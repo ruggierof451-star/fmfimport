@@ -1,0 +1,1128 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FMF Import</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+<style>
+/* Layout: fondo bianco, molta aria, nessun bordo sulle schede; il nero è l'unico accento, l'oro resta solo nel marchio. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --ink:#222222; --muted:#6E6E72; --line:#E8E8E8; --soft:#F4F4F4;
+  --night:#000000; --night2:#111111; --night-line:#2A2A2A; --on-night:#FFFFFF; --on-night-muted:#B5B5B5;
+  --gold:#C9A227; --gold-ink:#222222; --gold-wash:#F6F6F6;
+  --ok:#1C7A43; --ok-wash:#EDF6F0; --warn:#8A5A00; --err:#C0372C; --err-wash:#FBEFEE;
+  --f-display:"Poppins", system-ui, sans-serif;
+  --f-body:"Poppins", system-ui, sans-serif;
+  --f-mono:ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r:10px; --wrap:1240px;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--ink)} a:hover{color:#000;text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid #000;outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:500;text-wrap:balance;margin:0;line-height:1.2}
+.wrap{max-width:var(--wrap);margin:0 auto;padding-inline:16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* Header */
+.proto{background:var(--soft);color:var(--muted);font-size:12px;text-align:center;padding:7px 16px}
+.topbar{background:#000;color:#fff;font-size:13px}
+.topbar .wrap{display:flex;flex-wrap:wrap;gap:4px 28px;justify-content:center;padding-block:8px}
+.topbar b{color:#fff;font-weight:600}
+header.site{background:#fff;color:var(--ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:40;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:16px;padding-block:14px;flex-wrap:wrap}
+.logo{flex:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 12px 5px;background:#000;text-decoration:none;line-height:1;border-radius:6px}
+.logo:hover{text-decoration:none}
+.logo b{font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:.14em;color:#fff}
+.logo span{font-size:8px;letter-spacing:.44em;color:var(--gold);font-weight:500;margin-left:.44em;margin-top:3px}
+.burger{flex:none;width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 10px;border-radius:8px}
+.burger:hover{background:var(--soft)}
+.burger span{display:block;height:2px;background:var(--ink);border-radius:2px}
+.hrow .logo{margin:0 auto}
+.searchrow{padding-block:0 14px}
+.search{position:relative;width:100%;min-width:0}
+.search form{display:flex;align-items:center;background:var(--soft);border-radius:10px;height:48px;padding:0 6px 0 16px;gap:10px}
+.search input{flex:1;min-width:0;border:0;outline:none;height:46px;background:transparent;color:var(--ink);font-size:15px}
+.search input::placeholder{color:#8C8C90}
+.search button{flex:none;height:36px;padding:0 16px;border:0;border-radius:8px;background:#000;color:#fff;font-weight:600;font-size:14px;cursor:pointer}
+.suggest{position:absolute;top:54px;left:0;right:0;background:#fff;color:var(--ink);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.14);border:1px solid var(--line);padding:6px;z-index:60}
+.suggest a{display:flex;gap:12px;align-items:center;padding:7px 8px;border-radius:7px;text-decoration:none;color:var(--ink)}
+.suggest a:hover,.suggest a.on{background:var(--soft)}
+.suggest .thumb{flex:none;width:44px;height:34px;border-radius:5px;background:var(--soft);overflow:hidden}
+.suggest .t1{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggest .t2{font-size:12px;color:var(--muted)}
+.suggest .all{display:block;padding:9px 8px;font-weight:600;font-size:14px}
+.suggest .none{padding:12px 8px;font-size:14px}
+.hicons{flex:none;display:flex;gap:4px;margin-left:auto}
+.hicon{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink);text-decoration:none;font-size:11px;padding:5px 8px;min-width:48px;background:none;border:0;cursor:pointer}
+.hicon:hover{color:#000;text-decoration:none}
+.badge{position:absolute;top:0;right:4px;min-width:18px;height:18px;border-radius:9px;background:#000;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px}
+nav.cats{background:#fff;border-top:1px solid var(--line)}
+nav.cats .wrap{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none}
+nav.cats a{display:block;white-space:nowrap;text-decoration:none;font-size:15px;font-weight:400;padding:13px 0 11px;color:var(--ink);border-bottom:2px solid transparent}
+nav.cats a:hover{text-decoration:none;border-bottom-color:var(--line)}
+nav.cats a.on{font-weight:600;border-bottom-color:#000}
+@media (max-width:640px){.hicon .lbl{display:none}.hrow{gap:10px;padding-block:12px}.logo b{font-size:19px}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:10px;border:0;font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{text-decoration:none}
+.btn-gold{background:#000;color:#fff}
+.btn-gold:hover{background:#2A2A2A;color:#fff}
+.btn-dark{background:#000;color:#fff}
+.btn-dark:hover{background:#2A2A2A;color:#fff}
+.btn-line{background:#fff;border:1px solid #BFBFBF;color:var(--ink)}
+.btn-line:hover{background:var(--soft);border-color:#000}
+.btn-sm{height:40px;padding:0 14px;font-size:14px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--ink);font-weight:500;text-decoration:underline;cursor:pointer}
+
+/* Hero */
+.hero{background:#fff;overflow:hidden;border-bottom:1px solid var(--line)}
+.hero .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:36px;padding-block:clamp(32px,5vw,60px)}
+.hero .txt{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.hero h1{font-size:clamp(30px,4vw,46px);font-weight:600;letter-spacing:-.01em;color:var(--ink);line-height:1.15}
+.hero p{margin:0;font-size:16px;color:var(--muted);max-width:540px}
+.hero .art{flex:1 1 360px;min-width:0;max-width:520px}
+.hero .art svg{width:100%;height:auto;display:block}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:14px;color:var(--muted)}
+.facts span{display:flex;align-items:center;gap:8px}
+.facts span::before{content:"";width:5px;height:5px;border-radius:3px;background:var(--ink)}
+
+.perks{background:#fff;border-bottom:1px solid var(--line)}
+.perks .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px 28px;padding-block:24px}
+.perk{display:flex;gap:12px;align-items:flex-start}
+.perk svg{flex:none;width:34px;height:34px}
+.perk b{display:block;font-size:15px;font-weight:500}
+.perk span{font-size:13px;color:var(--muted)}
+
+main.page{padding-block:36px 72px;display:flex;flex-direction:column;gap:60px}
+.sec{display:flex;flex-direction:column;gap:18px}
+.sechead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px}
+.sechead h2{font-size:25px;font-weight:500}
+.sechead p{margin:5px 0 0;color:var(--muted);font-size:14px}
+.sechead a{font-weight:400;text-decoration:underline}
+
+.catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.cat{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:20px;min-height:150px;padding:20px;border-radius:10px;text-decoration:none;color:var(--ink);background:var(--soft);overflow:hidden}
+.cat:hover{background:#EBEBEB;color:var(--ink);text-decoration:none}
+.cat.dark{background:#000;color:#fff}
+.cat.dark:hover{background:#1C1C1C;color:#fff}
+.cat .n{font-family:var(--f-display);font-size:24px;font-weight:600;position:relative}
+.cat .d{font-size:14px;color:var(--muted);position:relative}
+.cat.dark .d{color:var(--on-night-muted)}
+.cat .c{font-size:12px;position:relative;color:var(--muted)}
+.cat.dark .c{color:var(--on-night-muted)}
+
+/* Product grid + card — niente bordi, come Toreca */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:30px 18px}
+@media (min-width:1100px){.grid.row5{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.card{background:#fff;display:flex;flex-direction:column;gap:2px}
+.card .img{display:block;position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:10px;overflow:hidden}
+.card .img svg{width:100%;height:100%;display:block}
+.card:hover .img{background:var(--soft)}
+.tags{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;background:#000;color:#fff}
+.tag.gold{background:#000;color:#fff}
+.tag.line{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.lang{position:absolute;top:10px;right:10px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;background:#fff;border:1px solid var(--line)}
+.card .body{padding:12px 2px 0;display:flex;flex-direction:column;gap:6px;flex:1;text-align:center;align-items:center}
+.card .meta{font-size:12px;color:var(--muted)}
+.card .name{color:var(--ink);text-decoration:none;font-weight:400;font-size:15px;line-height:1.35;min-height:41px}
+.card .name:hover{text-decoration:underline}
+.price{font-family:var(--f-display);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.ind{font-size:11px;color:var(--muted)}
+.bulk{font-size:13px;color:var(--muted)}
+.bulk b{color:var(--ink);font-weight:500}
+.stock{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400}
+.stock::before{content:"";width:7px;height:7px;border-radius:4px;background:currentColor}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}
+.card .act{margin-top:auto;padding-top:10px;width:100%}
+.card .act .btn{width:100%;height:42px;font-size:14px}
+
+/* Catalog */
+.lhead{background:#fff;border-bottom:1px solid var(--line)}
+.lhead .wrap{padding-block:18px 26px;display:flex;flex-direction:column;gap:10px}
+.crumbs{font-size:13px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.crumbs a{color:var(--muted)}
+.lhead h1{font-size:clamp(26px,3.2vw,36px);font-weight:600}
+.lhead p{margin:0;color:var(--muted);max-width:720px;font-size:14px}
+.seg{display:inline-flex;flex-wrap:wrap;align-self:flex-start;background:var(--soft);border-radius:10px;padding:4px;gap:4px;margin-top:4px}
+.seg a,.seg button{border:0;border-radius:8px;padding:0 16px;height:38px;display:flex;align-items:center;font-weight:400;font-size:14px;cursor:pointer;background:transparent;color:var(--ink);text-decoration:none}
+.seg a:hover,.seg button:hover{text-decoration:none;background:#EBEBEB}
+.seg .on{background:#000;color:#fff;font-weight:500}
+.seg .on:hover{background:#000}
+.lbody{padding-block:22px 64px;display:flex;flex-direction:column;gap:16px}
+.tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.tools .l{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+select.in,input.in,textarea.in{height:46px;border:1px solid #D4D4D4;border-radius:10px;padding:0 13px;background:#fff;font-size:15px;width:100%}
+textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
+.in:focus{border-color:var(--ink);outline:none}
+.in.bad{border-color:var(--err)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 13px;border:0;border-radius:999px;background:var(--soft);color:var(--ink);font-size:13px;font-weight:400;cursor:pointer}
+.chip:hover{background:#E6E6E6}
+.chip i{font-style:normal;color:var(--muted)}
+.lay{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+.filters{flex:1 1 230px;max-width:100%;background:#fff;border-radius:10px;padding:0;display:flex;flex-direction:column;gap:22px}
+.filters fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.filters legend{font-weight:600;font-size:14px;margin-bottom:8px}
+.filters label{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;min-height:28px}
+.filters label.dis{color:#A6A6A6;cursor:default}
+.filters input[type=checkbox],.filters input[type=radio]{width:17px;height:17px;accent-color:#000;margin:0}
+.filters .n{margin-left:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.results{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:22px}
+.empty{background:var(--soft);border-radius:10px;padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.empty b{font-size:19px;font-family:var(--f-display);font-weight:500}
+.empty p{margin:0;color:var(--muted);max-width:480px}
+.more{display:flex;flex-direction:column;align-items:center;gap:10px}
+@media (max-width:760px){.filters.closed{display:none}}
+@media (min-width:761px){.ftoggle{display:none}}
+
+/* Product page */
+.pp{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.pp .gal{flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pp .main{position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:12px;overflow:hidden;max-width:100%}
+.pp .main svg{width:100%;height:100%;display:block}
+.pp .note{position:absolute;bottom:12px;left:14px;font-size:12px;color:var(--muted)}
+.pp .info{flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.pp h1{font-size:clamp(23px,2.6vw,30px);font-weight:500}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:400;padding:4px 11px;border-radius:999px;background:var(--soft)}
+.pill.dark{background:#000;color:#fff}
+.buybox{background:var(--soft);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.bigprice{font-family:var(--f-display);font-size:34px;font-weight:600;font-variant-numeric:tabular-nums}
+.tiers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-radius:10px;overflow:hidden;gap:2px;background:#DCDCDC}
+.tiers div{padding:11px 14px;background:#fff}
+.tiers div.on{background:#000;color:#fff}
+.tiers div.on span{color:#C9C9C9}
+.tiers span{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.tiers b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.qty{display:flex;align-items:center;border:1px solid #D4D4D4;border-radius:10px;height:48px;overflow:hidden;background:#fff}
+.qty button{width:46px;height:100%;border:0;background:transparent;font-size:22px;cursor:pointer}
+.qty button:hover{background:var(--soft)}
+.qty input{width:52px;height:100%;border:0;text-align:center;font-size:17px;font-weight:800;outline:none;font-variant-numeric:tabular-nums}
+.buyrow{display:flex;gap:12px;flex-wrap:wrap}
+.buyrow .btn{flex:1 1 220px;height:50px;font-size:16px}
+.alert{border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600}
+.alert.err{background:var(--err-wash);color:#8C1D17}
+.alert.ok{background:var(--ok-wash);color:#155C33}
+.alert.info{background:var(--soft);color:#4A4A4A}
+.assure{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.assure div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px;font-size:14px}
+.assure b{display:block;font-weight:500}
+.tabs{background:#fff;border-top:1px solid var(--line)}
+.tabbar{display:flex;border-bottom:1px solid var(--line);overflow-x:auto;gap:24px}
+.tabbar button{border:0;background:none;padding:15px 0;font-weight:400;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabbar button.on{color:var(--ink);font-weight:600;border-bottom-color:#000}
+.tabpane{padding:26px 0;max-width:860px}
+dl.spec{margin:0;display:grid;grid-template-columns:minmax(130px,190px) 1fr;gap:9px 18px}
+dl.spec dt{color:var(--muted)} dl.spec dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+
+/* Cart / checkout */
+.two{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.two > .a{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.two > .b{flex:1 1 320px;min-width:0;position:sticky;top:140px}
+.line{display:flex;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:14px 0;align-items:center;flex-wrap:wrap}
+.line .im{flex:none;width:86px;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#FBFBFB}
+.line .im svg{width:100%;height:100%;display:block}
+.line .tx{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.line .tx a{color:var(--ink);text-decoration:none;font-weight:500}
+.line .rt{display:flex;align-items:center;gap:14px;margin-left:auto}
+.line .qty{height:42px}
+.line .qty button{width:38px}
+.line .qty input{width:44px;font-size:15px}
+.line .tot{font-weight:600;min-width:90px;text-align:right;font-variant-numeric:tabular-nums}
+.sum{background:var(--soft);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.sum .r{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.sum .t{font-size:19px;font-weight:600;font-family:var(--f-display);border-top:1px solid #DCDCDC;padding-top:12px}
+.bar{height:6px;border-radius:3px;background:#DCDCDC;overflow:hidden}
+.bar i{display:block;height:100%;background:#000}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+.form .full{grid-column:1/-1}
+.fl{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600}
+.fl .e{color:var(--err);font-size:13px;font-weight:600}
+@media (max-width:560px){.form{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:clamp(18px,2.6vw,26px);display:flex;flex-direction:column;gap:16px}
+.box h2{font-size:20px;font-weight:500}
+.step{display:flex;gap:12px;align-items:center}
+.step i{font-style:normal;flex:none;width:26px;height:26px;border-radius:13px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid #D4D4D4;border-radius:10px;padding:13px;cursor:pointer}
+.opt:has(input:checked){border-color:#000;background:#FAFAFA}
+.opt input{margin-top:3px;width:18px;height:18px;accent-color:#000}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+.check input{width:18px;height:18px;margin:1px 0 0;accent-color:#000;flex:none}
+
+/* Account, info */
+.side{flex:1 1 220px;background:#fff;border-radius:10px;padding:0;display:flex;flex-direction:column;gap:2px;align-self:flex-start}
+.side button,.side a{text-align:left;border:0;background:none;padding:10px 12px;border-radius:8px;font-weight:400;cursor:pointer;text-decoration:none;color:var(--ink)}
+.side button:hover,.side a:hover{background:var(--soft);text-decoration:none}
+.side .on{background:#000;color:#fff;font-weight:500}
+.side .on:hover{background:#000;color:#fff}
+.content{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.timeline{display:flex;flex-wrap:wrap;gap:0;margin:4px 0}
+.timeline div{flex:1 1 110px;position:relative;padding-top:20px;font-size:13px;color:var(--muted)}
+.timeline div::before{content:"";position:absolute;top:3px;left:0;width:11px;height:11px;border-radius:6px;background:#D4D4D4}
+.timeline div::after{content:"";position:absolute;top:8px;left:15px;right:4px;height:1px;background:var(--line)}
+.timeline div.done{color:var(--ink);font-weight:500}
+.timeline div.done::before{background:#000}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:12px}
+.prose h2{font-size:22px;font-weight:500;margin-top:10px}
+.prose h3{font-size:17px;font-weight:600;margin-top:6px}
+.prose p,.prose ul{margin:0}
+.prose li{margin-bottom:6px}
+.ph{background:var(--soft);color:var(--muted);padding:0 5px;border-radius:4px;font-weight:400}
+details.faq{background:#fff;border-bottom:1px solid var(--line);border-radius:0;padding:0}
+details.faq summary{cursor:pointer;font-weight:500;padding:15px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.faq summary::after{content:"+";font-weight:400;font-size:20px;line-height:1}
+details.faq[open] summary::after{content:"–"}
+details.faq p{margin:0 0 15px;color:var(--muted)}
+table.pt{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+table.pt th,table.pt td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+table.pt th{font-size:12px;color:var(--muted);font-weight:400}
+.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.switch{display:inline-flex;align-items:center;gap:10px;font-weight:400;cursor:pointer;font-size:14px}
+.switch input{width:38px;height:21px;accent-color:#000}
+
+/* Drawer + toast */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:80}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:#fff;z-index:90;display:flex;flex-direction:column;box-shadow:-16px 0 40px rgba(0,0,0,.12);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer.left{right:auto;left:0;width:min(340px,100%);box-shadow:16px 0 40px rgba(0,0,0,.12)}
+.menu{gap:0;padding:8px 10px 24px}
+.menu h3{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:18px 10px 6px}
+.menu a{display:block;padding:11px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:16px}
+.menu a:hover{background:var(--soft);text-decoration:none}
+.drawer .dh{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:#fff}
+.drawer .dh b{font-size:17px;font-family:var(--f-display);font-weight:500}
+.drawer .db{flex:1;overflow:auto;padding:0 16px;display:flex;flex-direction:column}
+.drawer .df{padding:14px 16px;border-top:1px solid var(--line);background:#fff;display:flex;flex-direction:column;gap:10px}
+.drawer .line .im{width:64px}
+.x{width:40px;height:40px;border:0;background:none;font-size:22px;cursor:pointer;border-radius:8px;color:var(--muted)}
+.x:hover{background:var(--soft);color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000;color:#fff;padding:12px 18px;border-radius:10px;z-index:100;font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.toast b{color:#fff;font-weight:600}
+
+footer.site{background:#fff;color:var(--muted);margin-top:auto;border-top:1px solid var(--line)}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:34px 28px;padding-block:48px 28px}
+footer h3{font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--ink);margin-bottom:12px}
+footer nav{display:flex;flex-direction:column;gap:9px;font-size:14px}
+footer nav a{color:var(--muted);text-decoration:none}
+footer nav a:hover{color:var(--ink);text-decoration:underline}
+footer .legal{border-top:1px solid var(--line)}
+footer .legal .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;font-size:12px;padding-block:16px 26px}
+#app{min-height:100vh;display:flex;flex-direction:column}
+#app > *{width:100%;min-width:0;max-width:100%}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+</head><body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   FMF Import — prototipo funzionante
+   Catalogo: titoli pubblici Toreca Import (categorie Pokémon JP/CN/KR,
+   One Piece JP/CN, B-Grade) letti il 07/10/2026.
+   Prezzi: costo Toreca NON visibile senza login → costo stimato
+   (marcato "indicativo") finché non arriva il listino/feed.
+   ========================================================= */
+const CFG = {
+  MARGIN: 0.30,        // ricarico standard sul costo Toreca
+  MARGIN_BULK: 0.20,   // ricarico per grandi quantità
+  BULK_OVER: 10,       // sconto quando la quantità di un articolo è OLTRE 10 pezzi
+  VAT: 0.22,           // IVA inclusa nei prezzi al pubblico
+  FREE_SHIP: 200,      // spedizione gratuita sopra questa cifra
+  SHIP_FEE: 7.90,      // [DA DEFINIRE] costo spedizione standard sotto soglia
+  ROUND_90: true       // arrotonda per eccesso a ,90
+};
+
+const RAW = {
+pkjp: [
+"Glory of Team Rocket Booster Box JP","Mega Symphonia Booster Box JP","Mega Brave Booster Box JP","Pokémon Munikis Zero Booster Box JP","Pokémon Stellar Miracle Booster Box Japanese","Ancient Roar Booster Box JP","Cyber Judge Booster Box JP","Night Wanderer Booster Box JP","Pokémon Center Fukuoka Special Box JP","Pokémon Center Tohoku Special Box JP","Pokémon Center Hiroshima Special Box JP","Pokémon Abyss Eye Booster Box JP","Raging Surf Booster Box JP","151 Booster Box JP","Inferno X Booster Box JP","Shiny Treasure ex Booster Box JP","White Flare Booster Box JP","Terastal Festival ex Booster Box JP","Black Bolt Booster Box JP","Pokémon Mega Dream Ex Booster Box JP",
+"Pokémon Battle Partners Booster Box Japanese","VSTAR Universe Booster Box JP","Future Flash Booster Box JP","Pokémon Ninja Spinner Booster Box JP","Pokemon Wild Force Booster Box JP","Pokemon Snow Hazard Booster Box JP","Pokemon Clay Burst Booster Box JP","Mask of Change Booster Box JP","Pokemon Storm Emeralda Booster Box JP","Pokemon 30th Celebration Booster Box JP","Pokemon 30th Celebration Premium Deck Set JP"],
+pkcn: [
+"Pokemon TCG Nuzzle Cheeks Plush Blind Box","Pokémon 151 Gathering Slim Booster Box CN","Pokémon 30th Anniversary First Partner Vol. 1 DISPLAY CN","Pokemon Return of the Dragon Ultra Necrozma CSFM1 CN","Pokemon Return of the Dragon Rayquaza CSFM2 CN","Pokemon 151 First Partner Gift Box Charmander CN","Pokemon 151 First Partner Gift Box Squirtle CN","Pokemon Pikachu V-UNION Card Frame Collector Box CS0G DISPLAY CN","Pokemon Terastal Gathering Espeon Coin Display CN","Pokemon Terastal Gathering Sylveon Coin Display CN","Pokemon Terastal Gathering Glaceon Coin Display CN","Pokemon Terastal Gathering Leafeon Coin Display CN","Pokemon Terastal Gathering Eevee Gift Box Set CN","Pokemon Terastal Gathering Vaporeon Gift Box Set CN","Pokemon Terastal Gathering Flareon Gift Box Set CN","Pokemon Terastal Gathering Jolteon Gift Box Set CN","Pokemon Terastal Gathering Espeon Gift Box Set CN","Pokemon Terastal Gathering Glaceon Gift Box Set CN","Pokemon Terastal Gathering Leafeon Gift Box Set CN","Pokemon Terastal Gathering Tin Box DISPLAY CN",
+"Pokemon Terastal Gathering Vaporeon Tin Box DISPLAY CN","Pokemon Terastal Gathering Flareon Tin Box DISPLAY CN","Pokemon Terastal Gathering Espeon Tin Box DISPLAY CN","Pokemon Terastal Gathering Sylveon Tin Box DISPLAY CN","Pokemon Terastal Gathering Glaceon Tin Box DISPLAY CN","Pokemon Terastal Gathering Leafeon Tin Box DISPLAY CN","Pokemon Terastal Gathering Eevee and Friends Gift Box CN","Pokemon Terastal Gathering Quicksand Charm SINGLE BOX CN","Pokemon Chasing Glory Together Jumbo Booster Box CSV10C CN","Pokemon Nine Colors Jumbo Boxes Bundle CN","Pokémon 30th Anniversary First Partner Vol. 2 DISPLAY CN","Pokémon Dream Painting Vol.3 Eevee And Friends DISPLAY CN","Pokémon 30th Anniversary First Partner Vol. 3 DISPLAY CN","Pokemon 2026 Chinese New Year Gift Box CN","Pókemon Gem Pack Vol.2 Booster Box CN","Pokémon Gem Pack Vol.6 Booster Box CN","Pokémon Gem Pack Vol.5 CASE CN","Pokémon Gem Pack Vol.5 Booster Box CN","Terastal Gathering Booster Box CSV9.5C CN","Pokemon Dragon Boat Festival 2026 Gift Box CN",
+"Pókemon Gem Pack Vol.3 Booster Box CN","Pokémon Charizard Gift Box Case CN","Pokémon Vaporeon Advanced Gift Box CN","Pokemon 2026 Mid Autumn Gift Box CN","Pokemon 151 Journey Jumbo Booster Box CN","Pókemon Gem Pack Vol.4 Booster Box CN","Pokémon 151 Gathering Coin Display CN","Pokémon 151 Surprise Coin Display CN","Pokémon Dream Painting Collection 151 Case CN","Pokémon 30th Anniversary First Partner Vol. 1 CN","Pokémon Gem Badge Display CN","Charizard VSTAR Collection Gift Box CN","Pokémon 151 Hope Coin Display CN","Pokemon Mid Autumn Moon Festival Gift Box CN","Pokémon TCG 25th Anniversary Collection Charizard Box CN","Pokémon TCG 25th Anniversary Collection Venusaur Box CN","Pokémon TCG 25th Anniversary Collection Blastoise Box CN","Pokémon 151 Journey Slim Booster Box CN","Pokémon TCG 25th Anniversary Collection Rayquaza Box CN","Pokémon Dream Painting Aqua Figurine Case CN",
+"Pokemon Charizard VMAX Battle Set Gift Box CS0B CN","Pokemon Chinese 1st Anniversary Gift Box CN","Pokemon 151 First Partner Gift Box Bulbasaur CN","Pokemon Travel Collection Tin Gift Box CN","Pokemon Travel Collection Tin Gift Box DISPLAY CN","Pokemon Glaceon GX Gift Box CN","Pokemon Sylveon GX Gift Box CN","Pokemon Umbreon GX Gift Box CN","Pokemon Lillie's Support Gift Box CN","Pokemon Leafeon GX Gift Box CN","Pokemon Radiant Energy Pikachu Box CSK1 CN","Pokemon Glory of Team Rocket Collector Blister T-CN","Pokemon Radiant Energy Mew Box CSP1 CN","Pokemon Terastal Gathering CSV9.5C Badge Set DISPLAY CN","Pokemon Terastal Gathering Vaporeon Coin Display CN","Pokemon Terastal Gathering Flareon Coin Display CN","Pokemon Terastal Gathering Jolteon Coin Display CN","Pokemon Terastal Gathering Umbreon Gift Box Set CN","Pokemon Terastal Gathering Sylveon Gift Box Set CN","Pokemon Terastal Gathering Jolteon Tin Box DISPLAY CN",
+"Pokemon Dark Crystal Blaze CSV5C Slim Booster Box CN","Pokemon Chasing Glory Together Slim Booster Box CSV10C CN","Pokemon Chasing Glory Together Briefcase CN","Pokemon Super Ball + Poke Ball Bundle CN","Pokemon Azure Shadow Slim Boxes Bundle CN","Pokemon Storming Emergence Booster Box CSM1AC CN","Pókemon Gem Pack Vol.1 Booster Box CN","Pokemon 30th Celebration Premium Display Box CN","Pokemon 30th Celebration Umbreon ex Deck Set CN","Pokemon 30th Celebration Espeon ex Deck Set CN","Pokemon 30th Celebration Coin Set DISPLAY CN","Pokemon 30th Celebration Booster Box CN","Pokemon Stellar Crystal Booster Box CSV9C CN","Pokemon 30th Celebration Greninja EX Card CASE CN","Pokemon 30th Celebration Sylveon EX Card Display Set CASE Chinese","Pokemon True Mystery Slim Booster Box CSV6C CN","Pokémon Gengar Gift Box Case CN","Pokémon Eevee Gift Box Case CN","Pokémon Flareon Advanced Gift Box CN","Pokémon Jolteon Advanced Gift Box CN",
+"Mewtwo VSTAR Collection Gift Box CN","Pokemon Arceus & Dialga & Palkia-GX Sealed Gift Box CN","Pokémon TCG 25th Anniversary Collection Umbreon Box CN","Pokemon Charizard VMAX Collection Set Gift Box CS0C CN","Pokemon Terastal Gathering Eevee Coin Display CN","Pokemon Terastal Gathering Quicksand Charm DISPLAY CN","Pokemon Terastal Gathering Umbreon Coin Display CN","Pokemon Terastal Gathering Umbreon Tin Box DISPLAY CN","Pokemon Dark Crystal Blaze CSV5C Jumbo Booster Box CN"],
+pkkr: [
+"Pokemon Terastal Festival Booster Box KR","Pokémon White Flare Booster Box KR","Pokémon Mega Inferno X Booster Box KR","Pokemon Mega Brave Booster Box KR","Pokemon Glory of Team Rocket Booster Box KR","Pokémon 151 Booster Box KR","Pokemon Heat Wave Arena Booster Box KR","Pokémon Munikis Zero Booster Box KR","Pokemon Crimson Haze Booster Box KR","Pokemon Super Electric Breaker Booster Box KR","Pokemon Stellar Crown Booster box KR","Pokemon Night Wanderer Booster Box KR","Pokemon Abyss Eye Booster Box KR","Pokémon Mega Dream Ex Booster Box KR","Pokemon Mega Symphonia Booster Box KR","Pokémon Black Bolt Booster Box KR","Pokemon Eevee Heroes Booster Box KR","Pokemon Shiny Treasure ex Booster Box KR","Pokemon Future Flash Booster Box KR","Pokemon Cyber Judge Booster Box KR",
+"Pokemon Clay Burst Booster Box KR","Pokemon Mask of Change Booster Box KR","Pokemon Battle Partners Booster Box KR","Pokemon Ruler of the Black Flame Booster Box KR","Pokemon Blue Sky Stream KR","Pokemon Ninja Spinner Booster Box KR","Pokemon Paradise Dragona Booster Box KR","Pokemon Wild Force Booster Box KR","Pokemon Ancient Roar Booster Box KR","Pokemon VSTAR Universe Booster Box KR","Pokemon Snow Hazard Booster Box KR","Pokemon Storm Emeralda Booster Box KR","Pokemon Mega Festa 2026 Magikarp Promo Card 040/M-P Pack KR"],
+opjp: [
+"One Piece PRB-02 The Best Vol.2 JP","One Piece OP-14 The Seven Warlords of the Sea Booster Box JP","One Piece Chopper Vol.1 Comic + Promo Card EB02-003","One Piece TCG Luffy Ichiban Kuji Promo Card OP13-001 JP","One Piece Base Shop Limited Playmat Vol.2 JP","One Piece 4th Anniversary Holographic Sticker PACK OF 30","One Piece Saikyo Jump Summit War Power Promo Pack JP","One Piece PRB-01 The Best JP","One Piece OP-13 Carrying on His Will JP","One Piece OP-09 Emperors in the New World JP","One Piece OP-11 A Fist of Divine Speed JP","One Piece EB-03 Heroines Edition Booster Box JP","One Piece EB-04 Egghead Crisis Booster Box JP","One Piece EB-02 Anime 25th Collection JP","One Piece OP-10 Royal Blood JP","One Piece OP-08 Two Legends JP","One Piece EB-01 Memorial Collection Booster Box JP","One Piece OP-15 Adventure on Kami's Island Booster Box JP","One Piece OP-12 Legacy of the Master JP","One Piece OP-16 The Time of Battle JP",
+"One Piece Mini Tin Pack Set Vol. 3 TS-03 ASIA EXCLUSIVE Display JP","[PRE-ORDER] One Piece Natsucomi Watermelon Luffy Metakira Card","[PRE-ORDER] Luffy P-159 Shonen Jump Promo Regular Version","One Piece Base Shop Limited Card Collection Vol.1 JP","One Piece OP-17 The World's Strongest Warriors JP","One Piece TCG x Round One Promo Pack JP"],
+opcn: [
+"One Piece TCG Two Legends Slim Box OPC-08 CN","One Piece TCG Legacy Of the Masters Slim Box OPC-12 CN","One Piece OPC-13 Carrying on His Will Booster Box CN","One Piece Romance Dawn OP01 Booster Box CN","One Piece Paramount War OP02 Booster Box Chinese","One Piece The Azure Seven Seas OPC14 Booster Box CN","One Piece Adventure on Kami's Island OPC15 Booster Box CN","One Piece EBC02 Anime 25th Collection Booster Box CN","One Piece EBC03 Heroines Edition Booster Box CN","One Piece OPC-16 The Time of Battle Booster Box CN","One Piece Pillars of Strength OPC03 Booster Box CN","One Piece OP-17 The World's Strongest Warriors CN"],
+bgrade: [
+"[B-GRADE] Pokémon 151 Surprise Coin Display CN","[B-GRADE] One Piece OP-14 The Seven Warlords of the Sea Booster Box JP","[B-GRADE] Night Wanderer Booster Box JP","[B-GRADE] Pokemon Snow Hazard Booster Box JP","[B-GRADE] Cyber Judge Booster Box JP","[B-GRADE] Future Flash Booster Box JP","[B-GRADE] Pokemon Terastal Festival Booster Box KR","[B-GRADE] Pokémon Mega Dream Ex Booster Box KR","[B-GRADE] Pókemon Gem Pack Vol.3 Booster Box CN"]
+};
+
+/* ---------- Classificazione automatica dai titoli ---------- */
+const LANGS = { JP: 'Giapponese', CN: 'Cinese', KR: 'Coreano' };
+const GAMES = { pk: 'Pokémon', op: 'One Piece' };
+function typeOf(n) {
+  if (/\bCASE\b|\bCase\b/.test(n)) return 'Case';
+  if (/Bundle/i.test(n)) return 'Bundle';
+  if (/Slim (Booster )?Box|Slim Boxes/i.test(n)) return 'Slim box';
+  if (/Jumbo/i.test(n)) return 'Jumbo box';
+  if (/Booster Box|Booster box/.test(n)) return 'Booster box';
+  if (/Coin (Display|Set)|Badge/i.test(n)) return 'Coin e badge';
+  if (/\bTin\b/i.test(n)) return 'Tin';
+  if (/Deck/i.test(n)) return 'Deck';
+  if (/DISPLAY|Display/.test(n)) return 'Display';
+  if (/Special Box/i.test(n)) return 'Special box';
+  if (/Gift Box|Collection .*Box|Box CS|Blister|Briefcase|SINGLE BOX|Blind Box/i.test(n)) return 'Gift box e collection';
+  if (/Playmat|Sticker|Card Collection|Figurine|Plush/i.test(n)) return 'Accessori';
+  if (/Promo|Pack|Metakira|Version/i.test(n)) return 'Promo e pack';
+  return 'Booster box';
+}
+const COST = { 'Booster box': 72, 'Slim box': 24, 'Jumbo box': 58, 'Display': 62, 'Coin e badge': 48, 'Tin': 46, 'Deck': 24, 'Special box': 55, 'Gift box e collection': 30, 'Case': 230, 'Bundle': 95, 'Accessori': 26, 'Promo e pack': 16 };
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return Math.abs(h); }
+function estCost(p) {
+  let c = COST[p.type] || 40;
+  if (p.type === 'Booster box') c = p.game === 'op' ? (p.lang === 'JP' ? 82 : 46) : (p.lang === 'JP' ? 72 : p.lang === 'KR' ? 44 : 40);
+  c *= 0.9 + (hash(p.name) % 26) / 100;
+  if (p.bgrade) c *= 0.85;
+  return Math.round(c * 100) / 100;
+}
+function slug(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+function codeOf(n) {
+  const m = n.match(/\b(OPC?-?\d{2}|EBC?-?\d{2}|PRB-\d{2}|TS-\d{2}|CSV[\d.]+C|CSM\w+|CS0[A-Z]|CSK1|CSP1|CSFM\d|OP\d{2}|OPC\d{2})\b/);
+  return m ? m[1] : '';
+}
+function setName(n) {
+  return n.replace(/\[.*?\]/g, '').replace(/P[oóÓ]k[eé]mon|Pokemon|Pókemon/gi, '').replace(/One Piece/gi, '').replace(/\bTCG\b/g, '')
+    .replace(/\b(JP|CN|KR|T-CN|Japanese|Chinese)\b/g, '').replace(/Booster Box|Booster box|DISPLAY|Display|Gift Box Set|Gift Box|Slim Box(es)?|Jumbo Box(es)?|CASE|Case/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+const NEW_PER_CAT = 4;
+const PRODUCTS = [];
+const seen = new Set();
+Object.entries(RAW).forEach(([cat, list]) => list.forEach((name, i) => {
+  const game = /one piece|luffy/i.test(name) || cat.startsWith('op') ? 'op' : 'pk';
+  let lang = { pkjp: 'JP', opjp: 'JP', pkcn: 'CN', opcn: 'CN', pkkr: 'KR' }[cat];
+  if (!lang) lang = /\bKR\b/.test(name) ? 'KR' : /\bCN\b|Chinese/.test(name) ? 'CN' : 'JP';
+  const p = { name, game, lang, cat, type: typeOf(name), bgrade: /\[B-GRADE\]/i.test(name), pre: /\[PRE-ORDER\]/i.test(name), isNew: cat !== 'bgrade' && i < NEW_PER_CAT, order: i };
+  p.code = codeOf(name); p.set = setName(name) || name; p.id = slug(name);
+  if (seen.has(p.id)) return; seen.add(p.id);
+  p.cost = null;            // ← costo reale dal feed Toreca (netto IVA)
+  p.costEst = estCost(p);   // ← stima usata finché manca il listino
+  p.stock = null;           // ← scorta reale dal feed Toreca (null = disponibile, quantità non nota)
+  PRODUCTS.push(p);
+}));
+const BY_ID = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+
+/* ---------- Prezzi ---------- */
+const r90 = v => { if (!CFG.ROUND_90) return Math.round(v * 100) / 100; let x = Math.ceil(v) - 0.1; if (x < v - 1e-9) x += 1; return Math.round(x * 100) / 100; };
+const costOf = p => p.cost ?? p.costEst;
+const priceOf = p => r90(costOf(p) * (1 + CFG.MARGIN) * (1 + CFG.VAT));
+const bulkOf = p => r90(costOf(p) * (1 + CFG.MARGIN_BULK) * (1 + CFG.VAT));
+const unitFor = (p, q) => q > CFG.BULK_OVER ? bulkOf(p) : priceOf(p);
+const eur = v => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const netOf = v => v / (1 + CFG.VAT);
+const maxQty = p => p.stock == null ? 99 : p.stock;
+const BULK_PCT = Math.round((1 - (1 + CFG.MARGIN_BULK) / (1 + CFG.MARGIN)) * 1000) / 10;
+
+/* ---------- Stato ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('fmfi_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('fmfi_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const S = {
+  cart: store.get('cart', []).filter(l => BY_ID[l.id]),
+  orders: store.get('orders', []),
+  user: store.get('user', null),
+  route: 'home', param: '',
+  q: '', sugOpen: false, sugIdx: -1,
+  f: null, limit: 24, fOpen: false,
+  qty: 1, ptab: 0, pmsg: '',
+  drawer: false, menu: false, toast: '',
+  co: { step: 1, errors: {}, data: {}, invoice: false, pay: 'card', done: null },
+  acc: 'orders', accMode: 'login', accErr: '',
+  b2bNet: false, contactSent: false, proSent: false, nlSent: false
+};
+const saveCart = () => store.set('cart', S.cart);
+const cartCount = () => S.cart.reduce((a, l) => a + l.qty, 0);
+function cartTotals() {
+  let sub = 0, full = 0;
+  S.cart.forEach(l => { const p = BY_ID[l.id]; sub += unitFor(p, l.qty) * l.qty; full += priceOf(p) * l.qty; });
+  const disc = full - sub;
+  const ship = S.cart.length === 0 ? 0 : (sub >= CFG.FREE_SHIP ? 0 : CFG.SHIP_FEE);
+  const est = S.cart.some(l => BY_ID[l.id].cost == null);
+  return { sub, full, disc, ship, total: sub + ship, missing: Math.max(0, CFG.FREE_SHIP - sub), est };
+}
+function addToCart(id, q) {
+  const p = BY_ID[id]; const l = S.cart.find(x => x.id === id);
+  const cur = l ? l.qty : 0; const n = Math.min(maxQty(p), cur + q);
+  if (l) l.qty = n; else S.cart.push({ id, qty: n });
+  saveCart(); S.drawer = true; render();
+}
+function setLineQty(id, q) {
+  const p = BY_ID[id]; const l = S.cart.find(x => x.id === id); if (!l) return;
+  if (q <= 0) S.cart = S.cart.filter(x => x.id !== id); else l.qty = Math.min(maxQty(p), q);
+  saveCart(); render();
+}
+let toastT;
+function toast(msg) { S.toast = msg; render(); clearTimeout(toastT); toastT = setTimeout(() => { S.toast = ''; render(); }, 2600); }
+
+/* ---------- Illustrazioni prodotto (SVG monocromatiche) ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function art(p, opt = {}) {
+  const dark = opt.dark;
+  const bg = dark ? '#000000' : '#FBFBFB', st = dark ? '#8A8A8A' : '#C4C4C4', face = dark ? '#121212' : '#FFFFFF', side = dark ? '#191919' : '#F0F0F0', top = dark ? '#161616' : '#F7F7F7', gold = '#C9A227', txt = dark ? '#E8E8E8' : '#4A4A4A';
+  const raw = p.code || p.set;
+  const lab = esc(raw.length > 13 ? raw.slice(0, 12).trim() + '…' : raw), gm = p.game === 'op' ? 'ONE PIECE' : 'POKÉMON';
+  const ink = dark ? '#FFFFFF' : '#222222';
+  const box = (x, y, w, h, d, label, sub) => `
+    <polygon points="${x},${y} ${x + d},${y - d * .6} ${x + w + d},${y - d * .6} ${x + w},${y}" fill="${top}" stroke="${st}" stroke-width="1.2" stroke-linejoin="round"/>
+    <polygon points="${x + w},${y} ${x + w + d},${y - d * .6} ${x + w + d},${y + h - d * .6} ${x + w},${y + h}" fill="${side}" stroke="${st}" stroke-width="1.2" stroke-linejoin="round"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${face}" stroke="${st}" stroke-width="1.2"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${Math.max(8, h * .16)}" fill="${ink}"/>
+    <text x="${x + w / 2}" y="${y + Math.max(8, h * .16) - 3}" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="500" font-size="${Math.max(6, Math.min(9, h * .11))}" letter-spacing="1.4" fill="${dark ? '#000000' : '#FFFFFF'}">${gm}</text>
+    ${label ? `<text x="${x + w / 2}" y="${y + h * .62}" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="${Math.min(18, (w - 12) / Math.max(4, label.length) * 1.75)}" fill="${txt}">${label}</text>` : ''}
+    ${sub ? `<text x="${x + w / 2}" y="${y + h * .82}" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="400" font-size="7.5" letter-spacing="1.1" fill="${dark ? '#9A9A9A' : '#8C8C8C'}">${sub}</text>` : ''}`;
+  let g = '';
+  const t = p.type;
+  if (t === 'Case') g = box(34, 92, 62, 44, 14) + box(100, 92, 62, 44, 14) + box(56, 50, 82, 46, 16, lab, 'CASE');
+  else if (t === 'Bundle') g = box(28, 66, 74, 56, 14, lab, '') + box(104, 76, 66, 46, 14, '', 'BUNDLE');
+  else if (t === 'Slim box') g = box(48, 60, 94, 52, 18, lab, 'SLIM BOX');
+  else if (t === 'Jumbo box') g = box(40, 52, 108, 74, 22, lab, 'JUMBO BOX');
+  else if (t === 'Display' || t === 'Coin e badge') {
+    g = box(40, 56, 108, 70, 22, '', '') + `<rect x="52" y="76" width="84" height="40" fill="${dark ? '#000000' : '#F7F7F7'}" stroke="${st}" stroke-width="1"/>` +
+      [0, 1, 2, 3].map(i => t === 'Coin e badge' ? `<circle cx="${66 + i * 19}" cy="96" r="7.5" fill="none" stroke="${gold}" stroke-width="1.4"/>` : `<rect x="${58 + i * 19}" y="82" width="15" height="28" rx="2" fill="${face}" stroke="${st}" stroke-width="1"/>`).join('') +
+      `<text x="94" y="${56 + 70 - 3}" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="9" fill="${txt}">${lab}</text>`;
+  } else if (t === 'Tin') g = `<rect x="56" y="44" width="88" height="84" rx="16" fill="${face}" stroke="${st}" stroke-width="1.2"/><path d="M56 66 h88" stroke="${st}" stroke-width="1"/><rect x="56" y="44" width="88" height="22" rx="16" fill="${ink}"/><text x="100" y="59" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="500" font-size="8" letter-spacing="1.4" fill="${dark ? '#000' : '#fff'}">${gm}</text><text x="100" y="100" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="13" fill="${txt}">${lab.slice(0, 10)}</text><text x="100" y="116" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="400" font-size="7.5" letter-spacing="1.1" fill="#8C8C8C">TIN</text>`;
+  else if (t === 'Deck' || t === 'Promo e pack' || t === 'Accessori') {
+    const card = (x, y, rot) => `<g transform="rotate(${rot} ${x + 30} ${y + 42})"><rect x="${x}" y="${y}" width="60" height="84" rx="5" fill="${face}" stroke="${st}" stroke-width="1.2"/><rect x="${x + 6}" y="${y + 6}" width="48" height="72" rx="3" fill="none" stroke="${gold}" stroke-width="1"/></g>`;
+    g = (t === 'Deck' ? card(62, 38, -8) + card(70, 36, -2) : '') + card(70, 34, 4) + `<text x="100" y="82" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="9" fill="${txt}" transform="rotate(4 100 76)">${lab.slice(0, 9)}</text><text x="100" y="140" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="400" font-size="7.5" letter-spacing="1.3" fill="${dark ? '#9A9A9A' : '#8C8C8C'}">${t === 'Deck' ? 'DECK' : t === 'Accessori' ? 'ACCESSORIO' : 'PROMO'}</text>`;
+  } else if (t === 'Gift box e collection' || t === 'Special box') {
+    g = box(42, 58, 100, 66, 20, lab, t === 'Special box' ? 'SPECIAL BOX' : 'GIFT BOX') + `<path d="M92 58 v66 M42 74 h100" stroke="${gold}" stroke-width="2.4" opacity=".7"/><path d="M92 58 l12 -12 M92 58 l-12 -14" stroke="${gold}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7"/>`;
+  } else g = box(40, 54, 108, 72, 22, lab, 'BOOSTER BOX');
+  return `<svg viewBox="0 0 200 150" role="img" aria-label="Illustrazione: ${esc(t)}" preserveAspectRatio="xMidYMid meet"><rect width="200" height="150" fill="${bg}"/>${g}</svg>`;
+}
+
+/* ---------- Componenti ---------- */
+const NAV = [['novita', 'Novità'], ['pokemon-jp', 'Pokémon JP'], ['pokemon-cn', 'Pokémon CN'], ['pokemon-kr', 'Pokémon KR'], ['one-piece-jp', 'One Piece JP'], ['one-piece-cn', 'One Piece CN'], ['altri-tcg', 'Altri TCG'], ['bgrade', 'B-Grade']];
+const MENU = [
+  ['Categorie', [['novita', 'Novità'], ['pokemon-jp', 'Pokémon JP'], ['pokemon-cn', 'Pokémon CN'], ['pokemon-kr', 'Pokémon KR'], ['one-piece-jp', 'One Piece JP'], ['one-piece-cn', 'One Piece CN'], ['altri-tcg', 'Altri TCG'], ['bgrade', 'B-Grade']]],
+  ['Scopri', [['pokemon', 'Tutto Pokémon'], ['onepiece', 'Tutto One Piece'], ['piu-venduti', 'Più venduti'], ['offerte', 'Offerte']]],
+  ['Informazioni', [['chi-siamo', 'Chi siamo'], ['come-funziona', 'Come funziona'], ['negozianti', 'Ingrosso'], ['assistenza', 'Centro assistenza'], ['contatti', 'Contatti']]]
+];
+const ico = {
+  user: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  cart: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.2 11h11.3L21 7H6.2"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>',
+  help: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><circle cx="12" cy="17.5" r=".6" fill="currentColor"/></svg>',
+  search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C5B60" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>'
+};
+function header() {
+  const sug = suggestions();
+  const navKey = S.route === 'cat' ? S.param : S.route;
+  return `
+  <div class="proto">PROTOTIPO · catalogo dai titoli pubblici Toreca Import · prezzi indicativi finché non colleghiamo il listino · nessun pagamento reale</div>
+  <div class="topbar"><div class="wrap"><span><b>Spedizione gratuita</b> sopra ${eur(CFG.FREE_SHIP)}</span><span><b>Prezzo quantità</b> oltre ${CFG.BULK_OVER} pezzi per articolo</span><span><b>Prezzi visibili</b> senza registrazione</span></div></div>
+  <header class="site">
+    <div class="wrap hrow">
+      <button class="burger" data-act="menu" aria-label="Apri il menu" aria-expanded="${S.menu}"><span></span><span></span><span></span></button>
+      <a href="#home" class="logo" aria-label="FMF Import, homepage"><b>FMF</b><span>IMPORT</span></a>
+      <div class="hicons">
+        <a class="hicon" href="#account">${ico.user}<span class="lbl">${S.user ? 'Account' : 'Accedi'}</span></a>
+        <button class="hicon" data-act="drawer" aria-label="Carrello, ${cartCount()} articoli">${ico.cart}<span class="lbl">Carrello</span>${cartCount() ? `<span class="badge">${cartCount()}</span>` : ''}</button>
+      </div>
+    </div>
+    <div class="wrap searchrow">
+      <div class="search">
+        <form data-form="search" role="search">
+          ${ico.search}
+          <label for="q" class="sr">Cerca prodotti</label>
+          <input id="q" type="search" autocomplete="off" placeholder="Cerca prodotti" value="${esc(S.q)}" aria-expanded="${S.sugOpen}" aria-controls="sug">
+          <button type="submit">Cerca</button>
+        </form>
+        ${S.sugOpen && S.q.trim().length >= 2 ? `<div class="suggest" id="sug" role="listbox">
+          ${sug.length ? sug.map((p, i) => `<a href="#p-${p.id}" role="option" class="${i === S.sugIdx ? 'on' : ''}"><span class="thumb">${art(p)}</span><span style="min-width:0"><div class="t1">${esc(p.name)}</div><div class="t2">${GAMES[p.game]} · ${LANGS[p.lang]} · ${p.type} · ${eur(priceOf(p))}</div></span></a>`).join('') + `<a class="all" href="#cerca">Vedi tutti i risultati per “${esc(S.q)}” →</a>`
+          : `<div class="none">Nessun prodotto per “<b>${esc(S.q)}</b>”. Prova con il codice del set (es. <b>OP-14</b>) o con il nome dell'espansione.</div>`}
+        </div>` : ''}
+      </div>
+    </div>
+    <nav class="cats" aria-label="Categorie"><div class="wrap">${NAV.map(([k, l]) => `<a href="#${k}" class="${navKey === k ? 'on' : ''}">${l}</a>`).join('')}</div></nav>
+  </header>`;
+}
+function menuPanel() {
+  if (!S.menu) return '';
+  return `<div class="scrim" data-act="close-menu"></div>
+  <aside class="drawer left" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="dh"><b>Menu</b><button class="x" data-act="close-menu" aria-label="Chiudi il menu">×</button></div>
+    <nav class="db menu">
+      ${MENU.map(([t, items]) => `<h3>${t}</h3>${items.map(([k, l]) => `<a href="#${k}" data-act="close-menu-go">${l}</a>`).join('')}`).join('')}
+    </nav>
+  </aside>`;
+}
+function suggestions() {
+  const q = S.q.trim().toLowerCase(); if (q.length < 2) return [];
+  return search(q).slice(0, 6);
+}
+function search(q) {
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  return PRODUCTS.filter(p => { const h = (p.name + ' ' + p.code + ' ' + GAMES[p.game] + ' ' + LANGS[p.lang] + ' ' + p.lang + ' ' + p.type).toLowerCase(); return terms.every(t => h.includes(t)); });
+}
+function card(p) {
+  return `<article class="card">
+    <a class="img" href="#p-${p.id}" tabindex="-1" aria-hidden="true">${art(p)}
+      <span class="tags">${p.isNew ? '<span class="tag gold">Nuovo</span>' : ''}${p.pre ? '<span class="tag">Preordine</span>' : ''}${p.bgrade ? '<span class="tag line">B-Grade</span>' : ''}</span>
+      <span class="lang">${p.lang}</span></a>
+    <div class="body">
+      <div class="meta">${GAMES[p.game]} · ${p.type}</div>
+      <a class="name" href="#p-${p.id}">${esc(p.name.replace(/\[.*?\]\s*/g, ''))}</a>
+      <div><span class="price">${eur(priceOf(p))}</span> ${p.cost == null ? '<span class="ind">· indicativo</span>' : ''}</div>
+      <div class="bulk">Oltre ${CFG.BULK_OVER} pz: <b>${eur(bulkOf(p))}</b> cad.</div>
+      <div class="stock ${p.pre ? 'warn' : 'ok'}">${p.pre ? 'Preordine' : stockLabel(p)}</div>
+      <div class="act"><button class="btn btn-gold" data-act="add" data-id="${p.id}">Aggiungi al carrello</button></div>
+    </div></article>`;
+}
+function stockLabel(p) { return p.stock == null ? 'Disponibile' : p.stock === 0 ? 'Esaurito' : p.stock <= 5 ? `Solo ${p.stock} disponibili` : `Disponibile · ${p.stock} pz`; }
+function footer() {
+  return `<footer class="site">
+    <div class="wrap cols">
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start"><a href="#home" class="logo" aria-label="FMF Import"><b>FMF</b><span>IMPORT</span></a><p style="margin:0;font-size:14px;max-width:290px">Booster box, display e prodotti sigillati Pokémon e One Piece in edizione giapponese, cinese e coreana. Per collezionisti e negozianti.</p></div>
+      <div><h3>Negozio</h3><nav aria-label="Negozio"><a href="#novita">Novità</a><a href="#pokemon-jp">Pokémon JP</a><a href="#pokemon-cn">Pokémon CN</a><a href="#pokemon-kr">Pokémon KR</a><a href="#one-piece-jp">One Piece JP</a><a href="#one-piece-cn">One Piece CN</a><a href="#bgrade">B-Grade</a></nav></div>
+      <div><h3>Azienda</h3><nav aria-label="Azienda"><a href="#chi-siamo">Chi siamo</a><a href="#come-funziona">Come funziona</a><a href="#negozianti">Ingrosso</a><a href="#assistenza">Centro assistenza</a><a href="#contatti">Contatti</a></nav></div>
+      <div><h3>Informazioni</h3><nav aria-label="Informazioni legali"><a href="#spedizioni">Spedizioni</a><a href="#resi">Resi e recesso</a><a href="#condizioni">Condizioni di vendita</a><a href="#privacy">Privacy</a><a href="#cookie">Cookie</a></nav><p style="font-size:13px;margin:14px 0 0">Pagamenti: carta, PayPal, bonifico</p></div>
+    </div>
+    <div class="legal"><div class="wrap"><span>© 2026 FMF Import · <span class="ph">[RAGIONE SOCIALE · P.IVA · SEDE]</span></span><span style="max-width:640px">Pokémon e One Piece sono marchi dei rispettivi titolari. FMF Import è un rivenditore indipendente, non affiliato né approvato dai titolari dei marchi.</span></div></div>
+  </footer>`;
+}
+function drawer() {
+  if (!S.drawer) return '';
+  const t = cartTotals();
+  return `<div class="scrim" data-act="close-drawer"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Carrello">
+    <div class="dh"><b>Carrello (${cartCount()})</b><button class="x" data-act="close-drawer" aria-label="Chiudi carrello">×</button></div>
+    <div class="db">${S.cart.length ? S.cart.map(l => lineHTML(l, true)).join('') : `<div class="empty"><b>Il carrello è vuoto</b><p>Aggiungi un prodotto dal catalogo.</p></div>`}</div>
+    ${S.cart.length ? `<div class="df">${shipBar(t)}
+      <div class="sum" style="padding:0;border:0"><div class="r"><span>Subtotale</span><b>${eur(t.sub)}</b></div></div>
+      <a href="#checkout" class="btn btn-gold" data-act="close-drawer-go">Vai al checkout</a>
+      <a href="#carrello" class="btn btn-line btn-sm" data-act="close-drawer-go">Vedi carrello completo</a></div>` : ''}
+  </aside>`;
+}
+function shipBar(t) {
+  const pct = Math.min(100, t.sub / CFG.FREE_SHIP * 100);
+  return `<div style="display:flex;flex-direction:column;gap:6px;font-size:14px">${t.missing > 0 ? `Ti mancano <b>${eur(t.missing)}</b> per la spedizione gratuita` : '<b class="ok">Spedizione gratuita sbloccata</b>'}<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><i style="width:${pct}%"></i></div></div>`;
+}
+function lineHTML(l, compact) {
+  const p = BY_ID[l.id], u = unitFor(p, l.qty), isB = l.qty > CFG.BULK_OVER;
+  return `<div class="line">
+    <a class="im" href="#p-${p.id}" aria-hidden="true" tabindex="-1">${art(p)}</a>
+    <div class="tx"><a href="#p-${p.id}">${esc(p.name.replace(/\[.*?\]\s*/g, ''))}</a>
+      <span class="muted" style="font-size:13px">${GAMES[p.game]} · ${LANGS[p.lang]} · ${eur(u)} cad.${isB ? ' · <b class="ok">prezzo quantità</b>' : ''}</span>
+      ${!isB && !compact ? `<span style="font-size:13px" class="muted">Oltre ${CFG.BULK_OVER} pz: ${eur(bulkOf(p))} cad.</span>` : ''}</div>
+    <div class="rt">
+      <div class="qty"><button data-act="lq" data-id="${p.id}" data-d="-1" aria-label="Diminuisci">−</button><label class="sr" for="lq-${p.id}">Quantità</label><input id="lq-${p.id}" data-lq="${p.id}" inputmode="numeric" value="${l.qty}"><button data-act="lq" data-id="${p.id}" data-d="1" aria-label="Aumenta">+</button></div>
+      <span class="tot">${eur(u * l.qty)}</span>
+      <button class="x" data-act="rm" data-id="${p.id}" aria-label="Rimuovi ${esc(p.name)}">×</button>
+    </div></div>`;
+}
+
+/* ---------- Pagine ---------- */
+function pHome() {
+  const newest = PRODUCTS.filter(p => p.isNew && !p.bgrade);
+  const pick = (f, n) => PRODUCTS.filter(f).slice(0, n);
+  const c = k => PRODUCTS.filter(k).length;
+  const heroArt = `<svg viewBox="0 0 480 340" aria-hidden="true"><rect width="480" height="340" fill="#FBFBFB" rx="12"/>
+    ${[[60, 215, 165, 92], [255, 222, 150, 85], [145, 118, 190, 104]].map(([x, y, w, h]) => `<polygon points="${x},${y} ${x + 36},${y - 22} ${x + w + 36},${y - 22} ${x + w},${y}" fill="#F2F2F2" stroke="#D0D0D0"/><polygon points="${x + w},${y} ${x + w + 36},${y - 22} ${x + w + 36},${y + h - 22} ${x + w},${y + h}" fill="#EAEAEA" stroke="#D0D0D0"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#FFFFFF" stroke="#D0D0D0"/><rect x="${x}" y="${y}" width="${w}" height="13" fill="#222222"/>`).join('')}
+    <text x="240" y="182" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="28" fill="#333">OP-17</text>
+    <text x="240" y="203" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9.5" letter-spacing="2.4" fill="#9A9A9A">BOOSTER BOX · JP</text>
+    <text x="142" y="276" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="21" fill="#333">151</text>
+    <text x="142" y="293" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.5" letter-spacing="2.4" fill="#9A9A9A">CN</text>
+    <text x="330" y="276" text-anchor="middle" font-family="Poppins,sans-serif" font-weight="600" font-size="19" fill="#333">M2</text>
+    <text x="330" y="293" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.5" letter-spacing="2.4" fill="#9A9A9A">KR</text></svg>`;
+  const perk = (t, d, path) => `<div class="perk"><svg viewBox="0 0 34 34" aria-hidden="true"><rect x=".5" y=".5" width="33" height="33" rx="8" fill="#F4F4F4"/><g fill="none" stroke="#222222" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${path}</g></svg><span><b>${t}</b><span>${d}</span></span></div>`;
+  return `
+  <section class="hero" aria-labelledby="h1"><div class="wrap">
+    <div class="txt">
+      <span class="eyebrow">Pokémon · One Piece · JP · CN · KR</span>
+      <h1 id="h1">Prodotti sigillati dall'Asia, prezzi chiari per tutti.</h1>
+      <p>${PRODUCTS.length} prodotti tra booster box, display e collection in edizione giapponese, cinese e coreana. Prezzi visibili senza registrazione; oltre ${CFG.BULK_OVER} pezzi il prezzo scende in automatico.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px"><a class="btn btn-gold" href="#pokemon">Catalogo Pokémon</a><a class="btn btn-line" href="#onepiece">Catalogo One Piece</a></div>
+      <div class="facts"><span>Spedizione gratuita sopra ${eur(CFG.FREE_SHIP)}</span><span>Acquisto anche senza account</span><span>Fattura per P.IVA</span></div>
+    </div>
+    <div class="art">${heroArt}</div>
+  </div></section>
+  <section class="perks" aria-label="Perché FMF Import"><div class="wrap">
+    ${perk('Originali e sigillati', 'Da distribuzione autorizzata, mai riconfezionati.', '<path d="M12 19.5l5 5 10-11"/>')}
+    ${perk('Prezzo quantità', `Oltre ${CFG.BULK_OVER} pezzi per articolo: −${String(BULK_PCT).replace('.', ',')}% in automatico.`, '<path d="M11 27L27 11"/><circle cx="13" cy="13" r="2.5"/><circle cx="25" cy="25" r="2.5"/>')}
+    ${perk('Spedizione gratuita', `Sugli ordini sopra ${eur(CFG.FREE_SHIP)}, con tracking.`, '<path d="M8 13h14v12H8zM22 17h5l3 4v4h-8"/><circle cx="13" cy="26" r="2"/><circle cx="26" cy="26" r="2"/>')}
+    ${perk('Disponibilità aggiornata', 'Scorte e prezzi sincronizzati con il magazzino.', '<path d="M27 15a9 9 0 0 0-16-3M11 23a9 9 0 0 0 16 3"/><path d="M11 8v4h4M27 30v-4h-4"/>')}
+  </div></section>
+  <main class="wrap page">
+    <section class="sec" aria-labelledby="cats"><div class="sechead"><h2 id="cats">Categorie</h2></div>
+      <div class="catgrid">
+        ${NAV.filter(([k]) => k !== 'novita' && k !== 'altri-tcg').map(([k, l]) => `<a class="cat${k === 'bgrade' ? '' : ' dark'}" href="#${k}"><span class="c">${PRODUCTS.filter(LISTS[k].f).length} prodotti</span><span><span class="n" style="display:block">${l}</span><span class="d">${LISTS[k].d.split(' in edizione')[0].split(':')[0]}</span></span></a>`).join('')}
+      </div></section>
+    ${[['novita', 'Novità', newest], ['pokemon-jp', 'Pokémon JP', null], ['pokemon-cn', 'Pokémon CN', null], ['pokemon-kr', 'Pokémon KR', null], ['one-piece-jp', 'One Piece JP', null], ['one-piece-cn', 'One Piece CN', null], ['bgrade', 'B-Grade', null]].map(([k, l, pre], i) => {
+      const items = (pre || PRODUCTS.filter(LISTS[k].f)).slice(0, 5);
+      if (!items.length) return '';
+      return `<section class="sec" aria-labelledby="s${i}"><div class="sechead"><h2 id="s${i}">${l}</h2><a href="#${k}">Vedi tutti</a></div><div class="grid row5">${items.map(card).join('')}</div></section>`;
+    }).join('')}
+    <section class="sec" style="background:#000;color:#fff;border-radius:12px;padding:clamp(22px,3.4vw,40px);flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 40px" aria-labelledby="pro">
+      <div style="flex:1 1 420px;display:flex;flex-direction:column;gap:8px"><span class="eyebrow" style="color:var(--on-night-muted)">Negozi · live seller · vending</span><h2 id="pro" style="font-size:25px;font-weight:500">Compri in quantità?</h2><p style="margin:0;color:var(--on-night-muted);max-width:620px;font-size:14px">Oltre ${CFG.BULK_OVER} pezzi dello stesso articolo il prezzo scende in automatico nel carrello. Fattura con P.IVA e codice SDI, condizioni dedicate per volumi continuativi.</p></div>
+      <a class="btn" style="background:#fff;color:#000" href="#negozianti">Condizioni per negozianti</a></section>
+    <section class="box" aria-labelledby="nl" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:20px 40px">
+      <div style="flex:1 1 340px"><h2 id="nl">Avvisi uscite e restock</h2><p class="muted" style="margin:6px 0 0">Una email quando arriva un nuovo set. Facoltativa, ti cancelli con un clic.</p></div>
+      ${S.nlSent ? `<div class="alert ok" role="status" style="flex:1 1 380px">Iscrizione registrata. Nel sito reale arriverà un'email di conferma.</div>` :
+      `<form data-form="nl" style="flex:1 1 380px;display:flex;flex-direction:column;gap:10px" novalidate>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><label for="nle" class="sr">Email</label><input id="nle" class="in" type="email" placeholder="La tua email" style="flex:1 1 220px;width:auto" required><button class="btn btn-dark" type="submit">Iscrivimi</button></div>
+        <label class="check"><input type="checkbox" id="nlc" required> Acconsento a ricevere comunicazioni commerciali e ho letto l'<a href="#privacy">informativa privacy</a>.</label>
+        <span class="e err" id="nlerr" style="font-size:13px;font-weight:600"></span></form>`}
+    </section>
+  </main>`;
+}
+
+const LISTS = {
+  'pokemon-jp': { t: 'Pokémon JP', d: 'Booster box e special box Pokémon in edizione giapponese.', f: p => p.cat === 'pkjp' },
+  'pokemon-cn': { t: 'Pokémon CN', d: 'Booster box, display, gift box e coin display Pokémon in edizione cinese.', f: p => p.cat === 'pkcn' },
+  'pokemon-kr': { t: 'Pokémon KR', d: 'Booster box Pokémon in edizione coreana.', f: p => p.cat === 'pkkr' },
+  'one-piece-jp': { t: 'One Piece JP', d: 'Booster box OP, Extra Booster, Premium Booster, promo e accessori in edizione giapponese.', f: p => p.cat === 'opjp' },
+  'one-piece-cn': { t: 'One Piece CN', d: 'Booster box e slim box One Piece in edizione cinese.', f: p => p.cat === 'opcn' },
+  'altri-tcg': { t: 'Altri TCG', d: 'Altri giochi di carte collezionabili dal mercato asiatico.', f: () => false, empty: 'Al momento trattiamo solo Pokémon e One Piece. Gli altri giochi arriveranno dopo i primi ordini.', fallback: () => false },
+  pokemon: { t: 'Pokémon TCG', d: 'Tutto il catalogo Pokémon: giapponese, cinese e coreano.', f: p => p.game === 'pk' },
+  onepiece: { t: 'One Piece Card Game', d: 'Tutto il catalogo One Piece: giapponese e cinese.', f: p => p.game === 'op' },
+  novita: { t: 'Novità', d: 'Gli ultimi prodotti inseriti nel catalogo, per ogni gioco e lingua.', f: p => p.isNew },
+  'piu-venduti': { t: 'Più venduti', d: 'La classifica si calcola sugli ordini reali degli ultimi 30 giorni.', f: () => false, empty: 'La classifica comparirà con i primi ordini. Intanto trovi qui sotto i prodotti appena arrivati.', fallback: p => p.isNew },
+  offerte: { t: 'Offerte', d: 'Mostriamo solo ribassi reali, con il prezzo più basso degli ultimi 30 giorni accanto allo sconto.', f: () => false, empty: 'Nessuna offerta attiva in questo momento. I prodotti B-Grade (confezione esterna con difetti estetici, contenuto sigillato) hanno già un prezzo ridotto.', fallback: p => p.bgrade },
+  bgrade: { t: 'B-Grade', d: 'Prodotti con difetti estetici alla confezione esterna (ammaccature, segni), contenuto originale e sigillato. Prezzo ridotto.', f: p => p.bgrade },
+  cerca: { t: 'Risultati di ricerca', d: '', f: null }
+};
+function defaultF() { return { games: [], langs: [], types: [], price: 'all', avail: false, bg: 'all', sort: 'rel' }; }
+const PRICES = { all: ['Tutti i prezzi', 0, 1e9], a: ['Fino a 50 €', 0, 50], b: ['50 – 100 €', 50, 100], c: ['100 – 200 €', 100, 200], d: ['Oltre 200 €', 200, 1e9] };
+function pList(key) {
+  const L = LISTS[key];
+  if (!S.f) S.f = defaultF();
+  const f = S.f;
+  let pool = key === 'cerca' ? search(S.q) : PRODUCTS.filter(L.f);
+  const fallback = !pool.length && L.fallback ? PRODUCTS.filter(L.fallback) : null;
+  if (fallback) pool = fallback;
+  const pass = (p, skip) => (skip === 'g' || !f.games.length || f.games.includes(p.game)) && (skip === 'l' || !f.langs.length || f.langs.includes(p.lang)) && (skip === 't' || !f.types.length || f.types.includes(p.type)) && priceOf(p) >= PRICES[f.price][1] && priceOf(p) < PRICES[f.price][2] && (f.bg === 'all' || (f.bg === 'no' ? !p.bgrade : p.bgrade));
+  let list = pool.filter(p => pass(p));
+  const so = { rel: (a, b) => (b.isNew - a.isNew) || a.bgrade - b.bgrade || 0, asc: (a, b) => priceOf(a) - priceOf(b), desc: (a, b) => priceOf(b) - priceOf(a), name: (a, b) => a.set.localeCompare(b.set) };
+  list = list.slice().sort(so[f.sort]);
+  const cnt = (k, v, skip) => pool.filter(p => p[k] === v && pass(p, skip)).length;
+  const cb = (grp, val, label, n) => `<label class="${n ? '' : 'dis'}"><input type="checkbox" data-f="${grp}" value="${val}" ${f[grp].includes(val) ? 'checked' : ''} ${n || f[grp].includes(val) ? '' : 'disabled'}> ${label}<span class="n">${n}</span></label>`;
+  const types = [...new Set(pool.map(p => p.type))].sort();
+  const manyGames = new Set(pool.map(p => p.game)).size > 1;
+  const manyLangs = new Set(pool.map(p => p.lang)).size > 1;
+  const chips = [...f.games.map(v => [GAMES[v], 'games', v]), ...f.langs.map(v => [LANGS[v], 'langs', v]), ...f.types.map(v => [v, 'types', v]), ...(f.price !== 'all' ? [[PRICES[f.price][0], 'price', '']] : []), ...(f.bg !== 'all' ? [[f.bg === 'no' ? 'Escludi B-Grade' : 'Solo B-Grade', 'bg', '']] : [])];
+  const shown = list.slice(0, S.limit);
+  const SEGS = { 'pokemon-jp': 'pk', 'pokemon-cn': 'pk', 'pokemon-kr': 'pk', 'one-piece-jp': 'op', 'one-piece-cn': 'op' };
+  const seg = SEGS[key] === 'pk' ? [['pokemon-jp', 'Giapponese'], ['pokemon-cn', 'Cinese'], ['pokemon-kr', 'Coreano']] : SEGS[key] === 'op' ? [['one-piece-jp', 'Giapponese'], ['one-piece-cn', 'Cinese']] : null;
+  return `
+  <section class="lhead"><div class="wrap">
+    <nav class="crumbs" aria-label="Percorso"><a href="#home">Home</a><span aria-hidden="true">/</span><span>${L.t}</span></nav>
+    <h1>${key === 'cerca' ? `Risultati per “${esc(S.q)}”` : L.t}</h1>
+    ${L.d ? `<p>${L.d}</p>` : ''}
+    ${seg ? `<div class="seg" role="tablist">${seg.map(([k, l]) => `<a href="#${k}" role="tab" aria-selected="${k === key}" class="${k === key ? 'on' : ''}">${l}</a>`).join('')}</div>` : ''}
+  </div></section>
+  <main class="wrap lbody">
+    ${fallback ? `<div class="alert info">${L.empty}</div>` : ''}
+    <div class="tools">
+      <div class="l"><button class="btn btn-line btn-sm ftoggle" data-act="ftoggle" aria-expanded="${S.fOpen}">${S.fOpen ? 'Nascondi filtri' : 'Filtri'}</button><span role="status" class="muted">${list.length} ${list.length === 1 ? 'prodotto' : 'prodotti'}</span></div>
+      <label style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px">Ordina
+        <select class="in" data-f="sort" style="width:auto">${[['rel', 'In evidenza'], ['asc', 'Prezzo crescente'], ['desc', 'Prezzo decrescente'], ['name', 'Nome A–Z']].map(([v, l]) => `<option value="${v}" ${f.sort === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    </div>
+    ${chips.length ? `<div class="chips">${chips.map(([l, g, v]) => `<button class="chip" data-act="unf" data-g="${g}" data-v="${esc(v)}">${esc(l)} <i aria-hidden="true">×</i><span class="sr">rimuovi filtro</span></button>`).join('')}<button class="link" data-act="resetf">Azzera filtri</button></div>` : ''}
+    <div class="lay">
+      <aside class="filters ${S.fOpen ? '' : 'closed'}" aria-label="Filtri">
+        ${manyGames ? `<fieldset><legend>Gioco</legend>${cb('games', 'pk', 'Pokémon', cnt('game', 'pk', 'g'))}${cb('games', 'op', 'One Piece', cnt('game', 'op', 'g'))}</fieldset>` : ''}
+        ${manyLangs ? `<fieldset><legend>Lingua</legend>${cb('langs', 'JP', 'Giapponese', cnt('lang', 'JP', 'l'))}${cb('langs', 'CN', 'Cinese', cnt('lang', 'CN', 'l'))}${cb('langs', 'KR', 'Coreano', cnt('lang', 'KR', 'l'))}</fieldset>` : ''}
+        <fieldset><legend>Tipologia</legend>${types.map(t => cb('types', t, t, cnt('type', t, 't'))).join('')}</fieldset>
+        <fieldset><legend>Prezzo</legend>${Object.entries(PRICES).map(([k, v]) => `<label><input type="radio" name="pr" data-f="price" value="${k}" ${f.price === k ? 'checked' : ''}> ${v[0]}</label>`).join('')}</fieldset>
+        <fieldset><legend>Condizione</legend>${[['all', 'Tutti'], ['no', 'Solo confezione perfetta'], ['yes', 'Solo B-Grade']].map(([k, l]) => `<label><input type="radio" name="bg" data-f="bg" value="${k}" ${f.bg === k ? 'checked' : ''}> ${l}</label>`).join('')}</fieldset>
+      </aside>
+      <div class="results">
+        ${list.length ? `<div class="grid">${shown.map(card).join('')}</div>
+          <div class="more"><span class="muted">Mostrati ${shown.length} di ${list.length}</span>${list.length > S.limit ? '<button class="btn btn-line" data-act="more">Carica altri prodotti</button>' : ''}</div>`
+          : `<div class="empty"><b>Nessun prodotto trovato</b><p>${key === 'cerca' ? 'Prova con il codice del set (es. OP-14) o con un termine più generico.' : 'Prova a togliere qualche filtro o a cambiare fascia di prezzo.'}</p><button class="btn btn-dark btn-sm" data-act="resetf">Azzera filtri</button></div>`}
+      </div>
+    </div>
+  </main>`;
+}
+
+function pProduct(id) {
+  const p = BY_ID[id];
+  if (!p) return `<main class="wrap page"><div class="empty"><b>Prodotto non trovato</b><p>Potrebbe essere stato rimosso dal catalogo del fornitore.</p><a class="btn btn-dark btn-sm" href="#home">Torna alla home</a></div></main>`;
+  const q = S.qty, u = unitFor(p, q), isB = q > CFG.BULK_OVER;
+  const listKey = p.game === 'op' ? 'onepiece' : 'pokemon';
+  const twins = PRODUCTS.filter(x => x.id !== p.id && x.game === p.game && x.set.replace(/\s/g, '').toLowerCase() === p.set.replace(/\s/g, '').toLowerCase());
+  const rel = PRODUCTS.filter(x => x.id !== p.id && x.game === p.game && x.lang === p.lang && x.type === p.type).slice(0, 4);
+  const cleanName = p.name.replace(/\[.*?\]\s*/g, '');
+  return `<main class="wrap page" style="gap:44px;padding-top:20px">
+    <nav class="crumbs" aria-label="Percorso" style="color:var(--muted)"><a href="#home" style="color:var(--gold-ink)">Home</a><span aria-hidden="true">/</span><a href="#${listKey}" style="color:var(--gold-ink)">${GAMES[p.game]}</a><span aria-hidden="true">/</span><span>${esc(cleanName)}</span></nav>
+    <section class="pp" style="margin-top:-24px">
+      <div class="gal"><div class="main">${art(p)}<span class="lang" style="font-size:13px">${p.lang}</span><span class="note">Illustrazione · la foto reale arriverà dal catalogo</span></div></div>
+      <div class="info">
+        <div class="pills"><span class="pill dark">${GAMES[p.game]}</span><span class="pill">${p.type}</span><span class="pill">${LANGS[p.lang]}</span>${p.bgrade ? '<span class="pill">B-Grade</span>' : '<span class="pill">Sigillato</span>'}${p.pre ? '<span class="pill">Preordine</span>' : ''}</div>
+        <h1>${esc(cleanName)}</h1>
+        <div class="muted" style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px"><span>Espansione: <b style="color:var(--ink)">${esc(p.set)}</b></span>${p.code ? `<span>Codice set: <b class="mono" style="color:var(--ink)">${esc(p.code)}</b></span>` : ''}<span>Lingua: <b style="color:var(--ink)">${LANGS[p.lang]}</b></span></div>
+        <div class="buybox">
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span class="bigprice">${eur(u)}</span><span class="muted" style="font-size:14px">IVA inclusa, cad.</span>${isB ? '<span class="pill" style="background:var(--ok-wash);border-color:var(--ok-wash);color:#155C33">Prezzo quantità applicato</span>' : ''}</div>
+          ${p.cost == null ? '<div class="alert info" style="font-weight:500">Prezzo indicativo: verrà sostituito automaticamente dal listino del fornitore.</div>' : ''}
+          <div class="tiers"><div class="${isB ? '' : 'on'}"><span>da 1 a ${CFG.BULK_OVER} pezzi</span><b>${eur(priceOf(p))}</b></div><div class="${isB ? 'on' : ''}"><span>oltre ${CFG.BULK_OVER} pezzi · −${String(BULK_PCT).replace('.', ',')}%</span><b>${eur(bulkOf(p))}</b></div></div>
+          ${twins.length ? `<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Disponibile anche in</span><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn btn-dark btn-sm" aria-current="true">${LANGS[p.lang]}${p.bgrade ? ' · B-Grade' : ''}</span>${twins.map(t => `<a class="btn btn-line btn-sm" href="#p-${t.id}">${LANGS[t.lang]}${t.bgrade ? ' · B-Grade' : ''}</a>`).join('')}</div></div>` : ''}
+          <div class="stock ${p.pre ? 'warn' : 'ok'}" style="font-size:14px">${p.pre ? 'Preordine · spedizione all’uscita del prodotto' : stockLabel(p)}</div>
+          <div class="buyrow">
+            <div class="qty"><button data-act="pq" data-d="-1" aria-label="Diminuisci quantità">−</button><label for="pqty" class="sr">Quantità</label><input id="pqty" inputmode="numeric" value="${q}"><button data-act="pq" data-d="1" aria-label="Aumenta quantità">+</button></div>
+            <button class="btn btn-gold" data-act="padd" data-id="${p.id}">Aggiungi · ${eur(u * q)}</button>
+          </div>
+          ${S.pmsg ? `<div class="alert err" role="alert">${S.pmsg}</div>` : ''}
+          ${!isB ? `<div class="muted" style="font-size:14px">Con ${CFG.BULK_OVER + 1} o più pezzi paghi ${eur(bulkOf(p))} cad.</div>` : ''}
+        </div>
+        <div class="assure">
+          <div><b>Spedizione</b><span class="muted">Gratis sopra ${eur(CFG.FREE_SHIP)} · tempi <span class="ph">[DA CONFERMARE]</span></span></div>
+          <div><b>Originale</b><span class="muted">Da distribuzione autorizzata</span></div>
+          <div><b>Recesso 14 giorni</b><span class="muted"><a href="#resi">Come funziona</a></span></div>
+        </div>
+      </div>
+    </section>
+    <section class="tabs" aria-label="Informazioni prodotto">
+      <div class="tabbar" role="tablist">${['Descrizione', 'Dettagli', 'Spedizione e resi'].map((t, i) => `<button role="tab" aria-selected="${S.ptab === i}" class="${S.ptab === i ? 'on' : ''}" data-act="ptab" data-i="${i}">${t}</button>`).join('')}</div>
+      <div class="tabpane">${[
+        `<p style="margin:0 0 10px">${esc(p.type)} ${p.bgrade ? 'B-Grade (confezione esterna con difetti estetici, contenuto sigillato)' : 'originale sigillato'} dell'espansione <b>${esc(p.set)}</b>, ${GAMES[p.game]} in edizione ${LANGS[p.lang].toLowerCase()}.</p><p class="muted" style="margin:0">Contenuto della confezione e descrizione completa verranno importati dalla scheda del fornitore.</p>`,
+        `<dl class="spec"><dt>Gioco</dt><dd>${GAMES[p.game]}</dd><dt>Espansione</dt><dd>${esc(p.set)}</dd>${p.code ? `<dt>Codice set</dt><dd class="mono">${esc(p.code)}</dd>` : ''}<dt>Lingua</dt><dd>${LANGS[p.lang]}</dd><dt>Tipologia</dt><dd>${p.type}</dd><dt>Condizione</dt><dd>${p.bgrade ? 'B-Grade' : 'Nuovo, sigillato'}</dd><dt>Nome fornitore</dt><dd>${esc(p.name)}</dd><dt>Contenuto</dt><dd><span class="ph">[dal fornitore]</span></dd></dl>`,
+        `<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px"><li>Spedizione tracciata; il numero di tracking arriva via email e nell'area ordini.</li><li>Gratuita per ordini da ${eur(CFG.FREE_SHIP)} in su; sotto soglia ${eur(CFG.SHIP_FEE)} <span class="ph">[DA DEFINIRE]</span>.</li><li>Diritto di recesso entro 14 giorni dalla consegna. <a href="#resi">Leggi le condizioni</a>.</li></ul>`][S.ptab]}</div>
+    </section>
+    ${rel.length ? `<section class="sec" aria-labelledby="rel"><div class="sechead"><h2 id="rel">Prodotti simili</h2></div><div class="grid">${rel.map(card).join('')}</div></section>` : ''}
+  </main>`;
+}
+
+function pCart() {
+  const t = cartTotals();
+  return `<main class="wrap page" style="gap:24px">
+    <h1 style="font-size:clamp(26px,3vw,34px);font-weight:500">Carrello</h1>
+    ${S.cart.length ? `<div class="two">
+      <div class="a">${S.cart.map(l => lineHTML(l)).join('')}
+        <div class="alert info" style="font-weight:500">Prezzo quantità: oltre ${CFG.BULK_OVER} pezzi dello stesso articolo il prezzo unitario scende automaticamente.</div>
+        <a href="#home" style="font-weight:700">← Continua lo shopping</a></div>
+      <div class="b"><div class="sum">
+        ${shipBar(t)}
+        <div class="r"><span>Prodotti (${cartCount()})</span><span>${eur(t.full)}</span></div>
+        ${t.disc > 0.001 ? `<div class="r ok"><span>Sconto quantità</span><span>−${eur(t.disc)}</span></div>` : ''}
+        <div class="r"><span>Spedizione</span><span>${t.ship ? eur(t.ship) : '<b class="ok">Gratis</b>'}</span></div>
+        <div class="r t"><span>Totale</span><span>${eur(t.total)}</span></div>
+        <span class="muted" style="font-size:13px">IVA inclusa (${eur(t.total - netOf(t.total))}). ${t.est ? 'Contiene prezzi indicativi.' : ''}</span>
+        <a href="#checkout" class="btn btn-gold">Procedi al checkout</a>
+        <span class="muted" style="font-size:13px;text-align:center">Puoi acquistare anche senza registrarti.</span>
+      </div></div></div>`
+      : `<div class="empty"><b>Il carrello è vuoto</b><p>Scegli tra ${PRODUCTS.length} prodotti Pokémon e One Piece.</p><a class="btn btn-dark btn-sm" href="#home">Vai al catalogo</a></div>`}
+  </main>`;
+}
+
+function field(id, label, opt = {}) {
+  const v = S.co.data[id] ?? (S.user && opt.user ? S.user[opt.user] || '' : '');
+  const e = S.co.errors[id];
+  return `<label class="fl ${opt.full ? 'full' : ''}" for="co-${id}">${label}${opt.req === false ? ' <span class="muted" style="font-weight:400">(facoltativo)</span>' : ''}<input class="in ${e ? 'bad' : ''}" id="co-${id}" data-co="${id}" type="${opt.type || 'text'}" value="${esc(v)}" autocomplete="${opt.ac || 'on'}" ${e ? `aria-invalid="true" aria-describedby="er-${id}"` : ''}>${e ? `<span class="e" id="er-${id}">${e}</span>` : ''}</label>`;
+}
+function pCheckout() {
+  const t = cartTotals();
+  if (S.co.done) {
+    const o = S.co.done;
+    return `<main class="wrap page"><div class="box" style="max-width:720px;margin:0 auto;width:100%;align-items:flex-start">
+      <span class="eyebrow">Ordine ricevuto</span><h1 style="font-size:clamp(26px,3vw,34px);font-weight:500">Grazie, ${esc(o.nome)}.</h1>
+      <p style="margin:0">Ordine <b class="mono">${o.id}</b> · totale <b>${eur(o.total)}</b>. Abbiamo inviato il riepilogo a <b>${esc(o.email)}</b>.</p>
+      <div class="alert info">Prototipo: nessun pagamento è stato addebitato e nessuna email è stata inviata.</div>
+      <div class="timeline" style="width:100%"><div class="done">Ricevuto</div><div>In preparazione</div><div>Spedito</div><div>Consegnato</div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-dark" href="#account">Segui l'ordine</a><a class="btn btn-line" href="#home" data-act="co-reset">Torna al negozio</a></div></div></main>`;
+  }
+  if (!S.cart.length) return `<main class="wrap page"><div class="empty"><b>Il carrello è vuoto</b><p>Aggiungi almeno un prodotto per procedere.</p><a class="btn btn-dark btn-sm" href="#home">Vai al catalogo</a></div></main>`;
+  return `<main class="wrap page" style="gap:24px">
+    <h1 style="font-size:clamp(26px,3vw,34px);font-weight:500">Checkout</h1>
+    <form class="two" data-form="checkout" novalidate>
+      <div class="a">
+        ${Object.keys(S.co.errors).length ? '<div class="alert err" role="alert">Controlla i campi evidenziati in rosso.</div>' : ''}
+        <section class="box"><div class="step"><i>1</i><h2>Contatti</h2></div>
+          ${S.user ? `<p class="muted" style="margin:0">Accesso effettuato come <b style="color:var(--ink)">${esc(S.user.email)}</b>.</p>` : `<p class="muted" style="margin:0">Acquisti come ospite. Hai un account? <a href="#account">Accedi</a></p>`}
+          <div class="form">${field('email', 'Email', { type: 'email', full: true, user: 'email', ac: 'email' })}${field('tel', 'Telefono per il corriere', { type: 'tel', full: true, ac: 'tel' })}</div></section>
+        <section class="box"><div class="step"><i>2</i><h2>Indirizzo di spedizione</h2></div>
+          <div class="form">${field('nome', 'Nome', { user: 'nome', ac: 'given-name' })}${field('cognome', 'Cognome', { ac: 'family-name' })}${field('indirizzo', 'Indirizzo e numero civico', { full: true, ac: 'street-address' })}${field('cap', 'CAP', { ac: 'postal-code' })}${field('citta', 'Città', { ac: 'address-level2' })}${field('prov', 'Provincia', { ac: 'address-level1' })}
+            <label class="fl" for="co-paese">Paese<select class="in" id="co-paese"><option>Italia</option><option disabled>Altri paesi UE — in arrivo</option></select></label></div>
+          <label class="check"><input type="checkbox" data-act="inv" ${S.co.invoice ? 'checked' : ''}> Voglio la fattura (azienda o partita IVA)</label>
+          ${S.co.invoice ? `<div class="form">${field('rs', 'Ragione sociale', { full: true })}${field('piva', 'Partita IVA')}${field('sdi', 'Codice SDI o PEC')}</div>` : ''}
+        </section>
+        <section class="box"><div class="step"><i>3</i><h2>Pagamento</h2></div>
+          ${[['card', 'Carta di credito o debito', 'Visa, Mastercard, Amex. I dati della carta si inseriscono nel modulo sicuro del circuito di pagamento.'], ['paypal', 'PayPal', 'Verrai indirizzato a PayPal per completare il pagamento.'], ['bank', 'Bonifico bancario', 'L’ordine viene spedito alla ricezione del bonifico.']].map(([k, l, d]) => `<label class="opt"><input type="radio" name="pay" data-act="pay" value="${k}" ${S.co.pay === k ? 'checked' : ''}><span><b>${l}</b><br><span class="muted" style="font-size:14px">${d}</span></span></label>`).join('')}
+          ${S.co.pay === 'card' ? '<div style="border:1.5px dashed #CFCDC6;border-radius:10px;padding:16px;font-size:14px" class="muted">Qui comparirà il modulo carta del provider di pagamento (es. Stripe). Il sito non vede né conserva i dati della carta.</div>' : ''}
+        </section>
+        <label class="check"><input type="checkbox" id="co-terms" ${S.co.data.terms ? 'checked' : ''} data-co-check="terms"> Ho letto e accetto le <a href="#condizioni">condizioni di vendita</a> e l'<a href="#privacy">informativa privacy</a>.</label>
+        ${S.co.errors.terms ? `<span class="err" style="font-size:13px;font-weight:600">${S.co.errors.terms}</span>` : ''}
+      </div>
+      <div class="b"><div class="sum">
+        <b style="font-size:17px">Riepilogo</b>
+        ${S.cart.map(l => { const p = BY_ID[l.id]; return `<div class="r" style="font-size:14px"><span style="min-width:0">${l.qty} × ${esc(p.set)} <span class="muted">${p.lang}</span></span><span>${eur(unitFor(p, l.qty) * l.qty)}</span></div>`; }).join('')}
+        ${shipBar(t)}
+        ${t.disc > 0.001 ? `<div class="r ok"><span>Sconto quantità</span><span>−${eur(t.disc)}</span></div>` : ''}
+        <div class="r"><span>Spedizione</span><span>${t.ship ? eur(t.ship) : '<b class="ok">Gratis</b>'}</span></div>
+        <div class="r t"><span>Totale</span><span>${eur(t.total)}</span></div>
+        <span class="muted" style="font-size:13px">IVA inclusa (${eur(t.total - netOf(t.total))})</span>
+        <button type="submit" class="btn btn-gold">Conferma e paga ${eur(t.total)}</button>
+        <span class="muted" style="font-size:12px;text-align:center">Prototipo: nessun addebito reale.</span>
+      </div></div>
+    </form></main>`;
+}
+
+function pAccount() {
+  if (!S.user) {
+    const reg = S.accMode === 'register';
+    return `<main class="wrap page"><div class="two">
+      <div class="a"><form class="box" data-form="${reg ? 'register' : 'login'}" novalidate>
+        <div class="seg" style="background:var(--soft)" role="tablist"><button type="button" role="tab" class="${reg ? '' : 'on'}" style="${reg ? 'color:var(--ink)' : ''}" data-act="accmode" data-m="login">Accedi</button><button type="button" role="tab" class="${reg ? 'on' : ''}" style="${reg ? '' : 'color:var(--ink)'}" data-act="accmode" data-m="register">Crea account</button></div>
+        <h1 style="font-size:28px;font-weight:500">${reg ? 'Crea il tuo account' : 'Accedi al tuo account'}</h1>
+        ${S.accErr ? `<div class="alert err" role="alert">${S.accErr}</div>` : ''}
+        <div class="form">
+          ${reg ? '<label class="fl full" for="ac-nome">Nome<input class="in" id="ac-nome" autocomplete="given-name"></label>' : ''}
+          <label class="fl full" for="ac-email">Email<input class="in" id="ac-email" type="email" autocomplete="email"></label>
+          <label class="fl full" for="ac-pw">Password<input class="in" id="ac-pw" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}">${reg ? '<span class="muted" style="font-weight:400;font-size:13px">Almeno 8 caratteri.</span>' : ''}</label>
+        </div>
+        <button class="btn btn-dark" type="submit">${reg ? 'Crea account' : 'Accedi'}</button>
+        ${reg ? '' : '<button type="button" class="link" style="align-self:flex-start" data-act="forgot">Password dimenticata?</button>'}
+        <p class="muted" style="margin:0;font-size:13px">Prototipo: l'account resta solo in questo browser e la password non viene salvata.</p>
+      </form></div>
+      <div class="b" style="position:static"><div class="box"><h2>Non serve un account per comprare</h2><p class="muted" style="margin:0">Puoi completare l'ordine come ospite. Con l'account hai in più:</p>
+        <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px"><li>storico ordini e tracking in un posto solo</li><li>indirizzi e dati di fatturazione salvati</li><li>avvisi quando un prodotto torna disponibile</li></ul>
+        <a class="btn btn-line btn-sm" href="#checkout" style="align-self:flex-start">Continua come ospite</a></div></div>
+    </div></main>`;
+  }
+  const orders = S.orders;
+  const steps = ['Ricevuto', 'In preparazione', 'Spedito', 'Consegnato'];
+  return `<main class="wrap page" style="gap:24px">
+    <h1 style="font-size:clamp(26px,3vw,34px);font-weight:500">Ciao ${esc(S.user.nome || '')}</h1>
+    <div class="lay">
+      <nav class="side" aria-label="Area cliente">${[['orders', 'Ordini e tracking'], ['addr', 'Indirizzi'], ['data', 'Dati e fatturazione']].map(([k, l]) => `<button class="${S.acc === k ? 'on' : ''}" data-act="acc" data-k="${k}">${l}</button>`).join('')}<button data-act="logout">Esci</button></nav>
+      <div class="content">
+        ${S.acc === 'orders' ? (orders.length ? orders.map(o => `<div class="box"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px"><b class="mono">${o.id}</b><span class="muted">${new Date(o.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</span><b>${eur(o.total)}</b></div>
+            <div class="timeline">${steps.map((s, i) => `<div class="${i <= o.status ? 'done' : ''}">${s}</div>`).join('')}</div>
+            <div class="muted" style="font-size:14px">${o.items.map(i => `${i.qty} × ${esc(i.name)}`).join(' · ')}</div>
+            <div style="font-size:14px">Tracking: <span class="muted">comparirà qui appena il pacco viene affidato al corriere.</span></div></div>`).join('')
+          : `<div class="empty"><b>Nessun ordine ancora</b><p>Quando completi un ordine lo trovi qui con lo stato di spedizione.</p><a class="btn btn-dark btn-sm" href="#home">Vai al catalogo</a></div>`)
+        : S.acc === 'addr' ? `<div class="box"><h2>Indirizzi salvati</h2><p class="muted" style="margin:0">Nessun indirizzo salvato. Verrà proposto quello usato nel prossimo ordine.</p></div>`
+        : `<div class="box"><h2>Dati personali</h2><dl class="spec"><dt>Nome</dt><dd>${esc(S.user.nome || '—')}</dd><dt>Email</dt><dd>${esc(S.user.email)}</dd></dl></div>`}
+      </div>
+    </div></main>`;
+}
+
+function pHelp() {
+  const faqs = [
+    ['I prodotti sono originali?', 'Sì. Vendiamo solo prodotti ufficiali e sigillati, acquistati da distribuzione autorizzata.'],
+    ['Devo registrarmi o avere la partita IVA?', 'No. I prezzi sono visibili a tutti e puoi comprare come ospite. La fattura è disponibile se inserisci i dati aziendali al checkout.'],
+    ['Come funziona lo sconto quantità?', `Quando nel carrello metti più di ${CFG.BULK_OVER} pezzi dello stesso articolo, il prezzo unitario scende automaticamente per tutti i pezzi di quell'articolo.`],
+    ['Quanto costa la spedizione?', `È gratuita per ordini da ${eur(CFG.FREE_SHIP)} in su. Sotto questa soglia il costo è indicato nel carrello prima del pagamento.`],
+    ['Che differenza c’è tra giapponese, cinese e coreano?', 'Sono tutte carte ufficiali. Cambiano la lingua, la composizione delle buste e spesso il prezzo. In ogni scheda trovi la lingua indicata chiaramente.'],
+    ['Cosa significa B-Grade?', 'La confezione esterna ha difetti estetici (ammaccature, segni), il contenuto è originale e sigillato. Per questo il prezzo è più basso.'],
+    ['Posso restituire un prodotto?', 'Sì, hai 14 giorni dalla consegna per esercitare il diritto di recesso. Trovi la procedura nella pagina Resi e recesso.']
+  ];
+  return `<main class="wrap page" style="gap:28px">
+    <div><span class="eyebrow">Assistenza</span><h1 style="font-size:clamp(26px,3vw,34px);font-weight:500;margin-top:6px">Come possiamo aiutarti?</h1></div>
+    <div class="two">
+      <div class="a">
+        <h2 style="font-size:22px;font-weight:500">Domande frequenti</h2>
+        ${faqs.map(([q, a]) => `<details class="faq"><summary>${q}</summary><p>${a}</p></details>`).join('')}
+      </div>
+      <div class="b" style="position:static;display:flex;flex-direction:column;gap:14px">
+        <div class="box"><h2>Scrivici</h2>
+          ${S.contactSent ? '<div class="alert ok" role="status">Messaggio registrato. Nel sito reale ti risponderemo entro <span class="ph">[TEMPO]</span>.</div>' : `<form data-form="contact" class="form" style="grid-template-columns:1fr" novalidate>
+            <label class="fl" for="ct-email">Email<input class="in" id="ct-email" type="email" autocomplete="email"></label>
+            <label class="fl" for="ct-ord">Numero ordine <span class="muted" style="font-weight:400">(facoltativo)</span><input class="in" id="ct-ord" placeholder="FMF-…"></label>
+            <label class="fl" for="ct-arg">Argomento<select class="in" id="ct-arg"><option>Stato dell'ordine</option><option>Prodotto e disponibilità</option><option>Resi e rimborsi</option><option>Ordini per negozianti</option><option>Altro</option></select></label>
+            <label class="fl" for="ct-msg">Messaggio<textarea class="in" id="ct-msg"></textarea></label>
+            <span class="err" id="ct-err" style="font-size:13px;font-weight:600"></span>
+            <button class="btn btn-dark" type="submit">Invia messaggio</button></form>`}
+        </div>
+        <div class="box" style="gap:8px"><h2>Altri contatti</h2><p style="margin:0">Email: <span class="ph">[EMAIL]</span></p><p style="margin:0">WhatsApp: <span class="ph">[NUMERO]</span></p><p class="muted" style="margin:0">Orari: <span class="ph">[ORARI]</span></p></div>
+      </div>
+    </div></main>`;
+}
+
+const INFO = {
+  spedizioni: ['Spedizioni', `<h3>Costi</h3><p>Spedizione <b>gratuita</b> per ordini da ${eur(CFG.FREE_SHIP)} in su (IVA inclusa). Sotto soglia: ${eur(CFG.SHIP_FEE)} <span class="ph">[DA DEFINIRE]</span>.</p><h3>Tempi</h3><p>Preparazione e consegna: <span class="ph">[DA CONFERMARE IN BASE AL MODELLO LOGISTICO CON IL FORNITORE]</span>. Il tempo stimato è indicato in ogni scheda e nel checkout.</p><h3>Tracking</h3><p>Ricevi il numero di tracking via email appena il pacco viene affidato al corriere; lo trovi anche nell'area ordini.</p><h3>Imballaggio</h3><p>I prodotti sigillati viaggiano in scatola rigida con protezioni sugli angoli.</p>`],
+  resi: ['Resi e diritto di recesso', `<p>Se acquisti come consumatore hai <b>14 giorni dalla consegna</b> per recedere dal contratto senza indicarne il motivo (artt. 52 e seguenti del Codice del Consumo).</p><h3>Come fare</h3><ul><li>Scrivi a <span class="ph">[EMAIL]</span> o usa il modulo nella pagina Assistenza indicando il numero d'ordine.</li><li>Rispedisci il prodotto entro 14 giorni dalla comunicazione.</li><li>Rimborsiamo entro 14 giorni dalla ricezione del recesso, con lo stesso metodo di pagamento.</li></ul><h3>Condizioni del prodotto</h3><p><span class="ph">[DA DEFINIRE CON IL LEGALE: costi di restituzione, gestione di prodotti aperti o con sigillo rimosso]</span></p><h3>Prodotti difettosi</h3><p>Si applica la garanzia legale di conformità di 24 mesi.</p>`],
+  privacy: ['Privacy', `<p><span class="ph">[INFORMATIVA DA REDIGERE CON IL CONSULENTE — Reg. UE 2016/679]</span></p><h3>Titolare</h3><p><span class="ph">[RAGIONE SOCIALE, SEDE, CONTATTI]</span></p><h3>Dati trattati</h3><p>Dati di contatto e spedizione per evadere gli ordini; dati di fatturazione per obblighi fiscali; email per la newsletter solo con consenso.</p><h3>Pagamenti</h3><p>I dati delle carte sono gestiti dal provider di pagamento e non transitano sui nostri server.</p>`],
+  condizioni: ['Condizioni di vendita', `<p><span class="ph">[TESTO COMPLETO DA REDIGERE CON IL LEGALE]</span></p><h3>Venditore</h3><p><span class="ph">[RAGIONE SOCIALE · P.IVA · SEDE · PEC]</span></p><h3>Prezzi</h3><p>Prezzi in euro, IVA inclusa. Per quantità superiori a ${CFG.BULK_OVER} pezzi dello stesso articolo si applica il prezzo quantità indicato in scheda. Il prezzo valido è quello mostrato al momento della conferma dell'ordine.</p><h3>Disponibilità</h3><p>Le scorte sono aggiornate di continuo. Se un prodotto si esaurisce dopo l'ordine ti avvisiamo e rimborsiamo l'importo.</p><h3>Preordini</h3><p>I prodotti in preordine vengono spediti all'uscita; la data stimata è indicata in scheda.</p>`],
+  cookie: ['Cookie', `<p><span class="ph">[COOKIE POLICY DA REDIGERE]</span></p><p>Il sito usa cookie tecnici necessari al carrello e all'accesso. Eventuali cookie di analisi o marketing vengono attivati solo con il tuo consenso.</p>`],
+  'chi-siamo': ['Chi siamo', `<p>FMF Import nasce da <b>FMF Cards</b>, attività di vendita di carte collezionabili avviata online e cresciuta sulle live. Dopo anni passati a comprare, aprire e spedire migliaia di prodotti, abbiamo aperto il canale di importazione diretta.</p><h3>Cosa facciamo</h3><p>Importiamo prodotti sigillati Pokémon e One Piece dalle edizioni giapponese, cinese e coreana, e li rivendiamo a collezionisti e negozianti con prezzi uguali per tutti.</p><h3>Perché senza registrazione</h3><p>Nel nostro settore quasi tutti nascondono i prezzi dietro un login. Noi li mostriamo: puoi confrontare prima di decidere, e se compri in quantità lo sconto si applica da solo.</p><h3>Dati societari</h3><p><span class="ph">[RAGIONE SOCIALE · P.IVA · SEDE · REA]</span></p>`],
+  'come-funziona': ['Come funziona', `<h3>1. Scegli</h3><p>Il catalogo mostra solo prodotti effettivamente disponibili. Lingua, espansione e tipologia sono indicate in ogni scheda.</p><h3>2. Il prezzo si adatta alla quantità</h3><p>Fino a ${CFG.BULK_OVER} pezzi dello stesso articolo paghi il prezzo pieno. Oltre ${CFG.BULK_OVER}, il prezzo unitario scende in automatico nel carrello: nessun codice, nessuna richiesta da inviare.</p><h3>3. Ordina come preferisci</h3><p>Puoi comprare come ospite o con un account. Se hai partita IVA, inserisci i dati al checkout e ricevi la fattura elettronica.</p><h3>4. Spedizione</h3><p>Gratuita sopra ${eur(CFG.FREE_SHIP)}. Imballaggio rinforzato e tracking via email.</p><h3>5. Dopo l'acquisto</h3><p>Trovi stato dell'ordine e tracking nella tua area account. Hai 14 giorni di tempo per il recesso.</p>`],
+  contatti: ['Contatti', `<h3>Assistenza clienti</h3><p>Email: <span class="ph">[EMAIL]</span><br>WhatsApp: <span class="ph">[NUMERO]</span><br>Orari: <span class="ph">[ORARI]</span></p><h3>Ordini all'ingrosso</h3><p>Per volumi continuativi scrivi a <span class="ph">[EMAIL INGROSSO]</span> oppure usa il modulo nella pagina <a href="#negozianti">Ingrosso</a>.</p><h3>Sede</h3><p><span class="ph">[INDIRIZZO]</span></p><p>Per domande frequenti e modulo di contatto, vai al <a href="#assistenza">Centro assistenza</a>.</p>`]
+};
+function pInfo(k) {
+  const [t, body] = INFO[k];
+  return `<main class="wrap page" style="gap:24px"><div class="lay">
+    <nav class="side" aria-label="Informazioni">${Object.entries(INFO).map(([kk, v]) => `<a href="#${kk}" class="${kk === k ? 'on' : ''}">${v[0]}</a>`).join('')}</nav>
+    <article class="content"><div class="box"><div class="prose"><h1 style="font-size:clamp(24px,2.8vw,32px);font-weight:500">${t}</h1>${body}</div></div></article></div></main>`;
+}
+
+function pPro() {
+  const sample = ['one-piece-op-14-the-seven-warlords-of-the-sea-booster-box-jp', 'glory-of-team-rocket-booster-box-jp', 'pokemon-151-booster-box-kr', 'pokemon-151-gathering-slim-booster-box-cn', 'one-piece-opc-16-the-time-of-battle-booster-box-cn'].map(id => BY_ID[id]).filter(Boolean);
+  const show = v => eur(S.b2bNet ? netOf(v) : v);
+  return `<main class="wrap page" style="gap:40px">
+    <section style="display:flex;flex-wrap:wrap;gap:24px 48px;align-items:flex-end;justify-content:space-between">
+      <div style="flex:1 1 520px;display:flex;flex-direction:column;gap:12px"><span class="eyebrow">Negozianti e professionisti</span>
+        <h1 style="font-size:clamp(28px,3.4vw,40px);font-weight:500">Prezzi chiari anche per chi compra in quantità.</h1>
+        <p class="muted" style="margin:0;font-size:17px;max-width:640px">Nessun account obbligatorio e nessun minimo d'ordine. Oltre ${CFG.BULK_OVER} pezzi dello stesso articolo il prezzo scende in automatico, per tutti.</p></div>
+      <label class="switch"><input type="checkbox" data-act="b2bnet" ${S.b2bNet ? 'checked' : ''}> Mostra prezzi IVA esclusa</label>
+    </section>
+    <section class="catgrid">
+      <div class="box"><span class="eyebrow">Automatico</span><h2>Prezzo quantità</h2><p class="muted" style="margin:0">Oltre ${CFG.BULK_OVER} pezzi per articolo: −${String(BULK_PCT).replace('.', ',')}% sul prezzo unitario, calcolato nel carrello.</p></div>
+      <div class="box"><span class="eyebrow">Fattura</span><h2>P.IVA e SDI</h2><p class="muted" style="margin:0">Inserisci ragione sociale, partita IVA e codice SDI o PEC al checkout: la fattura elettronica arriva in automatico.</p></div>
+      <div class="box"><span class="eyebrow">Spedizione</span><h2>Gratis sopra ${eur(CFG.FREE_SHIP)}</h2><p class="muted" style="margin:0">Imballaggio rinforzato per ordini multipli di booster box e display.</p></div>
+    </section>
+    <section class="sec" aria-labelledby="ex"><div class="sechead"><div><h2 id="ex">Esempio di listino</h2><p>Prezzi ${S.b2bNet ? 'IVA esclusa' : 'IVA inclusa'}, aggiornati dal catalogo.</p></div></div>
+      <div class="tscroll"><table class="pt"><thead><tr><th>Prodotto</th><th>Lingua</th><th style="text-align:right">1–${CFG.BULK_OVER} pz</th><th style="text-align:right">oltre ${CFG.BULK_OVER} pz</th></tr></thead><tbody>
+        ${sample.map(p => `<tr><td><a href="#p-${p.id}">${esc(p.name)}</a></td><td>${p.lang}</td><td style="text-align:right">${show(priceOf(p))}</td><td style="text-align:right;font-weight:800">${show(bulkOf(p))}</td></tr>`).join('')}
+      </tbody></table></div><span class="muted" style="font-size:13px">Prezzi indicativi finché non è collegato il listino del fornitore.</span></section>
+    <section class="box" aria-labelledby="req" style="max-width:860px">
+      <h2 id="req">Volumi continuativi? Parliamone</h2><p class="muted" style="margin:0">Per ordini ricorrenti o casse intere valutiamo condizioni dedicate.</p>
+      ${S.proSent ? '<div class="alert ok" role="status">Richiesta registrata. Nel sito reale ti ricontattiamo via email.</div>' : `<form data-form="pro" class="form" novalidate>
+        <label class="fl" for="pr-rs">Ragione sociale<input class="in" id="pr-rs" autocomplete="organization"></label>
+        <label class="fl" for="pr-piva">Partita IVA<input class="in" id="pr-piva"></label>
+        <label class="fl" for="pr-email">Email<input class="in" id="pr-email" type="email" autocomplete="email"></label>
+        <label class="fl" for="pr-tipo">Attività<select class="in" id="pr-tipo"><option>Negozio fisico</option><option>Negozio online</option><option>Live seller / breaker</option><option>Vending</option><option>Altro</option></select></label>
+        <label class="fl full" for="pr-vol">Volume mensile stimato e prodotti di interesse<textarea class="in" id="pr-vol"></textarea></label>
+        <span class="err full" id="pr-err" style="font-size:13px;font-weight:600"></span>
+        <button class="btn btn-dark" type="submit" style="justify-self:start">Invia richiesta</button></form>`}
+    </section>
+  </main>`;
+}
+
+/* ---------- Router + render ---------- */
+function parse() {
+  const h = (location.hash || '#home').slice(1);
+  if (h.startsWith('p-')) { S.route = 'product'; S.param = h.slice(2); }
+  else if (LISTS[h]) { S.route = 'cat'; S.param = h; }
+  else if (INFO[h]) { S.route = 'info'; S.param = h; }
+  else S.route = ({ carrello: 'cart', checkout: 'checkout', account: 'account', accedi: 'account', assistenza: 'help', negozianti: 'negozianti', ingrosso: 'negozianti' })[h] || 'home';
+}
+function view() {
+  switch (S.route) {
+    case 'cat': return pList(S.param);
+    case 'product': return pProduct(S.param);
+    case 'cart': return pCart();
+    case 'checkout': return pCheckout();
+    case 'account': return pAccount();
+    case 'help': return pHelp();
+    case 'info': return pInfo(S.param);
+    case 'negozianti': return pPro();
+    default: return pHome();
+  }
+}
+const app = document.getElementById('app');
+function render() {
+  const a = document.activeElement, id = a && a.id, pos = a && a.selectionStart;
+  app.innerHTML = header() + view() + footer() + drawer() + menuPanel() + (S.toast ? `<div class="toast" role="status">${S.toast}</div>` : '');
+  if (id) { const el = document.getElementById(id); if (el) { el.focus(); try { if (pos != null) el.setSelectionRange(pos, pos); } catch (e) {} } }
+}
+window.addEventListener('hashchange', () => {
+  const prev = S.route + S.param; parse();
+  if (S.route === 'cat' && prev !== S.route + S.param) { S.f = defaultF(); S.limit = 24; }
+  if (S.route === 'product') { S.qty = 1; S.ptab = 0; S.pmsg = ''; }
+  S.sugOpen = false; S.drawer = false; S.menu = false; render(); window.scrollTo(0, 0);
+});
+
+/* ---------- Eventi ---------- */
+app.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) { if (!e.target.closest('.search')) { if (S.sugOpen) { S.sugOpen = false; render(); } } return; }
+  const a = t.dataset.act, id = t.dataset.id;
+  if (a === 'add') { addToCart(id, 1); }
+  else if (a === 'drawer') { S.drawer = true; render(); }
+  else if (a === 'close-drawer') { S.drawer = false; render(); }
+  else if (a === 'close-drawer-go') { S.drawer = false; }
+  else if (a === 'menu') { S.menu = true; render(); }
+  else if (a === 'close-menu') { S.menu = false; render(); }
+  else if (a === 'close-menu-go') { S.menu = false; }
+  else if (a === 'lq') { const l = S.cart.find(x => x.id === id); setLineQty(id, l.qty + +t.dataset.d); }
+  else if (a === 'rm') { setLineQty(id, 0); toast('Prodotto rimosso dal carrello'); }
+  else if (a === 'pq') { setPQ(S.qty + +t.dataset.d); }
+  else if (a === 'padd') { addToCart(id, S.qty); }
+  else if (a === 'ptab') { S.ptab = +t.dataset.i; render(); }
+  else if (a === 'ftoggle') { S.fOpen = !S.fOpen; render(); }
+  else if (a === 'more') { S.limit += 24; render(); }
+  else if (a === 'resetf') { S.f = defaultF(); render(); }
+  else if (a === 'unf') { const g = t.dataset.g, v = t.dataset.v; if (g === 'price') S.f.price = 'all'; else if (g === 'bg') S.f.bg = 'all'; else S.f[g] = S.f[g].filter(x => x !== v); render(); }
+  else if (a === 'accmode') { S.accMode = t.dataset.m; S.accErr = ''; render(); }
+  else if (a === 'acc') { S.acc = t.dataset.k; render(); }
+  else if (a === 'logout') { S.user = null; store.set('user', null); toast('Sei uscito dal tuo account'); }
+  else if (a === 'forgot') { toast('Nel sito reale riceverai un link per reimpostare la password'); }
+  else if (a === 'co-reset') { S.co.done = null; }
+});
+function setPQ(n) {
+  const p = BY_ID[S.param]; const m = maxQty(p);
+  n = Math.max(1, isNaN(n) ? 1 : n);
+  S.pmsg = n > m ? `Disponibili al massimo ${m} pezzi: abbiamo impostato la quantità massima.` : '';
+  S.qty = Math.min(m, n); render();
+}
+app.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'q') { S.q = t.value; S.sugOpen = true; S.sugIdx = -1; render(); }
+  else if (t.dataset.co) { S.co.data[t.dataset.co] = t.value; if (S.co.errors[t.dataset.co]) { delete S.co.errors[t.dataset.co]; } }
+});
+app.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.f) {
+    const g = t.dataset.f;
+    if (g === 'sort' || g === 'price' || g === 'bg') S.f[g] = t.value;
+    else S.f[g] = t.checked ? [...S.f[g], t.value] : S.f[g].filter(x => x !== t.value);
+    S.limit = 24; render();
+  } else if (t.dataset.lq) { setLineQty(t.dataset.lq, parseInt(t.value, 10) || 0); }
+  else if (t.id === 'pqty') { setPQ(parseInt(t.value, 10)); }
+  else if (t.dataset.act === 'inv') { S.co.invoice = t.checked; render(); }
+  else if (t.dataset.act === 'pay') { S.co.pay = t.value; render(); }
+  else if (t.dataset.coCheck) { S.co.data.terms = t.checked; delete S.co.errors.terms; }
+  else if (t.dataset.act === 'b2bnet') { S.b2bNet = t.checked; render(); }
+});
+app.addEventListener('focusin', e => { if (e.target.id === 'q' && !S.sugOpen && S.q.trim().length >= 2) { S.sugOpen = true; render(); } });
+app.addEventListener('keydown', e => {
+  if (e.target.id === 'q' && S.sugOpen) {
+    const n = suggestions().length;
+    if (e.key === 'ArrowDown') { e.preventDefault(); S.sugIdx = Math.min(n - 1, S.sugIdx + 1); render(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); S.sugIdx = Math.max(-1, S.sugIdx - 1); render(); }
+    else if (e.key === 'Escape') { S.sugOpen = false; render(); }
+    else if (e.key === 'Enter' && S.sugIdx >= 0) { e.preventDefault(); location.hash = 'p-' + suggestions()[S.sugIdx].id; }
+  } else if (e.key === 'Escape' && (S.drawer || S.menu)) { S.drawer = false; S.menu = false; render(); }
+});
+const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v || '');
+app.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target.dataset.form, v = id => (document.getElementById(id) || {}).value?.trim() || '';
+  if (f === 'search') { S.sugOpen = false; S.f = defaultF(); S.limit = 24; if (location.hash === '#cerca') render(); else location.hash = 'cerca'; }
+  else if (f === 'nl') { if (!emailOk(v('nle'))) { document.getElementById('nlerr').textContent = 'Inserisci un indirizzo email valido.'; return; } if (!document.getElementById('nlc').checked) { document.getElementById('nlerr').textContent = 'Per iscriverti serve il consenso.'; return; } S.nlSent = true; render(); }
+  else if (f === 'contact') { if (!emailOk(v('ct-email')) || v('ct-msg').length < 5) { document.getElementById('ct-err').textContent = 'Inserisci un’email valida e un messaggio.'; return; } S.contactSent = true; render(); }
+  else if (f === 'pro') { if (!v('pr-rs') || !/^\d{11}$/.test(v('pr-piva').replace(/^IT/i, '')) || !emailOk(v('pr-email'))) { document.getElementById('pr-err').textContent = 'Compila ragione sociale, una partita IVA di 11 cifre e un’email valida.'; return; } S.proSent = true; render(); }
+  else if (f === 'login' || f === 'register') {
+    const email = v('ac-email'), pw = (document.getElementById('ac-pw') || {}).value || '';
+    if (!emailOk(email)) { S.accErr = 'Inserisci un indirizzo email valido.'; render(); return; }
+    if (pw.length < 8) { S.accErr = 'La password deve avere almeno 8 caratteri.'; render(); return; }
+    S.user = { email, nome: f === 'register' ? v('ac-nome') : (email.split('@')[0]) }; store.set('user', S.user); S.accErr = '';
+    toast(f === 'register' ? 'Account creato' : 'Accesso effettuato');
+  }
+  else if (f === 'checkout') {
+    const d = S.co.data, err = {};
+    if (!emailOk(d.email ?? S.user?.email)) err.email = 'Inserisci un indirizzo email valido.';
+    if (!/^[+\d\s]{8,}$/.test(d.tel || '')) err.tel = 'Inserisci un numero di telefono valido.';
+    ['nome', 'cognome', 'indirizzo', 'citta'].forEach(k => { if (!(d[k] || (k === 'nome' && S.user?.nome) || '').trim()) err[k] = 'Campo obbligatorio.'; });
+    if (!/^\d{5}$/.test(d.cap || '')) err.cap = 'Il CAP ha 5 cifre.';
+    if (!/^[A-Za-z]{2}$/.test(d.prov || '')) err.prov = 'Sigla di 2 lettere (es. NA).';
+    if (S.co.invoice) { if (!(d.rs || '').trim()) err.rs = 'Campo obbligatorio.'; if (!/^(IT)?\d{11}$/i.test((d.piva || '').trim())) err.piva = 'La partita IVA ha 11 cifre.'; if (!(d.sdi || '').trim()) err.sdi = 'Inserisci codice SDI (7 caratteri) o PEC.'; }
+    if (!d.terms) err.terms = 'Per completare l’ordine devi accettare le condizioni.';
+    S.co.errors = err;
+    if (Object.keys(err).length) { render(); window.scrollTo({ top: 0 }); return; }
+    const t = cartTotals();
+    const o = { id: 'FMF-' + String(Date.now()).slice(-6), date: Date.now(), total: t.total, email: d.email || S.user.email, nome: d.nome || S.user?.nome || '', status: 0, items: S.cart.map(l => ({ qty: l.qty, name: BY_ID[l.id].name })) };
+    S.orders.unshift(o); store.set('orders', S.orders); S.cart = []; saveCart(); S.co.done = o; S.co.data = {}; render(); window.scrollTo(0, 0);
+  }
+});
+
+parse(); render();
+</script>
+
+</body></html>
