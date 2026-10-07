@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
@@ -6,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getPricingSettings, toPricingRules } from "@/lib/settings";
 import { formatEuro } from "@/lib/pricing";
 import { LIST_META } from "@/lib/catalog";
+import { cleanProductName } from "@/lib/product-art";
 
 const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "novita", label: "Novità" },
@@ -17,14 +19,7 @@ const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "bgrade", label: "B-Grade" },
 ];
 
-const CATEGORY_TILES = [
-  { key: "pokemon-jp", dark: true },
-  { key: "pokemon-cn", dark: true },
-  { key: "pokemon-kr", dark: true },
-  { key: "one-piece-jp", dark: true },
-  { key: "one-piece-cn", dark: true },
-  { key: "bgrade", dark: false },
-];
+const CATEGORY_TILES = ["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn", "bgrade"];
 
 export default async function HomePage() {
   const settings = await getPricingSettings();
@@ -39,12 +34,34 @@ export default async function HomePage() {
   );
 
   const tiles = await Promise.all(
-    CATEGORY_TILES.map(async (t) => ({
-      ...t,
-      meta: LIST_META[t.key],
-      count: await prisma.product.count({ where: { AND: [{ published: true }, LIST_META[t.key].where] } }),
-    }))
+    CATEGORY_TILES.map(async (key) => {
+      const meta = LIST_META[key];
+      const [count, cover] = await Promise.all([
+        prisma.product.count({ where: { AND: [{ published: true }, meta.where] } }),
+        prisma.product.findFirst({
+          where: { AND: [{ published: true }, meta.where, { imageUrl: { not: null } }] },
+          orderBy: { isNew: "desc" },
+        }),
+      ]);
+      return { key, meta, count, cover };
+    })
   );
+
+  // Tre foto reali per la vetrina dell'hero (una per gioco/edizione diversa quando possibile).
+  const heroCandidates = await prisma.product.findMany({
+    where: { published: true, imageUrl: { not: null }, isNew: true },
+    take: 12,
+    orderBy: { updatedAt: "desc" },
+  });
+  const heroPhotos: typeof heroCandidates = [];
+  const seenCombos = new Set<string>();
+  for (const p of heroCandidates) {
+    const combo = `${p.game}-${p.language}`;
+    if (seenCombos.has(combo)) continue;
+    seenCombos.add(combo);
+    heroPhotos.push(p);
+    if (heroPhotos.length === 3) break;
+  }
 
   return (
     <>
@@ -73,7 +90,21 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="art">
-            <HeroArt />
+            {heroPhotos.length >= 3 ? (
+              <div className="hero-photos">
+                {heroPhotos.slice(0, 3).map((p, i) => (
+                  <Link key={p.id} href={`/prodotto/${p.slug}`} className={`ph ph${i + 1}`}>
+                    <Image
+                      src={p.imageUrl as string}
+                      alt={cleanProductName(p.name)}
+                      fill
+                      sizes="300px"
+                      style={{ objectFit: "contain", background: "#FBFBFB" }}
+                    />
+                  </Link>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -106,14 +137,20 @@ export default async function HomePage() {
           </div>
           <div className="catgrid">
             {tiles.map((t) => (
-              <Link key={t.key} className={`cat${t.dark ? " dark" : ""}`} href={`/${t.key}`}>
+              <Link key={t.key} className="cat" href={`/${t.key}`}>
+                {t.cover?.imageUrl ? (
+                  <Image
+                    className="photo"
+                    src={t.cover.imageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 100vw, 30vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                ) : null}
                 <span className="c">{t.count} prodotti</span>
-                <span>
-                  <span className="n" style={{ display: "block" }}>
-                    {t.meta.title}
-                  </span>
-                  <span className="d">{t.meta.description.split(".")[0]}</span>
-                </span>
+                <span className="n">{t.meta.title}</span>
+                <span className="d">{t.meta.description.split(".")[0]}</span>
               </Link>
             ))}
           </div>
@@ -186,43 +223,5 @@ function Perk({ title, desc, path }: { title: string; desc: string; path: string
         <span>{desc}</span>
       </span>
     </div>
-  );
-}
-
-function HeroArt() {
-  return (
-    <svg viewBox="0 0 480 340" aria-hidden="true">
-      <rect width="480" height="340" fill="#FBFBFB" rx="12" />
-      {[[60, 215, 165, 92], [255, 222, 150, 85], [145, 118, 190, 104]].map(([x, y, w, h], i) => (
-        <g key={i}>
-          <polygon points={`${x},${y} ${x + 36},${y - 22} ${x + w + 36},${y - 22} ${x + w},${y}`} fill="#F2F2F2" stroke="#D0D0D0" />
-          <polygon
-            points={`${x + w},${y} ${x + w + 36},${y - 22} ${x + w + 36},${y + h - 22} ${x + w},${y + h}`}
-            fill="#EAEAEA"
-            stroke="#D0D0D0"
-          />
-          <rect x={x} y={y} width={w} height={h} fill="#FFFFFF" stroke="#D0D0D0" />
-          <rect x={x} y={y} width={w} height={13} fill="#222222" />
-        </g>
-      ))}
-      <text x="240" y="182" textAnchor="middle" fontFamily="Poppins,sans-serif" fontWeight={600} fontSize={28} fill="#333">
-        OP-17
-      </text>
-      <text x="240" y="203" textAnchor="middle" fontFamily="Poppins,sans-serif" fontSize={9.5} letterSpacing={2.4} fill="#9A9A9A">
-        BOOSTER BOX · JP
-      </text>
-      <text x="142" y="276" textAnchor="middle" fontFamily="Poppins,sans-serif" fontWeight={600} fontSize={21} fill="#333">
-        151
-      </text>
-      <text x="142" y="293" textAnchor="middle" fontFamily="Poppins,sans-serif" fontSize={8.5} letterSpacing={2.4} fill="#9A9A9A">
-        CN
-      </text>
-      <text x="330" y="276" textAnchor="middle" fontFamily="Poppins,sans-serif" fontWeight={600} fontSize={19} fill="#333">
-        M2
-      </text>
-      <text x="330" y="293" textAnchor="middle" fontFamily="Poppins,sans-serif" fontSize={8.5} letterSpacing={2.4} fill="#9A9A9A">
-        KR
-      </text>
-    </svg>
   );
 }

@@ -5,9 +5,10 @@
  *  - Prezzo pubblico = costo fornitore (Toreca) × 1,30 (ricarico ordinario 30%).
  *  - Prezzo quantità = costo fornitore × 1,20 (ricarico 20%) quando la quantità DELLO
  *    STESSO ARTICOLO nel carrello è SUPERIORE alla soglia (default 10, quindi da 11 pezzi).
- *  - Nessuna IVA viene aggiunta separatamente sopra il ricarico: il prezzo pubblico è
- *    semplicemente costo × margine. Il trattamento fiscale (se e come esporre l'IVA in
- *    fattura) resta da definire col commercialista — qui non viene calcolato né mostrato.
+ *  - I prezzi del sito sono SEMPRE IVA ESCLUSA: nessuna IVA viene aggiunta al prezzo
+ *    pubblico o al carrello. Solo al checkout, se il cliente richiede la fattura con
+ *    partita IVA, si applica un supplemento IVA (default 22%) sul totale dell'ordine
+ *    — vedi computeInvoiceVatCents. Verificare questa impostazione col commercialista.
  *  - Arrotondamento commerciale: il prezzo pubblico termina sempre in ",90" (per eccesso).
  *  - Spedizione gratuita sopra una soglia sul subtotale.
  *
@@ -158,6 +159,14 @@ export function computeCartTotals(
     freeShippingRemainderCents: Math.max(0, shipping.freeShippingThresholdCents - subtotalCents),
     qualifiesForFreeShipping,
   };
+}
+
+/**
+ * Supplemento IVA applicato SOLO quando il cliente richiede la fattura con partita IVA.
+ * Il resto del sito (catalogo, carrello, totale senza fattura) resta sempre IVA esclusa.
+ */
+export function computeInvoiceVatCents(totalCents: number, invoiceVatRateBps: number): number {
+  return roundCents((totalCents * invoiceVatRateBps) / 10000);
 }
 
 export function formatEuro(cents: number): string {

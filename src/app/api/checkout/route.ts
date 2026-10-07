@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { computeCartTotals } from "@/lib/pricing";
+import { computeCartTotals, computeInvoiceVatCents } from "@/lib/pricing";
 import { getPricingSettings, toPricingRules, toShippingRules } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
@@ -55,6 +55,13 @@ export async function POST(req: Request) {
   }
   const body = parsed.data;
 
+  if (body.invoice?.requested && (!body.invoice.companyName?.trim() || !body.invoice.vatNumber?.trim())) {
+    return NextResponse.json(
+      { error: "Per la fattura servono ragione sociale e partita IVA." },
+      { status: 400 }
+    );
+  }
+
   const settings = await getPricingSettings();
   const rules = toPricingRules(settings);
   const shippingRules = toShippingRules(settings);
@@ -97,6 +104,12 @@ export async function POST(req: Request) {
   const session = await getSession();
   const orderNumber = generateOrderNumber();
 
+  // I prezzi del sito sono IVA esclusa. Il supplemento IVA si applica SOLO se il cliente
+  // richiede la fattura con partita IVA, sopra il totale (subtotale - sconto + spedizione).
+  const invoiceRequested = body.invoice?.requested ?? false;
+  const invoiceVatCents = invoiceRequested ? computeInvoiceVatCents(totals.totalCents, settings.invoiceVatRateBps) : 0;
+  const grandTotalCents = totals.totalCents + invoiceVatCents;
+
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
       data: {
@@ -109,7 +122,8 @@ export async function POST(req: Request) {
         subtotalCents: totals.subtotalCents,
         discountCents: totals.bulkDiscountCents,
         shippingCents: totals.shippingCents,
-        totalCents: totals.totalCents,
+        invoiceVatCents,
+        totalCents: grandTotalCents,
         shipName: `${body.shipping.firstName} ${body.shipping.lastName}`.trim(),
         shipStreet: body.shipping.street,
         shipPostal: body.shipping.postalCode,
@@ -117,7 +131,7 @@ export async function POST(req: Request) {
         shipProvince: body.shipping.province,
         shipCountry: body.shipping.country,
         shipPhone: body.contact.phone,
-        invoiceRequested: body.invoice?.requested ?? false,
+        invoiceRequested,
         companyName: body.invoice?.companyName,
         vatNumber: body.invoice?.vatNumber,
         sdiCode: body.invoice?.sdiCode,
@@ -144,6 +158,7 @@ export async function POST(req: Request) {
     orderId: order.id,
     orderNumber: order.orderNumber,
     totalCents: order.totalCents,
+    invoiceVatCents: order.invoiceVatCents,
     paymentMethod: order.paymentMethod,
   });
 }

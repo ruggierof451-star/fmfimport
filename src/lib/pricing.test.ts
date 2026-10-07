@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bulkPriceCents,
   computeCartTotals,
+  computeInvoiceVatCents,
   netCostCents,
   round90,
   standardPriceCents,
@@ -94,6 +95,21 @@ describe("unitPriceCentsForQty — the >10 threshold", () => {
 
   it("uses the standard price for quantity 1", () => {
     expect(unitPriceCentsForQty(product, RULES, 1)).toBe(standardPriceCents(product, RULES));
+  });
+});
+
+describe("computeInvoiceVatCents", () => {
+  it("computes 22% of the order total", () => {
+    expect(computeInvoiceVatCents(10000, 2200)).toBe(2200); // 100,00 € -> 22,00 €
+  });
+
+  it("is zero when the rate is zero", () => {
+    expect(computeInvoiceVatCents(10000, 0)).toBe(0);
+  });
+
+  it("rounds to the nearest cent", () => {
+    // 133,33 € * 22% = 29,3326 € -> 2933 cents
+    expect(computeInvoiceVatCents(13333, 2200)).toBe(2933);
   });
 });
 

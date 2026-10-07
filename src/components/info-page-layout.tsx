@@ -11,6 +11,7 @@ export async function InfoPageLayout({ slug }: { slug: string }) {
     freeShip: formatEuro(settings.freeShippingThresholdCents),
     shipFee: formatEuro(settings.standardShippingFeeCents),
     bulkThreshold: settings.bulkThresholdQty,
+    invoiceVatRate: (settings.invoiceVatRateBps / 100).toLocaleString("it-IT"),
   });
   const page = pages.find((p) => p.slug === slug)!;
 

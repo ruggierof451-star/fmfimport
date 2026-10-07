@@ -265,11 +265,15 @@ model Order {
   paymentMethod PaymentMethod
   paymentStatus PaymentStatus @default(PENDING)
 
-  // Totali congelati al momento dell'ordine (sempre ricalcolati server-side)
-  subtotalCents Int
-  discountCents Int @default(0)
-  shippingCents Int
-  totalCents    Int
+  // Totali congelati al momento dell'ordine (sempre ricalcolati server-side).
+  // subtotalCents/shippingCents sono SEMPRE IVA esclusa. invoiceVatCents è il supplemento
+  // IVA applicato solo se invoiceRequested=true; totalCents è l'importo finale da pagare
+  // (= subtotale - sconto + spedizione + invoiceVatCents).
+  subtotalCents   Int
+  discountCents   Int @default(0)
+  shippingCents   Int
+  invoiceVatCents Int @default(0)
+  totalCents      Int
 
   // Spedizione / fatturazione
   shipName     String

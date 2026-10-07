@@ -4,8 +4,13 @@ export interface InfoPage {
   body: React.ReactNode;
 }
 
-export function buildInfoPages(opts: { freeShip: string; shipFee: string; bulkThreshold: number }): InfoPage[] {
-  const { freeShip, shipFee, bulkThreshold } = opts;
+export function buildInfoPages(opts: {
+  freeShip: string;
+  shipFee: string;
+  bulkThreshold: number;
+  invoiceVatRate: string;
+}): InfoPage[] {
+  const { freeShip, shipFee, bulkThreshold, invoiceVatRate } = opts;
   return [
     {
       slug: "spedizioni",
@@ -35,24 +40,28 @@ export function buildInfoPages(opts: { freeShip: string; shipFee: string; bulkTh
       body: (
         <>
           <p>
-            Se acquisti come consumatore hai <b>14 giorni dalla consegna</b> per recedere dal contratto senza
-            indicarne il motivo (artt. 52 e seguenti del Codice del Consumo).
+            È possibile effettuare il reso entro <b>7 giorni dalla consegna</b> solo se i prodotti risultano{" "}
+            <b>danneggiati o mancanti</b>, contattando l&apos;assistenza.
           </p>
           <h3>Come fare</h3>
           <ul>
             <li>
-              Scrivi a <span className="ph">[EMAIL]</span> o usa il modulo nella pagina Assistenza indicando il numero
-              d&apos;ordine.
+              Contatta l&apos;assistenza dalla pagina <a href="/assistenza">Centro assistenza</a> entro 7 giorni
+              dalla consegna, indicando il numero d&apos;ordine e allegando foto del danno o dell&apos;articolo
+              mancante.
             </li>
-            <li>Rispedisci il prodotto entro 14 giorni dalla comunicazione.</li>
-            <li>Rimborsiamo entro 14 giorni dalla ricezione del recesso, con lo stesso metodo di pagamento.</li>
+            <li>Valutiamo la richiesta e confermiamo come procedere (sostituzione o rimborso).</li>
           </ul>
-          <h3>Condizioni del prodotto</h3>
+          <h3>Cosa non è coperto</h3>
           <p>
-            <span className="ph">[DA DEFINIRE CON IL LEGALE: costi di restituzione, gestione di prodotti aperti o con sigillo rimosso]</span>
+            Il reso non è previsto per cambio idea o per prodotti integri e completi. Fuori dai casi di danno o
+            mancanza indicati sopra, l&apos;ordine non è reso.
           </p>
-          <h3>Prodotti difettosi</h3>
-          <p>Si applica la garanzia legale di conformità di 24 mesi.</p>
+          <p className="muted" style={{ fontSize: 13 }}>
+            <span className="ph">[DA VERIFICARE CON IL LEGALE: questa politica riguarda la non conformità del
+            prodotto alla consegna; eventuali diritti di recesso previsti per legge per gli acquisti a distanza
+            vanno confermati col consulente in base al regime della tua attività.]</span>
+          </p>
         </>
       ),
     },
@@ -92,9 +101,15 @@ export function buildInfoPages(opts: { freeShip: string; shipFee: string; bulkTh
           </p>
           <h3>Prezzi</h3>
           <p>
-            Prezzi in euro. Per quantità superiori a {bulkThreshold} pezzi dello stesso articolo si
-            applica il prezzo quantità indicato in scheda. Il prezzo valido è quello mostrato al momento della
-            conferma dell&apos;ordine.
+            Tutti i prezzi esposti sul sito sono <b>IVA esclusa</b>. Per quantità superiori a {bulkThreshold} pezzi
+            dello stesso articolo si applica il prezzo quantità indicato in scheda. Il prezzo valido è quello
+            mostrato al momento della conferma dell&apos;ordine.
+          </p>
+          <h3>Fatturazione e IVA</h3>
+          <p>
+            Il cliente che richiede la fattura con partita IVA al checkout riceve un supplemento del{" "}
+            {invoiceVatRate}% calcolato sul totale dell&apos;ordine (spedizione inclusa), mostrato in modo esplicito
+            prima della conferma. Senza richiesta di fattura non viene addebitato alcun supplemento.
           </p>
           <h3>Disponibilità</h3>
           <p>Le scorte sono aggiornate di continuo. Se un prodotto si esaurisce dopo l&apos;ordine ti avvisiamo e rimborsiamo l&apos;importo.</p>

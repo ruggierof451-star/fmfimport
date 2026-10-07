@@ -9,7 +9,7 @@ import { formatEuro } from "@/lib/pricing";
 
 type Errors = Record<string, string>;
 
-export function CheckoutForm() {
+export function CheckoutForm({ invoiceVatRateBps }: { invoiceVatRateBps: number }) {
   const { items, quote, clearCart } = useCart();
   const router = useRouter();
 
@@ -99,6 +99,9 @@ export function CheckoutForm() {
   }
 
   const totals = quote?.totals;
+  // Solo anteprima: il server ricalcola tutto da zero al momento della conferma.
+  const invoiceVatPreviewCents = wantsInvoice && totals ? Math.round((totals.totalCents * invoiceVatRateBps) / 10000) : 0;
+  const grandTotalPreviewCents = totals ? totals.totalCents + invoiceVatPreviewCents : 0;
 
   return (
     <main className="wrap page" style={{ gap: 24 }}>
@@ -170,6 +173,12 @@ export function CheckoutForm() {
               <input type="checkbox" checked={wantsInvoice} onChange={(e) => setWantsInvoice(e.target.checked)} />
               Voglio la fattura (azienda o partita IVA)
             </label>
+            {wantsInvoice ? (
+              <div className="alert info" style={{ marginTop: -4 }}>
+                I prezzi del sito sono IVA esclusa. Richiedendo la fattura con partita IVA viene applicato un
+                supplemento del {(invoiceVatRateBps / 100).toLocaleString("it-IT")}% sul totale dell&apos;ordine.
+              </div>
+            ) : null}
             {wantsInvoice ? (
               <div className="form">
                 <Field label="Ragione sociale" full error={errors.rs} htmlFor="rs">
@@ -253,12 +262,21 @@ export function CheckoutForm() {
                   <span>Spedizione</span>
                   <span>{totals.shippingCents ? formatEuro(totals.shippingCents) : <b className="ok">Gratis</b>}</span>
                 </div>
+                {wantsInvoice ? (
+                  <div className="r">
+                    <span>IVA fattura ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}%)</span>
+                    <span>{formatEuro(invoiceVatPreviewCents)}</span>
+                  </div>
+                ) : null}
                 <div className="r t">
                   <span>Totale</span>
-                  <span>{formatEuro(totals.totalCents)}</span>
+                  <span>{formatEuro(grandTotalPreviewCents)}</span>
                 </div>
+                <span className="muted" style={{ fontSize: 13 }}>
+                  Prezzi IVA esclusa.{wantsInvoice ? " Totale con supplemento IVA fattura." : ""}
+                </span>
                 <button type="submit" className="btn btn-gold" disabled={submitting}>
-                  {submitting ? "Invio in corso…" : `Conferma ordine · ${formatEuro(totals.totalCents)}`}
+                  {submitting ? "Invio in corso…" : `Conferma ordine · ${formatEuro(grandTotalPreviewCents)}`}
                 </button>
                 <span className="muted" style={{ fontSize: 12, textAlign: "center" }}>
                   Modalità test: nessun addebito reale.

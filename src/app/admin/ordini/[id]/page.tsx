@@ -70,6 +70,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <span>Spedizione</span>
               <span>{order.shippingCents ? formatEuro(order.shippingCents) : "Gratis"}</span>
             </div>
+            {order.invoiceVatCents > 0 ? (
+              <div className="r">
+                <span>IVA fattura (richiesta dal cliente)</span>
+                <span>{formatEuro(order.invoiceVatCents)}</span>
+              </div>
+            ) : null}
             <div className="r t">
               <span>Totale</span>
               <span>{formatEuro(order.totalCents)}</span>
@@ -77,6 +83,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </div>
           <p className="muted" style={{ marginTop: 10 }}>
             Pagamento: {order.paymentMethod} · {order.paymentStatus}
+          </p>
+          <p className="muted" style={{ marginTop: 4, fontSize: 13 }}>
+            Prezzi del sito sempre IVA esclusa; la riga IVA fattura compare solo se il cliente ha richiesto la
+            fattura con partita IVA.
           </p>
         </div>
       </div>

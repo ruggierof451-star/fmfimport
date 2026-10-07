@@ -13,7 +13,6 @@ export const NAV: { key: string; label: string }[] = [
   { key: "pokemon-kr", label: "Pokémon KR" },
   { key: "one-piece-jp", label: "One Piece JP" },
   { key: "one-piece-cn", label: "One Piece CN" },
-  { key: "altri-tcg", label: "Altri TCG" },
   { key: "bgrade", label: "B-Grade" },
 ];
 
@@ -109,13 +108,6 @@ export const LIST_META: Record<string, ListMeta> = {
     emptyFallbackMessage:
       "Nessuna offerta attiva in questo momento. I prodotti B-Grade (confezione esterna con difetti estetici, contenuto sigillato) hanno già un prezzo ridotto.",
     fallbackWhere: { condition: "B_GRADE" },
-  },
-  "altri-tcg": {
-    title: "Altri TCG",
-    description: "Altri giochi di carte collezionabili dal mercato asiatico.",
-    where: { id: "__none__" },
-    emptyFallbackMessage:
-      "Al momento trattiamo solo Pokémon e One Piece. Gli altri giochi arriveranno dopo i primi ordini.",
   },
   bgrade: {
     title: "B-Grade",
