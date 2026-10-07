@@ -131,8 +131,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div>
                 <b>Spedizione</b>
                 <span className="muted">
-                  Gratis sopra {formatEuro(settings.freeShippingThresholdCents)} · tempi{" "}
-                  <span className="ph">[DA CONFERMARE]</span>
+                  Gratis sopra {formatEuro(settings.freeShippingThresholdCents)} · 1-3 giorni lavorativi
                 </span>
               </div>
               <div>
@@ -140,9 +139,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <span className="muted">Da distribuzione autorizzata</span>
               </div>
               <div>
-                <b>Reso 7 giorni</b>
+                <b>Reso 14 giorni</b>
                 <span className="muted">
-                  Se danneggiato o mancante · <Link href="/resi">Come funziona</Link>
+                  Diritto di recesso · <Link href="/resi">Come funziona</Link>
                 </span>
               </div>
             </div>

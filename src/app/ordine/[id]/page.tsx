@@ -37,8 +37,8 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
             riepilogo è associato a <b>{order.guestEmail ?? "il tuo account"}</b>.
           </p>
           <div className="alert info">
-            Modalità test: nessun pagamento reale è stato addebitato. L&apos;ordine resta &ldquo;in attesa di
-            pagamento&rdquo; finché non viene collegato un gateway di pagamento reale.
+            Ti abbiamo inviato una email di conferma. Ti scriveremo a breve con le coordinate per il bonifico; appena
+            il pagamento risulta ricevuto, l&apos;ordine passa in preparazione.
           </div>
           <div className="timeline" style={{ width: "100%" }}>
             {STEPS.map((s, i) => (

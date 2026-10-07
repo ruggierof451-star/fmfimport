@@ -39,7 +39,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
   const [companyName, setCompanyName] = useState(prefill?.companyName ?? "");
   const [vatNumber, setVatNumber] = useState(prefill?.vatNumber ?? "");
   const [sdiCode, setSdiCode] = useState(prefill?.sdiCode ?? "");
-  const [payment, setPayment] = useState<"CARD" | "PAYPAL" | "BANK_TRANSFER">("CARD");
+  const [payment, setPayment] = useState<"CARD" | "PAYPAL" | "BANK_TRANSFER">("BANK_TRANSFER");
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -212,28 +212,17 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
               <i>3</i>
               <h2>Pagamento</h2>
             </div>
-            {(
-              [
-                ["CARD", "Carta di credito o debito", "Visa, Mastercard, Amex. I dati della carta si inseriscono nel modulo sicuro del circuito di pagamento."],
-                ["PAYPAL", "PayPal", "Verrai indirizzato a PayPal per completare il pagamento."],
-                ["BANK_TRANSFER", "Bonifico bancario", "L'ordine viene spedito alla ricezione del bonifico."],
-              ] as const
-            ).map(([value, label, desc]) => (
-              <label className="opt" key={value}>
-                <input type="radio" name="pay" checked={payment === value} onChange={() => setPayment(value)} />
-                <span>
-                  <b>{label}</b>
-                  <br />
-                  <span className="muted" style={{ fontSize: 14 }}>
-                    {desc}
-                  </span>
+            <label className="opt">
+              <input type="radio" name="pay" checked readOnly />
+              <span>
+                <b>Bonifico bancario</b>
+                <br />
+                <span className="muted" style={{ fontSize: 14 }}>
+                  Ricevi l&apos;IBAN via email dopo la conferma dell&apos;ordine. La spedizione parte alla ricezione
+                  del bonifico.
                 </span>
-              </label>
-            ))}
-            <div className="alert info">
-              Modalità test: il gateway di pagamento reale non è ancora collegato. Nessun addebito verrà effettuato;
-              l&apos;ordine resta in attesa di pagamento finché non viene configurato.
-            </div>
+              </span>
+            </label>
           </section>
 
           <label className="check">
@@ -285,9 +274,6 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                 <button type="submit" className="btn btn-gold" disabled={submitting}>
                   {submitting ? "Invio in corso…" : `Conferma ordine · ${formatEuro(totals.totalCents)}`}
                 </button>
-                <span className="muted" style={{ fontSize: 12, textAlign: "center" }}>
-                  Modalità test: nessun addebito reale.
-                </span>
               </>
             ) : null}
           </div>

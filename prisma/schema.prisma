@@ -228,7 +228,7 @@ model PricingSettings {
   invoiceVatRateBps     Int     @default(2200) // 22,00%
   roundTo90Cents        Boolean @default(true) // arrotonda il prezzo pubblico a ,90
   freeShippingThresholdCents Int @default(20000) // 200,00 €
-  standardShippingFeeCents   Int @default(790) // 7,90 € — [DA DEFINIRE]
+  standardShippingFeeCents   Int @default(790) // 7,90 €
 
   updatedAt DateTime @updatedAt
   updatedBy String?

@@ -19,13 +19,13 @@ export function buildInfoPages(opts: {
         <>
           <h3>Costi</h3>
           <p>
-            Spedizione <b>gratuita</b> per ordini da {freeShip} in su. Sotto soglia: {shipFee}{" "}
-            <span className="ph">[DA DEFINIRE]</span>.
+            Spedizione <b>gratuita</b> per ordini da {freeShip} in su. Sotto soglia: {shipFee}.
           </p>
           <h3>Tempi</h3>
           <p>
-            Preparazione e consegna: <span className="ph">[DA CONFERMARE IN BASE AL MODELLO LOGISTICO CON IL FORNITORE]</span>. Il
-            tempo stimato è indicato in ogni scheda e nel checkout.
+            I prodotti già in stock vengono preparati e affidati al corriere entro 1-3 giorni lavorativi dalla
+            conferma del pagamento. I preordini vengono spediti all&apos;uscita del prodotto, con la data stimata
+            indicata in ogni scheda e nel checkout.
           </p>
           <h3>Tracking</h3>
           <p>Ricevi il numero di tracking via email appena il pacco viene affidato al corriere; lo trovi anche nell&apos;area ordini.</p>
@@ -39,28 +39,26 @@ export function buildInfoPages(opts: {
       title: "Resi e diritto di recesso",
       body: (
         <>
+          <h3>Diritto di recesso (acquisti come consumatore privato)</h3>
           <p>
-            È possibile effettuare il reso entro <b>7 giorni dalla consegna</b> solo se i prodotti risultano{" "}
-            <b>danneggiati o mancanti</b>, contattando l&apos;assistenza.
-          </p>
-          <h3>Come fare</h3>
-          <ul>
-            <li>
-              Contatta l&apos;assistenza dalla pagina <a href="/assistenza">Centro assistenza</a> entro 7 giorni
-              dalla consegna, indicando il numero d&apos;ordine e allegando foto del danno o dell&apos;articolo
-              mancante.
-            </li>
-            <li>Valutiamo la richiesta e confermiamo come procedere (sostituzione o rimborso).</li>
-          </ul>
-          <h3>Cosa non è coperto</h3>
-          <p>
-            Il reso non è previsto per cambio idea o per prodotti integri e completi. Fuori dai casi di danno o
-            mancanza indicati sopra, l&apos;ordine non è reso.
+            Se acquisti come privato hai diritto di recedere dal contratto <b>entro 14 giorni</b> dalla consegna,
+            senza bisogno di motivazione, ai sensi degli artt. 52-59 del Codice del Consumo (D.Lgs. 206/2005). Per
+            esercitare il recesso contattaci dalla pagina <a href="/assistenza">Centro assistenza</a> indicando il
+            numero d&apos;ordine entro il termine indicato. Il prodotto va restituito integro, nella confezione
+            originale e nelle stesse condizioni in cui è stato ricevuto, entro 14 giorni dalla comunicazione di
+            recesso; le spese di spedizione del reso sono a carico del cliente. Il rimborso avviene entro 14 giorni
+            dal ricevimento del reso, con lo stesso mezzo di pagamento usato per l&apos;acquisto.
           </p>
           <p className="muted" style={{ fontSize: 13 }}>
-            <span className="ph">[DA VERIFICARE CON IL LEGALE: questa politica riguarda la non conformità del
-            prodotto alla consegna; eventuali diritti di recesso previsti per legge per gli acquisti a distanza
-            vanno confermati col consulente in base al regime della tua attività.]</span>
+            Il diritto di recesso non si applica agli acquisti effettuati con partita IVA per l&apos;attività
+            professionale (B2B).
+          </p>
+          <h3>Prodotti danneggiati o mancanti</h3>
+          <p>
+            Indipendentemente dal recesso, se un prodotto arriva <b>danneggiato o mancante</b> contattaci entro 7
+            giorni dalla consegna dalla pagina <a href="/assistenza">Centro assistenza</a>, indicando il numero
+            d&apos;ordine e allegando foto del danno o dell&apos;articolo mancante: valutiamo la richiesta e
+            confermiamo sostituzione o rimborso, senza spese a tuo carico.
           </p>
         </>
       ),
@@ -70,22 +68,39 @@ export function buildInfoPages(opts: {
       title: "Privacy",
       body: (
         <>
-          <p>
-            <span className="ph">[INFORMATIVA DA REDIGERE CON IL CONSULENTE — Reg. UE 2016/679]</span>
-          </p>
-          <h3>Titolare</h3>
+          <p>Informativa ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p>
+          <h3>Titolare del trattamento</h3>
           <p>
             FMF Cards S.R.L.S. · Traversa Garibaldi 24, 80040 Striano (NA), Italia · P.IVA 11105221219
             <br />
             Email: fmfcardssrls@gmail.com · PEC: fmfcardssrls@legalmail.it
           </p>
-          <h3>Dati trattati</h3>
+          <h3>Dati trattati e finalità</h3>
+          <ul>
+            <li>Dati di contatto e spedizione (nome, indirizzo, email, telefono): per evadere gli ordini e comunicare lo stato di spedizione.</li>
+            <li>Dati di fatturazione (ragione sociale, P.IVA, codice SDI): per adempiere agli obblighi fiscali.</li>
+            <li>Email e cronologia ordini: per gestire l&apos;account cliente e l&apos;assistenza post-vendita.</li>
+            <li>Email per comunicazioni promozionali: solo con consenso esplicito, revocabile in ogni momento.</li>
+          </ul>
+          <h3>Base giuridica e conservazione</h3>
           <p>
-            Dati di contatto e spedizione per evadere gli ordini; dati di fatturazione per obblighi fiscali; email
-            per la newsletter solo con consenso.
+            Il trattamento si basa sull&apos;esecuzione del contratto di vendita e sugli obblighi di legge (fiscali e
+            contabili); per le comunicazioni promozionali si basa sul consenso. I dati relativi agli ordini sono
+            conservati per il periodo previsto dalla normativa fiscale (10 anni); i dati dell&apos;account restano
+            fino alla richiesta di cancellazione.
           </p>
-          <h3>Pagamenti</h3>
-          <p>I dati delle carte sono gestiti dal provider di pagamento e non transitano sui nostri server.</p>
+          <h3>Comunicazione a terzi</h3>
+          <p>
+            I dati necessari alla consegna sono condivisi con i corrieri incaricati della spedizione. I dati di
+            pagamento sono gestiti direttamente dal provider di pagamento e non transitano né vengono conservati sui
+            nostri server.
+          </p>
+          <h3>Diritti dell&apos;interessato</h3>
+          <p>
+            Puoi richiedere accesso, rettifica, cancellazione o limitazione del trattamento, nonché la portabilità
+            dei dati e la revoca del consenso, scrivendo a fmfcardssrls@gmail.com. Hai inoltre diritto di proporre
+            reclamo al Garante per la protezione dei dati personali (www.garanteprivacy.it).
+          </p>
         </>
       ),
     },
@@ -95,7 +110,8 @@ export function buildInfoPages(opts: {
       body: (
         <>
           <p>
-            <span className="ph">[TESTO COMPLETO DA REDIGERE CON IL LEGALE]</span>
+            Le presenti condizioni regolano la vendita a distanza dei prodotti offerti su questo sito da FMF Cards
+            S.R.L.S. Effettuando un ordine accetti integralmente queste condizioni.
           </p>
           <h3>Venditore</h3>
           <p>
@@ -118,6 +134,17 @@ export function buildInfoPages(opts: {
           <p>Le scorte sono aggiornate di continuo. Se un prodotto si esaurisce dopo l&apos;ordine ti avvisiamo e rimborsiamo l&apos;importo.</p>
           <h3>Preordini</h3>
           <p>I prodotti in preordine vengono spediti all&apos;uscita; la data stimata è indicata in scheda.</p>
+          <h3>Diritto di recesso</h3>
+          <p>
+            Se acquisti come consumatore privato hai diritto di recesso entro 14 giorni dalla consegna: vedi i
+            dettagli nella pagina <a href="/resi">Resi e diritto di recesso</a>.
+          </p>
+          <h3>Legge applicabile e foro competente</h3>
+          <p>
+            Il contratto è regolato dalla legge italiana. Per i consumatori resta ferma la competenza del foro del
+            luogo di residenza o domicilio, se in Italia. Per le controversie online puoi inoltre utilizzare la
+            piattaforma europea ODR all&apos;indirizzo ec.europa.eu/consumers/odr.
+          </p>
         </>
       ),
     },
@@ -127,11 +154,23 @@ export function buildInfoPages(opts: {
       body: (
         <>
           <p>
-            <span className="ph">[COOKIE POLICY DA REDIGERE]</span>
+            Questa pagina descrive i cookie utilizzati dal sito fmfimport.it e come gestirli.
           </p>
+          <h3>Cookie tecnici</h3>
           <p>
-            Il sito usa cookie tecnici necessari al carrello e all&apos;accesso. Eventuali cookie di analisi o
-            marketing vengono attivati solo con il tuo consenso.
+            Necessari al funzionamento del sito: mantengono il contenuto del carrello e la sessione di accesso
+            all&apos;account. Non richiedono consenso e non possono essere disattivati senza compromettere l&apos;uso
+            del sito.
+          </p>
+          <h3>Cookie di analisi e marketing</h3>
+          <p>
+            Vengono attivati solo con il tuo consenso esplicito, dato tramite il banner mostrato alla prima visita.
+            Puoi modificare la scelta in qualsiasi momento cancellando i cookie dal browser e ricaricando la pagina.
+          </p>
+          <h3>Gestione da browser</h3>
+          <p>
+            Puoi inoltre bloccare o eliminare i cookie dalle impostazioni del tuo browser; questo potrebbe limitare
+            alcune funzionalità del sito (es. carrello).
           </p>
         </>
       ),
@@ -205,10 +244,8 @@ export function buildInfoPages(opts: {
           <p>
             Per volumi continuativi scrivi a fmfcardssrls@gmail.com oppure usa il modulo nella pagina Ingrosso.
           </p>
-          <h3>Sede</h3>
-          <p>
-            <span className="ph">[INDIRIZZO]</span>
-          </p>
+          <h3>Sede legale</h3>
+          <p>FMF Cards S.R.L.S. · Traversa Garibaldi 24, 80040 Striano (NA), Italia</p>
         </>
       ),
     },
