@@ -23,8 +23,8 @@ export interface CutoutImage {
  * dal ritaglio lascia spazio vuoto che mostra lo sfondo della pagina.
  */
 export async function ensureCutoutImage(imageUrl: string, slug: string): Promise<CutoutImage | null> {
-  const destPath = path.join(OUT_DIR, `${slug}.png`);
-  const destPublicPath = `/products-cutout/${slug}.png`;
+  const destPath = path.join(OUT_DIR, `${slug}.webp`);
+  const destPublicPath = `/products-cutout/${slug}.webp`;
 
   const sharp = (await import("sharp")).default;
 
@@ -36,7 +36,11 @@ export async function ensureCutoutImage(imageUrl: string, slug: string): Promise
   const srcPath = path.join(process.cwd(), "public", imageUrl.replace(/^\//, ""));
   if (!fs.existsSync(srcPath)) return null;
 
-  if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
+  } catch {
+    return null; // filesystem di sola lettura: vedi commento piu' sotto
+  }
 
   const img = sharp(srcPath);
   const { data, info } = await img.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -119,9 +123,17 @@ export async function ensureCutoutImage(imageUrl: string, slug: string): Promise
     data[p * channels + 3] = Math.min(data[p * channels + 3], Math.round(blurred[p]));
   }
 
-  const trimmed = sharp(data, { raw: { width, height, channels } }).png().trim({ threshold: 5 });
-  await trimmed.toFile(destPath);
-  const outMeta = await sharp(destPath).metadata();
-
-  return { url: destPublicPath, width: outMeta.width ?? width, height: outMeta.height ?? height };
+  try {
+    const trimmed = sharp(data, { raw: { width, height, channels } })
+      .webp({ quality: 85, alphaQuality: 90 })
+      .trim({ threshold: 5 });
+    await trimmed.toFile(destPath);
+    const outMeta = await sharp(destPath).metadata();
+    return { url: destPublicPath, width: outMeta.width ?? width, height: outMeta.height ?? height };
+  } catch {
+    // Filesystem di sola lettura (es. funzione serverless su Vercel): niente cache su
+    // disco possibile a runtime. I ritagli vanno pre-generati in locale col script
+    // prisma/cutout-all-products.ts e committati; qui ripieghiamo sulla foto originale.
+    return null;
+  }
 }

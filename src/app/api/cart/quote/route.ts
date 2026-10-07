@@ -5,6 +5,7 @@ import { computeCartTotals } from "@/lib/pricing";
 import { getPricingSettings, toPricingRules, toShippingRules } from "@/lib/settings";
 import { cleanProductName } from "@/lib/product-art";
 import { isOutOfStock, maxOrderableQty, stockLabel } from "@/lib/stock";
+import { ensureCutoutImage } from "@/lib/image-cutout";
 
 /**
  * Unica fonte di verità per i prezzi del carrello. Il client manda solo {productId, quantity}:
@@ -69,13 +70,14 @@ export async function POST(req: Request) {
     shipping
   );
 
-  const lineDetails = lines.map(({ product, quantity }, i) => ({
+  const lineDetails = await Promise.all(
+    lines.map(async ({ product, quantity }, i) => ({
     productId: product.id,
     slug: product.slug,
     name: cleanProductName(product.name),
     type: product.type,
     language: product.language,
-    imageUrl: product.imageUrl,
+    imageUrl: product.imageUrl ? (await ensureCutoutImage(product.imageUrl, product.slug))?.url ?? product.imageUrl : null,
     quantity,
     unitPriceCents: totals.lines[i].unitPriceCents,
     standardUnitPriceCents: totals.lines[i].standardUnitPriceCents,
@@ -85,7 +87,8 @@ export async function POST(req: Request) {
     isEstimatedCost: product.costIsEstimated,
     stockLabel: stockLabel(product.stockQty, product.isPreorder),
     maxOrderableQty: maxOrderableQty(product.stockQty),
-  }));
+    }))
+  );
 
   return NextResponse.json({
     lines: lineDetails,

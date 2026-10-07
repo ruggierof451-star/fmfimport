@@ -130,10 +130,15 @@ main.page{padding-block:36px 72px;display:flex;flex-direction:column;gap:60px}
 /* Product grid + card — niente bordi */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:30px 18px}
 @media (min-width:1100px){.grid.row5{grid-template-columns:repeat(5,minmax(0,1fr))}}
-.card{background:#fff;display:flex;flex-direction:column;gap:2px}
+.card{background:#fff;display:flex;flex-direction:column;gap:2px;transition:transform .22s ease}
 .card .img{display:block;position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:10px;overflow:hidden}
 .card .img svg{width:100%;height:100%;display:block}
+.card .img img{transition:transform .35s cubic-bezier(.2,.8,.2,1),filter .35s ease}
+.card:hover{transform:translateY(-4px)}
 .card:hover .img{background:var(--soft)}
+.card:hover .img img{transform:scale(1.07)}
+.card .img img{filter:drop-shadow(0 6px 10px rgba(0,0,0,.1))}
+.card:hover .img img{filter:drop-shadow(0 14px 18px rgba(0,0,0,.16))}
 .tags{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;background:#000;color:#fff}
 .tag.gold{background:#000;color:#fff}
@@ -197,6 +202,7 @@ textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
 .pp .gal{flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:10px}
 .pp .main{position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:12px;overflow:hidden;max-width:100%}
 .pp .main svg{width:100%;height:100%;display:block}
+.pp .main img{filter:drop-shadow(0 10px 16px rgba(0,0,0,.12))}
 .pp .note{position:absolute;bottom:12px;left:14px;font-size:12px;color:var(--muted)}
 .pp .info{flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:16px}
 .pp h1{font-size:clamp(23px,2.6vw,30px);font-weight:500}
