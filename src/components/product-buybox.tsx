@@ -33,7 +33,7 @@ export function ProductBuyBox({
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
         <span className="bigprice">{formatEuro(unit)}</span>
         <span className="muted" style={{ fontSize: 14 }}>
-          IVA inclusa, cad.
+          cad.
         </span>
         {isBulk ? (
           <span className="pill" style={{ background: "var(--ok-wash)", borderColor: "var(--ok-wash)", color: "#155C33" }}>

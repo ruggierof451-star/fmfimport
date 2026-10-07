@@ -81,7 +81,7 @@ const pricingSettingsSchema = z.object({
   marginBps: z.number().int().min(0).max(100000),
   marginBulkBps: z.number().int().min(0).max(100000),
   bulkThresholdQty: z.number().int().min(1),
-  defaultVatRateBps: z.number().int().min(0).max(10000),
+  invoiceVatRateBps: z.number().int().min(0).max(10000),
   roundTo90Cents: z.boolean(),
   freeShippingThresholdCents: z.number().int().min(0),
   standardShippingFeeCents: z.number().int().min(0),

@@ -1,11 +1,13 @@
 /**
  * Motore prezzi — FMF Import.
  *
- * Regole (dal prototipo originale, confermate nel brief):
- *  - Ricarico ordinario: 30% sul costo fornitore NETTO IVA.
- *  - Ricarico quantità: 20% quando la quantità DELLO STESSO ARTICOLO nel carrello
- *    è SUPERIORE alla soglia (default 10, quindi da 11 pezzi in su).
- *  - IVA aggiunta sopra il prezzo scontato di ricarico, per ottenere il prezzo pubblico.
+ * Regole:
+ *  - Prezzo pubblico = costo fornitore (Toreca) × 1,30 (ricarico ordinario 30%).
+ *  - Prezzo quantità = costo fornitore × 1,20 (ricarico 20%) quando la quantità DELLO
+ *    STESSO ARTICOLO nel carrello è SUPERIORE alla soglia (default 10, quindi da 11 pezzi).
+ *  - Nessuna IVA viene aggiunta separatamente sopra il ricarico: il prezzo pubblico è
+ *    semplicemente costo × margine. Il trattamento fiscale (se e come esporre l'IVA in
+ *    fattura) resta da definire col commercialista — qui non viene calcolato né mostrato.
  *  - Arrotondamento commerciale: il prezzo pubblico termina sempre in ",90" (per eccesso).
  *  - Spedizione gratuita sopra una soglia sul subtotale.
  *
@@ -19,8 +21,13 @@ export type CostVatTreatment = "NET_OF_VAT" | "GROSS_WITH_VAT";
 export interface ProductPricingInput {
   /** Costo fornitore memorizzato, null se non ancora noto (si usa solo per prodotti con stima). */
   costCents: number;
+  /**
+   * Se il costo del fornitore arriva comprensivo di un'IVA che va scorporata prima di
+   * applicare il ricarico (es. un listino che include l'IVA del fornitore estero).
+   * Non ha a che fare con l'IVA del prezzo pubblico, che qui non viene applicata.
+   */
   costVatTreatment: CostVatTreatment;
-  /** Aliquota IVA del prodotto, in bps (2200 = 22%). */
+  /** Aliquota usata solo per scorporare il costo quando costVatTreatment è GROSS_WITH_VAT. */
   vatRateBps: number;
 }
 
@@ -50,7 +57,7 @@ export function round90(cents: number): number {
   return flo >= cents ? flo : flo + 100;
 }
 
-/** Ricava il costo netto IVA dal costo memorizzato, qualunque sia il trattamento IVA indicato. */
+/** Ricava il costo netto dal costo memorizzato, scorporando l'IVA solo se il costo è marcato lordo. */
 export function netCostCents(input: ProductPricingInput): number {
   if (input.costVatTreatment === "GROSS_WITH_VAT") {
     return roundCents((input.costCents * 10000) / (10000 + input.vatRateBps));
@@ -58,22 +65,20 @@ export function netCostCents(input: ProductPricingInput): number {
   return input.costCents;
 }
 
-/** Applica ricarico + IVA al costo netto. Non applica l'arrotondamento a ,90 (vedi publicPriceCents). */
-function markedUpWithVat(netCost: number, marginBps: number, vatRateBps: number): number {
-  const withMargin = (netCost * (10000 + marginBps)) / 10000;
-  const withVat = (withMargin * (10000 + vatRateBps)) / 10000;
-  return roundCents(withVat);
+/** Applica il ricarico al costo. Non applica l'arrotondamento a ,90 (vedi standardPriceCents/bulkPriceCents). */
+function markedUp(netCost: number, marginBps: number): number {
+  return roundCents((netCost * (10000 + marginBps)) / 10000);
 }
 
-/** Prezzo pubblico standard (fino alla soglia quantità), IVA inclusa, arrotondato a ,90 se abilitato. */
+/** Prezzo pubblico standard (fino alla soglia quantità) = costo × 1,30, arrotondato a ,90 se abilitato. */
 export function standardPriceCents(input: ProductPricingInput, rules: PricingRules): number {
-  const raw = markedUpWithVat(netCostCents(input), rules.marginBps, input.vatRateBps);
+  const raw = markedUp(netCostCents(input), rules.marginBps);
   return rules.roundTo90Cents ? round90(raw) : raw;
 }
 
-/** Prezzo pubblico "quantità" (oltre la soglia), IVA inclusa, arrotondato a ,90 se abilitato. */
+/** Prezzo pubblico "quantità" (oltre la soglia) = costo × 1,20, arrotondato a ,90 se abilitato. */
 export function bulkPriceCents(input: ProductPricingInput, rules: PricingRules): number {
-  const raw = markedUpWithVat(netCostCents(input), rules.marginBulkBps, input.vatRateBps);
+  const raw = markedUp(netCostCents(input), rules.marginBulkBps);
   return rules.roundTo90Cents ? round90(raw) : raw;
 }
 
@@ -86,12 +91,6 @@ export function unitPriceCentsForQty(
   return quantity > rules.bulkThresholdQty
     ? bulkPriceCents(input, rules)
     : standardPriceCents(input, rules);
-}
-
-/** Scompone un prezzo IVA inclusa in (netto, IVA), per la visualizzazione rivenditori/fatture. */
-export function splitVat(grossCents: number, vatRateBps: number): { netCents: number; vatCents: number } {
-  const netCents = roundCents((grossCents * 10000) / (10000 + vatRateBps));
-  return { netCents, vatCents: grossCents - netCents };
 }
 
 export interface CartLineInput {

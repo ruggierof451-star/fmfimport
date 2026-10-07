@@ -14,7 +14,7 @@ export function buildInfoPages(opts: { freeShip: string; shipFee: string; bulkTh
         <>
           <h3>Costi</h3>
           <p>
-            Spedizione <b>gratuita</b> per ordini da {freeShip} in su (IVA inclusa). Sotto soglia: {shipFee}{" "}
+            Spedizione <b>gratuita</b> per ordini da {freeShip} in su. Sotto soglia: {shipFee}{" "}
             <span className="ph">[DA DEFINIRE]</span>.
           </p>
           <h3>Tempi</h3>
@@ -92,7 +92,7 @@ export function buildInfoPages(opts: { freeShip: string; shipFee: string; bulkTh
           </p>
           <h3>Prezzi</h3>
           <p>
-            Prezzi in euro, IVA inclusa. Per quantità superiori a {bulkThreshold} pezzi dello stesso articolo si
+            Prezzi in euro. Per quantità superiori a {bulkThreshold} pezzi dello stesso articolo si
             applica il prezzo quantità indicato in scheda. Il prezzo valido è quello mostrato al momento della
             conferma dell&apos;ordine.
           </p>

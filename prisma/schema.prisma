@@ -207,7 +207,9 @@ model PricingSettings {
   marginBps             Int     @default(3000) // 30,00% ricarico ordinario
   marginBulkBps         Int     @default(2000) // 20,00% ricarico oltre soglia quantità
   bulkThresholdQty      Int     @default(10) // "oltre" questa quantità per articolo si applica il ricarico bulk
-  defaultVatRateBps     Int     @default(2200) // 22,00%
+  // I prezzi del sito sono IVA ESCLUSA. Questa aliquota si applica SOLO come supplemento
+  // al totale quando il cliente richiede la fattura con partita IVA al checkout.
+  invoiceVatRateBps     Int     @default(2200) // 22,00%
   roundTo90Cents        Boolean @default(true) // arrotonda il prezzo pubblico a ,90
   freeShippingThresholdCents Int @default(20000) // 200,00 €
   standardShippingFeeCents   Int @default(790) // 7,90 € — [DA DEFINIRE]

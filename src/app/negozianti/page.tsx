@@ -19,7 +19,6 @@ export default async function NegoziantiPage() {
       name: cleanProductName(p.name),
       standardCents: standardPriceCents(input, rules),
       bulkCents: bulkPriceCents(input, rules),
-      vatRateBps: p.vatRateBps,
     };
   });
 
@@ -32,8 +31,7 @@ export default async function NegoziantiPage() {
           <h1 style={{ fontSize: "clamp(26px,3vw,34px)", fontWeight: 500, marginTop: 6 }}>Condizioni per negozianti</h1>
           <p className="muted" style={{ maxWidth: 680 }}>
             Compri in quantità? Oltre {rules.bulkThresholdQty} pezzi dello stesso articolo il prezzo scende in
-            automatico nel carrello, senza bisogno di codici o richieste. Puoi visualizzare i prezzi IVA esclusa per
-            confrontarli con il tuo margine.
+            automatico nel carrello, senza bisogno di codici o richieste.
           </p>
         </div>
 
