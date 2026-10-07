@@ -7,8 +7,10 @@ const LINKS = [
   { href: "/admin", label: "Panoramica" },
   { href: "/admin/prodotti", label: "Prodotti" },
   { href: "/admin/ordini", label: "Ordini" },
+  { href: "/admin/messaggi", label: "Messaggi" },
   { href: "/admin/import", label: "Importazione catalogo" },
   { href: "/admin/impostazioni", label: "Regole di prezzo" },
+  { href: "/admin/utenti", label: "Utenti admin" },
 ];
 
 export function AdminNav() {

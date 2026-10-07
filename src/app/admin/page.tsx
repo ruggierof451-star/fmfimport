@@ -5,11 +5,12 @@ import { formatEuro } from "@/lib/pricing";
 export const metadata = { title: "Admin · Panoramica" };
 
 export default async function AdminDashboard() {
-  const [productCount, unmatchedCount, estimatedCount, pendingOrders, recentOrders, lastSync] = await Promise.all([
+  const [productCount, unmatchedCount, estimatedCount, pendingOrders, unreadMessages, recentOrders, lastSync] = await Promise.all([
     prisma.product.count(),
     prisma.product.count({ where: { matchStatus: "UNMATCHED" } }),
     prisma.product.count({ where: { costIsEstimated: true } }),
     prisma.order.count({ where: { status: { in: ["PENDING_PAYMENT", "PAYMENT_CONFIRMED", "AVAILABILITY_CHECK", "TO_PROCURE"] } } }),
+    prisma.contactMessage.count({ where: { read: false } }),
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.syncLog.findFirst({ orderBy: { startedAt: "desc" } }),
   ]);
@@ -23,6 +24,7 @@ export default async function AdminDashboard() {
         <StatCard label="Da abbinare al fornitore" value={String(unmatchedCount)} href="/admin/prodotti?match=UNMATCHED" warn={unmatchedCount > 0} />
         <StatCard label="Con costo stimato" value={String(estimatedCount)} href="/admin/prodotti?estimated=1" warn={estimatedCount > 0} />
         <StatCard label="Ordini da evadere" value={String(pendingOrders)} href="/admin/ordini" warn={pendingOrders > 0} />
+        <StatCard label="Messaggi da leggere" value={String(unreadMessages)} href="/admin/messaggi" warn={unreadMessages > 0} />
       </div>
 
       <div className="admin-card">

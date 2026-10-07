@@ -75,7 +75,9 @@ export function buildInfoPages(opts: {
           </p>
           <h3>Titolare</h3>
           <p>
-            <span className="ph">[RAGIONE SOCIALE, SEDE, CONTATTI]</span>
+            FMF Cards S.R.L.S. · Traversa Garibaldi 24, 80040 Striano (NA), Italia · P.IVA 11105221219
+            <br />
+            Email: fmfcardssrls@gmail.com · PEC: fmfcardssrls@legalmail.it
           </p>
           <h3>Dati trattati</h3>
           <p>
@@ -97,19 +99,20 @@ export function buildInfoPages(opts: {
           </p>
           <h3>Venditore</h3>
           <p>
-            <span className="ph">[RAGIONE SOCIALE · P.IVA · SEDE · PEC]</span>
+            FMF Cards S.R.L.S. · P.IVA 11105221219 · Sede legale: Traversa Garibaldi 24, 80040 Striano (NA), Italia
+            <br />
+            PEC: fmfcardssrls@legalmail.it · Email: fmfcardssrls@gmail.com
           </p>
           <h3>Prezzi</h3>
           <p>
-            Tutti i prezzi esposti sul sito sono <b>IVA esclusa</b>. Per quantità superiori a {bulkThreshold} pezzi
-            dello stesso articolo si applica il prezzo quantità indicato in scheda. Il prezzo valido è quello
-            mostrato al momento della conferma dell&apos;ordine.
+            Tutti i prezzi esposti sul sito sono <b>IVA inclusa</b> (aliquota {invoiceVatRate}%). Per quantità
+            superiori a {bulkThreshold} pezzi dello stesso articolo si applica il prezzo quantità indicato in
+            scheda. Il prezzo valido è quello mostrato al momento della conferma dell&apos;ordine.
           </p>
           <h3>Fatturazione e IVA</h3>
           <p>
-            Il cliente che richiede la fattura con partita IVA al checkout riceve un supplemento del{" "}
-            {invoiceVatRate}% calcolato sul totale dell&apos;ordine (spedizione inclusa), mostrato in modo esplicito
-            prima della conferma. Senza richiesta di fattura non viene addebitato alcun supplemento.
+            Il cliente che richiede la fattura con partita IVA al checkout non paga alcun supplemento: la fattura
+            riporta semplicemente l&apos;IVA al {invoiceVatRate}% già compresa nel totale dell&apos;ordine.
           </p>
           <h3>Disponibilità</h3>
           <p>Le scorte sono aggiornate di continuo. Se un prodotto si esaurisce dopo l&apos;ordine ti avvisiamo e rimborsiamo l&apos;importo.</p>
@@ -155,7 +158,7 @@ export function buildInfoPages(opts: {
           </p>
           <h3>Dati societari</h3>
           <p>
-            <span className="ph">[RAGIONE SOCIALE · P.IVA · SEDE · REA]</span>
+            FMF Cards S.R.L.S. · P.IVA 11105221219 · Sede legale: Traversa Garibaldi 24, 80040 Striano (NA), Italia
           </p>
         </>
       ),
@@ -194,16 +197,13 @@ export function buildInfoPages(opts: {
         <>
           <h3>Assistenza clienti</h3>
           <p>
-            Email: <span className="ph">[EMAIL]</span>
+            Email: fmfcardssrls@gmail.com
             <br />
-            WhatsApp: <span className="ph">[NUMERO]</span>
-            <br />
-            Orari: <span className="ph">[ORARI]</span>
+            Rispondiamo dal martedì al venerdì, dalle 8:00 alle 19:00.
           </p>
           <h3>Ordini all&apos;ingrosso</h3>
           <p>
-            Per volumi continuativi scrivi a <span className="ph">[EMAIL INGROSSO]</span> oppure usa il modulo nella
-            pagina Ingrosso.
+            Per volumi continuativi scrivi a fmfcardssrls@gmail.com oppure usa il modulo nella pagina Ingrosso.
           </p>
           <h3>Sede</h3>
           <p>

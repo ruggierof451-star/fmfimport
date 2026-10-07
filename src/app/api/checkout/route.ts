@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { computeCartTotals, computeInvoiceVatCents } from "@/lib/pricing";
+import { computeCartTotals, extractVatCents } from "@/lib/pricing";
 import { getPricingSettings, toPricingRules, toShippingRules } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
@@ -104,11 +104,11 @@ export async function POST(req: Request) {
   const session = await getSession();
   const orderNumber = generateOrderNumber();
 
-  // I prezzi del sito sono IVA esclusa. Il supplemento IVA si applica SOLO se il cliente
-  // richiede la fattura con partita IVA, sopra il totale (subtotale - sconto + spedizione).
+  // I prezzi del sito sono SEMPRE IVA inclusa: la fattura non aggiunge alcun supplemento,
+  // riporta solo l'IVA già compresa nel totale (vedi extractVatCents).
   const invoiceRequested = body.invoice?.requested ?? false;
-  const invoiceVatCents = invoiceRequested ? computeInvoiceVatCents(totals.totalCents, settings.invoiceVatRateBps) : 0;
-  const grandTotalCents = totals.totalCents + invoiceVatCents;
+  const invoiceVatCents = extractVatCents(totals.totalCents, settings.invoiceVatRateBps);
+  const grandTotalCents = totals.totalCents;
 
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ContactForm } from "@/components/contact-form";
+import { CopyEmailButton } from "@/components/copy-email-button";
 import { getPricingSettings } from "@/lib/settings";
 import { formatEuro } from "@/lib/pricing";
 
@@ -45,27 +47,19 @@ export default async function AssistenzaPage() {
             <div className="box">
               <h2>Scrivici</h2>
               <p className="muted" style={{ margin: 0 }}>
-                Per lo stato di un ordine, resi o domande sui prodotti, scrivici indicando (se disponibile) il numero
-                d&apos;ordine.
+                Per lo stato di un ordine, resi o domande sui prodotti, compila il modulo: la richiesta arriva
+                direttamente a noi.
               </p>
-              <a className="btn btn-dark" href="mailto:assistenza@fmfimport.it?subject=Richiesta%20assistenza">
-                Apri la tua email
-              </a>
-              <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-                Modalità test: l&apos;indirizzo email di assistenza è un segnaposto da sostituire prima della
-                pubblicazione.
-              </p>
+              <ContactForm />
             </div>
             <div className="box" style={{ gap: 8 }}>
               <h2>Altri contatti</h2>
-              <p style={{ margin: 0 }}>
-                Email: <span className="ph">[EMAIL]</span>
-              </p>
-              <p style={{ margin: 0 }}>
-                WhatsApp: <span className="ph">[NUMERO]</span>
-              </p>
+              <p style={{ margin: 0 }}>Email: fmfcardssrls@gmail.com</p>
+              <div>
+                <CopyEmailButton email="fmfcardssrls@gmail.com" />
+              </div>
               <p className="muted" style={{ margin: 0 }}>
-                Orari: <span className="ph">[ORARI]</span>
+                Rispondiamo dal martedì al venerdì, dalle 8:00 alle 19:00.
               </p>
               <Link href="/negozianti" style={{ fontSize: 14 }}>
                 Sei un negozio? Vai alle condizioni per rivenditori →

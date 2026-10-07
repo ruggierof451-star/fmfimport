@@ -39,8 +39,9 @@ export function AdminPricingForm({ settings }: { settings: PricingSettings }) {
       {message ? <div className={`alert ${message.startsWith("Impostazioni") ? "ok" : "err"}`}>{message}</div> : null}
       <div className="alert info">
         Queste regole valgono per TUTTO il catalogo. Modificarle cambia i prezzi pubblici immediatamente su tutto il
-        sito. I prezzi esposti sono IVA ESCLUSA: l&apos;aliquota qui sotto si applica solo come supplemento quando un
-        cliente richiede la fattura con partita IVA al checkout. Verifica questa impostazione con il commercialista.
+        sito. I prezzi esposti sono SEMPRE IVA INCLUSA: l&apos;aliquota qui sotto si applica a ogni prezzo pubblico
+        (catalogo, carrello, checkout), non solo come riga in fattura. Verifica questa impostazione con il
+        commercialista.
       </div>
       <label className="fl">
         Ricarico ordinario (%)
@@ -55,7 +56,7 @@ export function AdminPricingForm({ settings }: { settings: PricingSettings }) {
         <input className="in" value={bulkThreshold} onChange={(e) => setBulkThreshold(e.target.value)} />
       </label>
       <label className="fl">
-        Aliquota IVA per fattura con P.IVA (%) — supplemento al totale solo su richiesta
+        Aliquota IVA inclusa in ogni prezzo pubblico (%)
         <input className="in" value={vat} onChange={(e) => setVat(e.target.value)} />
       </label>
       <label className="check">

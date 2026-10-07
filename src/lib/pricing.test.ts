@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bulkPriceCents,
   computeCartTotals,
-  computeInvoiceVatCents,
+  extractVatCents,
   netCostCents,
   round90,
   standardPriceCents,
@@ -16,6 +16,7 @@ const RULES: PricingRules = {
   marginBulkBps: 2000, // 20%
   bulkThresholdQty: 10,
   roundTo90Cents: true,
+  publicVatRateBps: 2200, // 22% IVA inclusa in ogni prezzo pubblico
 };
 
 const SHIPPING: ShippingRules = {
@@ -50,23 +51,23 @@ describe("netCostCents", () => {
   });
 });
 
-describe("standardPriceCents / bulkPriceCents — price = cost x margin, no VAT added", () => {
-  // Cost 135,77 € (real supplier cost), 30% margin: 135.77 * 1.30 = 176.501 -> 17650 -> round90 -> 17690
-  it("applies the 30% margin and rounds to ,90 (standard tier)", () => {
+describe("standardPriceCents / bulkPriceCents — price = cost x margin x (1 + IVA 22%)", () => {
+  // Cost 135,77 € (real supplier cost), 30% margin: 135.77 * 1.30 = 176,50 -> x1,22 = 215,33 -> round90 -> 215,90
+  it("applies the 30% margin, 22% VAT, and rounds to ,90 (standard tier)", () => {
     const price = standardPriceCents(
       { costCents: 13577, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 },
       RULES
     );
-    expect(price).toBe(17690);
+    expect(price).toBe(21590);
   });
 
-  // Cost 135,77 €, 20% margin: 135.77 * 1.20 = 162.924 -> 16292 -> round90 -> 16390
-  it("applies the reduced 20% margin on the bulk tier", () => {
+  // Cost 135,77 €, 20% margin: 135.77 * 1.20 = 162,92 -> x1,22 = 198,84 -> round90 -> 198,90
+  it("applies the reduced 20% margin and VAT on the bulk tier", () => {
     const price = bulkPriceCents(
       { costCents: 13577, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 },
       RULES
     );
-    expect(price).toBe(16390);
+    expect(price).toBe(19890);
   });
 
   it("the bulk price is always lower than the standard price for the same product", () => {
@@ -74,11 +75,10 @@ describe("standardPriceCents / bulkPriceCents — price = cost x margin, no VAT 
     expect(bulkPriceCents(product, RULES)).toBeLessThan(standardPriceCents(product, RULES));
   });
 
-  it("never applies a VAT multiplier on top of the margin", () => {
-    // cost 10000 ("100,00 €"), 30% margin, no VAT -> 13000 -> round90 -> 13090.
-    // If VAT were still being added this would come out around 15970 instead.
+  it("includes the 22% public VAT in every displayed price", () => {
+    // cost 10000 ("100,00 €"), 30% margin -> 130,00; x1,22 IVA -> 158,60 -> round90 -> 158,90.
     const price = standardPriceCents({ costCents: 10000, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 }, RULES);
-    expect(price).toBe(13090);
+    expect(price).toBe(15890);
   });
 });
 
@@ -98,18 +98,17 @@ describe("unitPriceCentsForQty — the >10 threshold", () => {
   });
 });
 
-describe("computeInvoiceVatCents", () => {
-  it("computes 22% of the order total", () => {
-    expect(computeInvoiceVatCents(10000, 2200)).toBe(2200); // 100,00 € -> 22,00 €
+describe("extractVatCents — scorporo IVA già inclusa nel prezzo (per la fattura, non cambia il totale)", () => {
+  it("extracts 22% VAT from a VAT-inclusive amount", () => {
+    expect(extractVatCents(12200, 2200)).toBe(2200); // 122,00 € lordi -> 100,00 € netti + 22,00 € IVA
   });
 
   it("is zero when the rate is zero", () => {
-    expect(computeInvoiceVatCents(10000, 0)).toBe(0);
+    expect(extractVatCents(10000, 0)).toBe(0);
   });
 
   it("rounds to the nearest cent", () => {
-    // 133,33 € * 22% = 29,3326 € -> 2933 cents
-    expect(computeInvoiceVatCents(13333, 2200)).toBe(2933);
+    expect(extractVatCents(13333, 2200)).toBe(2404);
   });
 });
 

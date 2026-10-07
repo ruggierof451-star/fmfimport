@@ -60,18 +60,12 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               <span>Spedizione</span>
               <span>{order.shippingCents ? formatEuro(order.shippingCents) : "Gratis"}</span>
             </div>
-            {order.invoiceVatCents > 0 ? (
-              <div className="r" style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span>IVA fattura</span>
-                <span>{formatEuro(order.invoiceVatCents)}</span>
-              </div>
-            ) : null}
             <div className="r t" style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
               <span>Totale</span>
               <span>{formatEuro(order.totalCents)}</span>
             </div>
             <span className="muted" style={{ fontSize: 12 }}>
-              Prezzi IVA esclusa{order.invoiceVatCents > 0 ? ", con supplemento IVA per la fattura richiesta" : ""}.
+              Prezzi IVA inclusa (di cui IVA: {formatEuro(order.invoiceVatCents)}).
             </span>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

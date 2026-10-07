@@ -16,12 +16,14 @@ export function toPricingRules(settings: {
   marginBulkBps: number;
   bulkThresholdQty: number;
   roundTo90Cents: boolean;
+  invoiceVatRateBps: number;
 }): PricingRules {
   return {
     marginBps: settings.marginBps,
     marginBulkBps: settings.marginBulkBps,
     bulkThresholdQty: settings.bulkThresholdQty,
     roundTo90Cents: settings.roundTo90Cents,
+    publicVatRateBps: settings.invoiceVatRateBps,
   };
 }
 

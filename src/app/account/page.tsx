@@ -3,6 +3,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { AccountAuthForm } from "@/components/account-auth-form";
 import { LogoutButton } from "@/components/logout-button";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
@@ -51,6 +52,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </Link>
             <Link href="/account?tab=data" className={activeTab === "data" ? "on" : ""}>
               Dati e fatturazione
+            </Link>
+            <Link href="/account?tab=security" className={activeTab === "security" ? "on" : ""}>
+              Sicurezza
             </Link>
             {user.role === "ADMIN" ? (
               <Link href="/admin" style={{ color: "var(--gold)", fontWeight: 700 }}>
@@ -103,6 +107,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   Nessun indirizzo salvato. Verrà proposto quello usato nel prossimo ordine.
                 </p>
               </div>
+            ) : activeTab === "security" ? (
+              <ChangePasswordForm />
             ) : (
               <div className="box">
                 <h2>Dati personali</h2>

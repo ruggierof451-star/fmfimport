@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/auth";
+import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 
 export interface AuthResult {
   ok: boolean;
@@ -63,4 +63,39 @@ export async function loginAction(input: { email: string; password: string }): P
 
 export async function logoutAction(): Promise<void> {
   await destroySession();
+}
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Inserisci la password attuale."),
+    newPassword: z.string().min(8, "La nuova password deve avere almeno 8 caratteri."),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Le due password non coincidono.",
+    path: ["confirmPassword"],
+  });
+
+export async function changePasswordAction(input: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<AuthResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Devi essere connesso." };
+
+  const parsed = changePasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
+  }
+
+  const matches = await verifyPassword(parsed.data.currentPassword, user.passwordHash);
+  if (!matches) return { ok: false, error: "La password attuale non è corretta." };
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash: await hashPassword(parsed.data.newPassword) },
+  });
+
+  return { ok: true };
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, hashPassword } from "@/lib/auth";
 
 const productUpdateSchema = z.object({
   id: z.string(),
@@ -317,5 +317,59 @@ export async function updateOrderStatusAction(input: {
 
   revalidatePath("/admin/ordini");
   revalidatePath(`/admin/ordini/${input.orderId}`);
+  return { ok: true };
+}
+
+const createAdminSchema = z.object({
+  name: z.string().min(1, "Inserisci il nome."),
+  email: z.string().email("Inserisci un'email valida."),
+  password: z.string().min(8, "La password deve avere almeno 8 caratteri."),
+});
+
+/** Crea un nuovo utente con ruolo ADMIN: accesso completo alla dashboard. Solo un admin può farlo. */
+export async function createAdminUserAction(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const parsed = createAdminSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
+  const email = parsed.data.email.toLowerCase().trim();
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return { ok: false, error: "Esiste già un account con questa email." };
+
+  await prisma.user.create({
+    data: {
+      email,
+      name: parsed.data.name.trim(),
+      passwordHash: await hashPassword(parsed.data.password),
+      role: "ADMIN",
+    },
+  });
+
+  revalidatePath("/admin/utenti");
+  return { ok: true };
+}
+
+export async function revokeAdminAction(input: { userId: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+  if (admin.id === input.userId) return { ok: false, error: "Non puoi rimuovere i tuoi stessi permessi admin." };
+
+  await prisma.user.update({ where: { id: input.userId }, data: { role: "CUSTOMER" } });
+  revalidatePath("/admin/utenti");
+  return { ok: true };
+}
+
+export async function markContactMessageReadAction(input: { id: string; read: boolean }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  await prisma.contactMessage.update({ where: { id: input.id }, data: { read: input.read } });
+  revalidatePath("/admin/messaggi");
   return { ok: true };
 }

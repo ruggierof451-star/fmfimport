@@ -200,6 +200,20 @@ model SyncError {
   @@index([syncLogId])
 }
 
+// Messaggi dal modulo "Scrivici" del Centro assistenza. Senza un servizio email
+// configurato, questo è il modo affidabile per far arrivare le richieste: compaiono
+// subito nella dashboard admin invece di dipendere da un invio email esterno.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  email     String
+  orderNumber String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+}
+
 // Impostazioni del motore prezzi — riga singola, modificabile dall'area admin.
 model PricingSettings {
   id Int @id @default(1)
@@ -207,8 +221,8 @@ model PricingSettings {
   marginBps             Int     @default(3000) // 30,00% ricarico ordinario
   marginBulkBps         Int     @default(2000) // 20,00% ricarico oltre soglia quantità
   bulkThresholdQty      Int     @default(10) // "oltre" questa quantità per articolo si applica il ricarico bulk
-  // I prezzi del sito sono IVA ESCLUSA. Questa aliquota si applica SOLO come supplemento
-  // al totale quando il cliente richiede la fattura con partita IVA al checkout.
+  // I prezzi del sito sono SEMPRE IVA INCLUSA. Questa aliquota si applica a ogni prezzo
+  // pubblico (catalogo, carrello, checkout); la fattura non aggiunge alcun supplemento.
   invoiceVatRateBps     Int     @default(2200) // 22,00%
   roundTo90Cents        Boolean @default(true) // arrotonda il prezzo pubblico a ,90
   freeShippingThresholdCents Int @default(20000) // 200,00 €
@@ -266,9 +280,8 @@ model Order {
   paymentStatus PaymentStatus @default(PENDING)
 
   // Totali congelati al momento dell'ordine (sempre ricalcolati server-side).
-  // subtotalCents/shippingCents sono SEMPRE IVA esclusa. invoiceVatCents è il supplemento
-  // IVA applicato solo se invoiceRequested=true; totalCents è l'importo finale da pagare
-  // (= subtotale - sconto + spedizione + invoiceVatCents).
+  // Tutti gli importi sono SEMPRE IVA inclusa. invoiceVatCents è la quota IVA già compresa
+  // nel totale (informativa, per la fattura); totalCents = subtotale - sconto + spedizione.
   subtotalCents   Int
   discountCents   Int @default(0)
   shippingCents   Int

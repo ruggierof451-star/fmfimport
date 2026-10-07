@@ -75,6 +75,7 @@ export async function POST(req: Request) {
     name: cleanProductName(product.name),
     type: product.type,
     language: product.language,
+    imageUrl: product.imageUrl,
     quantity,
     unitPriceCents: totals.lines[i].unitPriceCents,
     standardUnitPriceCents: totals.lines[i].standardUnitPriceCents,

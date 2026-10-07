@@ -2,13 +2,14 @@
  * Motore prezzi — FMF Import.
  *
  * Regole:
- *  - Prezzo pubblico = costo fornitore × 1,30 (ricarico ordinario 30%).
- *  - Prezzo quantità = costo fornitore × 1,20 (ricarico 20%) quando la quantità DELLO
- *    STESSO ARTICOLO nel carrello è SUPERIORE alla soglia (default 10, quindi da 11 pezzi).
- *  - I prezzi del sito sono SEMPRE IVA ESCLUSA: nessuna IVA viene aggiunta al prezzo
- *    pubblico o al carrello. Solo al checkout, se il cliente richiede la fattura con
- *    partita IVA, si applica un supplemento IVA (default 22%) sul totale dell'ordine
- *    — vedi computeInvoiceVatCents. Verificare questa impostazione col commercialista.
+ *  - Prezzo pubblico = costo fornitore × 1,30 (ricarico ordinario 30%) × 1,22 (IVA 22%).
+ *  - Prezzo quantità = costo fornitore × 1,20 (ricarico 20%) × 1,22 (IVA 22%) quando la
+ *    quantità DELLO STESSO ARTICOLO nel carrello è SUPERIORE alla soglia (default 10,
+ *    quindi da 11 pezzi).
+ *  - Tutti i prezzi esposti sul sito (catalogo, carrello, checkout) sono SEMPRE IVA
+ *    INCLUSA: l'aliquota si applica sul ricarico, non è un supplemento separato.
+ *    Richiedere la fattura con partita IVA non cambia il totale: la fattura riporta
+ *    semplicemente l'IVA già inclusa nel prezzo.
  *  - Arrotondamento commerciale: il prezzo pubblico termina sempre in ",90" (per eccesso).
  *  - Spedizione gratuita sopra una soglia sul subtotale.
  *
@@ -37,6 +38,8 @@ export interface PricingRules {
   marginBulkBps: number;
   bulkThresholdQty: number;
   roundTo90Cents: boolean;
+  /** Aliquota IVA inclusa in ogni prezzo pubblico (catalogo, carrello, checkout). */
+  publicVatRateBps: number;
 }
 
 export interface ShippingRules {
@@ -66,20 +69,21 @@ export function netCostCents(input: ProductPricingInput): number {
   return input.costCents;
 }
 
-/** Applica il ricarico al costo. Non applica l'arrotondamento a ,90 (vedi standardPriceCents/bulkPriceCents). */
-function markedUp(netCost: number, marginBps: number): number {
-  return roundCents((netCost * (10000 + marginBps)) / 10000);
+/** Applica ricarico + IVA pubblica al costo netto. Non applica l'arrotondamento a ,90. */
+function markedUp(netCost: number, marginBps: number, publicVatRateBps: number): number {
+  const withMargin = roundCents((netCost * (10000 + marginBps)) / 10000);
+  return roundCents((withMargin * (10000 + publicVatRateBps)) / 10000);
 }
 
-/** Prezzo pubblico standard (fino alla soglia quantità) = costo × 1,30, arrotondato a ,90 se abilitato. */
+/** Prezzo pubblico standard (fino alla soglia quantità) = costo × 1,30 × 1,22 IVA, arrotondato a ,90 se abilitato. */
 export function standardPriceCents(input: ProductPricingInput, rules: PricingRules): number {
-  const raw = markedUp(netCostCents(input), rules.marginBps);
+  const raw = markedUp(netCostCents(input), rules.marginBps, rules.publicVatRateBps);
   return rules.roundTo90Cents ? round90(raw) : raw;
 }
 
-/** Prezzo pubblico "quantità" (oltre la soglia) = costo × 1,20, arrotondato a ,90 se abilitato. */
+/** Prezzo pubblico "quantità" (oltre la soglia) = costo × 1,20 × 1,22 IVA, arrotondato a ,90 se abilitato. */
 export function bulkPriceCents(input: ProductPricingInput, rules: PricingRules): number {
-  const raw = markedUp(netCostCents(input), rules.marginBulkBps);
+  const raw = markedUp(netCostCents(input), rules.marginBulkBps, rules.publicVatRateBps);
   return rules.roundTo90Cents ? round90(raw) : raw;
 }
 
@@ -164,12 +168,10 @@ export function computeCartTotals(
   };
 }
 
-/**
- * Supplemento IVA applicato SOLO quando il cliente richiede la fattura con partita IVA.
- * Il resto del sito (catalogo, carrello, totale senza fattura) resta sempre IVA esclusa.
- */
-export function computeInvoiceVatCents(totalCents: number, invoiceVatRateBps: number): number {
-  return roundCents((totalCents * invoiceVatRateBps) / 10000);
+/** Scorpora la quota IVA già inclusa in un importo, per mostrarla in fattura (non cambia il totale). */
+export function extractVatCents(grossCents: number, publicVatRateBps: number): number {
+  const net = roundCents((grossCents * 10000) / (10000 + publicVatRateBps));
+  return grossCents - net;
 }
 
 export function formatEuro(cents: number): string {

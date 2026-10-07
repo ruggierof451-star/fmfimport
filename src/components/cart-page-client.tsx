@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/components/cart-context";
 import { ShipBar } from "@/components/cart-drawer";
 import { formatEuro } from "@/lib/pricing";
@@ -37,7 +38,11 @@ export function CartPageClient() {
         <div className="a">
           {quote?.lines.map((line) => (
             <div className="line" key={line.productId}>
-              <Link className="im" href={`/prodotto/${line.slug}`} aria-hidden="true" tabIndex={-1} />
+              <Link className="im" href={`/prodotto/${line.slug}`} aria-hidden="true" tabIndex={-1}>
+                {line.imageUrl ? (
+                  <Image src={line.imageUrl} alt="" fill sizes="86px" style={{ objectFit: "contain" }} />
+                ) : null}
+              </Link>
               <div className="tx">
                 <Link href={`/prodotto/${line.slug}`}>{line.name}</Link>
                 <span className="muted" style={{ fontSize: 13 }}>

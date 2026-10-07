@@ -50,11 +50,10 @@ export function Footer() {
       <div className="legal">
         <div className="wrap">
           <span>
-            © 2026 FMF Import · <span className="ph">[RAGIONE SOCIALE · P.IVA · SEDE]</span>
+            © 2026 FMF Import · FMF Cards S.R.L.S. · P.IVA 11105221219 · Traversa Garibaldi 24, 80040 Striano (NA), Italia
           </span>
           <span style={{ maxWidth: 640 }}>
-            Pokémon e One Piece sono marchi dei rispettivi titolari. FMF Import è un rivenditore indipendente, non
-            affiliato né approvato dai titolari dei marchi.
+            Pokémon e One Piece sono marchi dei rispettivi titolari. FMF Import è un rivenditore indipendente.
           </span>
         </div>
       </div>

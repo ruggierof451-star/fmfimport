@@ -13,6 +13,7 @@ export interface QuoteLine {
   name: string;
   type: string;
   language: string;
+  imageUrl: string | null;
   quantity: number;
   unitPriceCents: number;
   standardUnitPriceCents: number;

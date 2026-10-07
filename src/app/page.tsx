@@ -32,9 +32,10 @@ export default async function HomePage() {
   );
 
   // Tre foto reali per la vetrina dell'hero (una per gioco/edizione diversa quando possibile).
+  const HERO_PHOTO_COUNT = 3;
   const heroCandidates = await prisma.product.findMany({
     where: { published: true, imageUrl: { not: null }, isNew: true },
-    take: 12,
+    take: 24,
     orderBy: { updatedAt: "desc" },
   });
   const heroPhotos: typeof heroCandidates = [];
@@ -44,14 +45,16 @@ export default async function HomePage() {
     if (seenCombos.has(combo)) continue;
     seenCombos.add(combo);
     heroPhotos.push(p);
-    if (heroPhotos.length === 3) break;
+    if (heroPhotos.length === HERO_PHOTO_COUNT) break;
   }
-  const heroCutouts = await Promise.all(
-    heroPhotos.slice(0, 3).map(async (p) => ({
-      ...p,
-      cutoutUrl: (await ensureCutoutImage(p.imageUrl as string, p.slug)) ?? (p.imageUrl as string),
-    }))
-  );
+  const heroCutouts = (
+    await Promise.all(
+      heroPhotos.map(async (p) => {
+        const cutout = await ensureCutoutImage(p.imageUrl as string, p.slug);
+        return { ...p, cutout };
+      })
+    )
+  ).filter((p): p is typeof heroPhotos[number] & { cutout: NonNullable<typeof p.cutout> } => p.cutout !== null);
 
   return (
     <>
@@ -85,36 +88,35 @@ export default async function HomePage() {
                 <div className="glow" aria-hidden="true" />
                 <div className="ph ph-back ph1">
                   <Image
-                    src={heroCutouts[0].cutoutUrl}
+                    src={heroCutouts[0].cutout.url}
                     alt={cleanProductName(heroCutouts[0].name)}
-                    fill
-                    sizes="240px"
-                    style={{ objectFit: "contain", objectPosition: "bottom" }}
-                    unoptimized={heroCutouts[0].cutoutUrl.startsWith("/products-cutout/")}
+                    width={heroCutouts[0].cutout.width}
+                    height={heroCutouts[0].cutout.height}
+                    style={{ height: "100%", width: "auto" }}
+                    unoptimized
                   />
                 </div>
                 <div className="ph ph-back ph3">
                   <Image
-                    src={heroCutouts[2].cutoutUrl}
+                    src={heroCutouts[2].cutout.url}
                     alt={cleanProductName(heroCutouts[2].name)}
-                    fill
-                    sizes="240px"
-                    style={{ objectFit: "contain", objectPosition: "bottom" }}
-                    unoptimized={heroCutouts[2].cutoutUrl.startsWith("/products-cutout/")}
+                    width={heroCutouts[2].cutout.width}
+                    height={heroCutouts[2].cutout.height}
+                    style={{ height: "100%", width: "auto" }}
+                    unoptimized
                   />
                 </div>
                 <Link href={`/prodotto/${heroCutouts[1].slug}`} className="ph ph-front ph2">
                   <Image
-                    src={heroCutouts[1].cutoutUrl}
+                    src={heroCutouts[1].cutout.url}
                     alt={cleanProductName(heroCutouts[1].name)}
-                    fill
-                    sizes="320px"
-                    style={{ objectFit: "contain", objectPosition: "bottom" }}
-                    unoptimized={heroCutouts[1].cutoutUrl.startsWith("/products-cutout/")}
+                    width={heroCutouts[1].cutout.width}
+                    height={heroCutouts[1].cutout.height}
+                    style={{ height: "100%", width: "auto" }}
+                    unoptimized
                     priority
                   />
                 </Link>
-                <span className="hero-tag">Ultimi arrivi</span>
               </div>
             ) : null}
           </div>
