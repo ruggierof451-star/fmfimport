@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
 import { formatEuro } from "@/lib/pricing";
+import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Ordini" };
 
@@ -27,6 +28,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Ordini ({orders.length})</h1>
       <form style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input className="in" name="q" defaultValue={sp.q ?? ""} placeholder="Numero, email o nome…" style={{ width: 260 }} />

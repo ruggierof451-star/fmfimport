@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateProductAction, deleteProductAction } from "@/lib/admin-actions";
+import { updateProductAction, deleteProductAction, archiveProductAction, unarchiveProductAction } from "@/lib/admin-actions";
+import { ImageUploadField } from "@/components/image-upload-field";
 import type { Product } from "@/generated/prisma";
 
 const CATEGORY_OPTIONS = [
@@ -13,12 +14,18 @@ const CATEGORY_OPTIONS = [
   { value: "one-piece-cn", label: "One Piece Cinese" },
 ];
 
-export function AdminProductForm({ product }: { product: Product }) {
+const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
+
+export function AdminProductForm({ product, existingTypes = [] }: { product: Product; existingTypes?: string[] }) {
   const router = useRouter();
+  const typeOptions = Array.from(new Set([...DEFAULT_TYPES, ...existingTypes, product.type])).sort((a, b) =>
+    a.localeCompare(b, "it")
+  );
   const [name, setName] = useState(product.name);
   const [category, setCategory] = useState(product.category);
   const [productSetName, setProductSetName] = useState(product.setName);
   const [type, setType] = useState(product.type);
+  const [customType, setCustomType] = useState("");
   const [imageUrl, setImageUrl] = useState(product.imageUrl ?? "");
   const [description, setDescription] = useState(product.description ?? "");
   const [isNew, setIsNew] = useState(product.isNew);
@@ -48,6 +55,12 @@ export function AdminProductForm({ product }: { product: Product }) {
     setSaving(true);
     setMessage("");
     const { game, language } = CATEGORY_TO_GAME_LANG[category] ?? CATEGORY_TO_GAME_LANG["pokemon-jp"];
+    const finalType = type === "__altro__" ? customType.trim() : type;
+    if (!finalType) {
+      setMessage("Specifica il tipo di prodotto.");
+      setSaving(false);
+      return;
+    }
     const result = await updateProductAction({
       id: product.id,
       name,
@@ -55,7 +68,7 @@ export function AdminProductForm({ product }: { product: Product }) {
       game,
       language,
       setName: productSetName,
-      type,
+      type: finalType,
       imageUrl: imageUrl.trim() === "" ? null : imageUrl.trim(),
       description: description.trim() === "" ? null : description,
       isNew,
@@ -79,7 +92,7 @@ export function AdminProductForm({ product }: { product: Product }) {
   }
 
   async function handleDelete() {
-    if (!confirm(`Eliminare definitivamente "${name}"? L'operazione non è reversibile.`)) return;
+    if (!confirm(`Eliminare "${name}"? Sparisce dal sito ma resta recuperabile dalla sezione Eliminati.`)) return;
     setDeleting(true);
     setMessage("");
     const result = await deleteProductAction({ id: product.id });
@@ -88,6 +101,18 @@ export function AdminProductForm({ product }: { product: Product }) {
     } else {
       setDeleting(false);
       setMessage(result.error ?? "Errore durante l'eliminazione.");
+    }
+  }
+
+  async function handleArchiveToggle() {
+    setSaving(true);
+    setMessage("");
+    const result = product.archived ? await unarchiveProductAction({ id: product.id }) : await archiveProductAction({ id: product.id });
+    setSaving(false);
+    if (result.ok) {
+      router.refresh();
+    } else {
+      setMessage(result.error ?? "Errore.");
     }
   }
 
@@ -117,14 +142,25 @@ export function AdminProductForm({ product }: { product: Product }) {
       </label>
 
       <label className="fl">
-        Tipo (es. Booster box, Display, Tin…)
-        <input className="in" value={type} onChange={(e) => setType(e.target.value)} />
+        Tipo
+        <select className="in" value={type} onChange={(e) => setType(e.target.value)}>
+          {typeOptions.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+          <option value="__altro__">Altro…</option>
+        </select>
       </label>
 
-      <label className="fl">
-        URL immagine (es. /products/nome-file.webp)
-        <input className="in" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="vuoto = immagine generata automaticamente" />
-      </label>
+      {type === "__altro__" ? (
+        <label className="fl">
+          Specifica il tipo
+          <input className="in" value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="es. Scatola regalo" />
+        </label>
+      ) : null}
+
+      <ImageUploadField value={imageUrl} onChange={setImageUrl} />
 
       <label className="fl">
         Descrizione (HTML consentito)
@@ -191,9 +227,12 @@ export function AdminProductForm({ product }: { product: Product }) {
         Pubblicato (visibile ai clienti)
       </label>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <button className="btn btn-dark" type="submit" disabled={saving} style={{ alignSelf: "flex-start" }}>
           {saving ? "Salvataggio…" : "Salva modifiche"}
+        </button>
+        <button type="button" onClick={handleArchiveToggle} disabled={saving} className="btn btn-line btn-sm">
+          {product.archived ? "Riattiva prodotto" : "Archivia prodotto"}
         </button>
         <button
           type="button"

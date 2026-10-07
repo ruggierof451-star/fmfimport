@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -39,12 +39,24 @@ async function signSession(payload: SessionPayload): Promise<string> {
     .sign(getSecretKey());
 }
 
+/**
+ * Il cookie "secure" richiede HTTPS: su Vercel/hosting reale arriva sempre con
+ * x-forwarded-proto=https, mentre in locale (dev o test da telefono via IP di rete,
+ * sempre http semplice) questo header manca. Usarlo invece di NODE_ENV fa sì che il
+ * login funzioni sia in locale sia online, senza bisogno di toccare questo codice
+ * quando il sito va in produzione dietro HTTPS.
+ */
+async function isSecureRequest(): Promise<boolean> {
+  const h = await headers();
+  return h.get("x-forwarded-proto") === "https";
+}
+
 export async function createSession(payload: SessionPayload) {
   const token = await signSession(payload);
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: await isSecureRequest(),
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_DURATION_SECONDS,

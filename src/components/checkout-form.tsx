@@ -9,22 +9,36 @@ import { formatEuro } from "@/lib/pricing";
 
 type Errors = Record<string, string>;
 
-export function CheckoutForm({ invoiceVatRateBps }: { invoiceVatRateBps: number }) {
+export interface CheckoutPrefill {
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  province?: string;
+  companyName?: string;
+  vatNumber?: string;
+  sdiCode?: string;
+}
+
+export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps: number; prefill?: CheckoutPrefill }) {
   const { items, quote, clearCart } = useCart();
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [street, setStreet] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
+  const [email, setEmail] = useState(prefill?.email ?? "");
+  const [phone, setPhone] = useState(prefill?.phone ?? "");
+  const [firstName, setFirstName] = useState(prefill?.firstName ?? "");
+  const [lastName, setLastName] = useState(prefill?.lastName ?? "");
+  const [street, setStreet] = useState(prefill?.street ?? "");
+  const [postalCode, setPostalCode] = useState(prefill?.postalCode ?? "");
+  const [city, setCity] = useState(prefill?.city ?? "");
+  const [province, setProvince] = useState(prefill?.province ?? "");
   const [wantsInvoice, setWantsInvoice] = useState(false);
-  const [companyName, setCompanyName] = useState("");
-  const [vatNumber, setVatNumber] = useState("");
-  const [sdiCode, setSdiCode] = useState("");
+  const [companyName, setCompanyName] = useState(prefill?.companyName ?? "");
+  const [vatNumber, setVatNumber] = useState(prefill?.vatNumber ?? "");
+  const [sdiCode, setSdiCode] = useState(prefill?.sdiCode ?? "");
   const [payment, setPayment] = useState<"CARD" | "PAYPAL" | "BANK_TRANSFER">("CARD");
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});

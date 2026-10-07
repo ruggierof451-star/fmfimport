@@ -1,0 +1,2 @@
+ALTER TABLE "Product" ADD COLUMN "archived" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Product" ADD COLUMN "deletedAt" DATETIME;

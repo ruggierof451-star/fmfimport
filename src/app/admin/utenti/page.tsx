@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { AdminNewAdminForm } from "@/components/admin-new-admin-form";
 import { AdminRevokeButton } from "@/components/admin-revoke-button";
+import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Utenti admin" };
 
@@ -11,6 +12,7 @@ export default async function AdminUsersPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Utenti admin</h1>
       <p className="muted" style={{ margin: 0 }}>
         Chi ha accesso completo alla dashboard (prodotti, ordini, prezzi, importazione, altri admin).

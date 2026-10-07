@@ -3,21 +3,36 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loginAction, registerAction } from "@/lib/auth-actions";
+import { loginAction, registerAction, requestPasswordResetAction } from "@/lib/auth-actions";
 
 export function AccountAuthForm() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [resetUrl, setResetUrl] = useState("");
+  const [resetSent, setResetSent] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
+
+    if (mode === "forgot") {
+      const result = await requestPasswordResetAction({ email });
+      setSubmitting(false);
+      if (!result.ok) {
+        setError(result.error ?? "Si è verificato un errore.");
+        return;
+      }
+      setResetSent(true);
+      setResetUrl(result.resetUrl ?? "");
+      return;
+    }
+
     const result = mode === "register" ? await registerAction({ name, email, password }) : await loginAction({ email, password });
     setSubmitting(false);
     if (!result.ok) {
@@ -25,6 +40,35 @@ export function AccountAuthForm() {
       return;
     }
     router.refresh();
+  }
+
+  if (mode === "forgot" && resetSent) {
+    return (
+      <main className="wrap page">
+        <div className="box" style={{ maxWidth: 480, marginInline: "auto" }}>
+          <h1 style={{ fontSize: 24, fontWeight: 500 }}>Controlla la tua email</h1>
+          <p className="muted">
+            Se esiste un account con questa email, riceverai un link per reimpostare la password (valido 1 ora).
+          </p>
+          {resetUrl ? (
+            <div className="alert info">
+              Invio email non ancora collegato: per ora ecco il link direttamente —{" "}
+              <Link href={resetUrl}>{resetUrl}</Link>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className="btn btn-line btn-sm"
+            onClick={() => {
+              setMode("login");
+              setResetSent(false);
+            }}
+          >
+            Torna al login
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -40,7 +84,9 @@ export function AccountAuthForm() {
                 Crea account
               </button>
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 500 }}>{mode === "register" ? "Crea il tuo account" : "Accedi al tuo account"}</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 500 }}>
+              {mode === "register" ? "Crea il tuo account" : mode === "forgot" ? "Recupera la password" : "Accedi al tuo account"}
+            </h1>
             {error ? (
               <div className="alert err" role="alert">
                 {error}
@@ -57,26 +103,45 @@ export function AccountAuthForm() {
                 Email
                 <input className="in" id="ac-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </label>
-              <label className="fl full" htmlFor="ac-pw">
-                Password
-                <input
-                  className="in"
-                  id="ac-pw"
-                  type="password"
-                  autoComplete={mode === "register" ? "new-password" : "current-password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                {mode === "register" ? (
-                  <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>
-                    Almeno 8 caratteri.
-                  </span>
-                ) : null}
-              </label>
+              {mode !== "forgot" ? (
+                <label className="fl full" htmlFor="ac-pw">
+                  Password
+                  <input
+                    className="in"
+                    id="ac-pw"
+                    type="password"
+                    autoComplete={mode === "register" ? "new-password" : "current-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  {mode === "register" ? (
+                    <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>
+                      Almeno 8 caratteri.
+                    </span>
+                  ) : null}
+                </label>
+              ) : null}
             </div>
+            {mode === "login" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("forgot");
+                  setError("");
+                }}
+                style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, textAlign: "left", cursor: "pointer", padding: 0 }}
+              >
+                Password dimenticata?
+              </button>
+            ) : null}
             <button className="btn btn-dark" type="submit" disabled={submitting}>
-              {submitting ? "Attendere…" : mode === "register" ? "Crea account" : "Accedi"}
+              {submitting ? "Attendere…" : mode === "register" ? "Crea account" : mode === "forgot" ? "Invia link di recupero" : "Accedi"}
             </button>
+            {mode === "forgot" ? (
+              <button type="button" className="btn btn-line btn-sm" onClick={() => setMode("login")} style={{ alignSelf: "flex-start" }}>
+                ← Torna al login
+              </button>
+            ) : null}
           </form>
         </div>
         <div className="b" style={{ position: "static" }}>

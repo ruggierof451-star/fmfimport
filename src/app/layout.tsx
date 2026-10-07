@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import { CartProvider } from "@/components/cart-context";
 import { CartDrawer } from "@/components/cart-drawer";
 import { Toast } from "@/components/toast";
+import { CookieConsent } from "@/components/cookie-consent";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div id="app">{children}</div>
           <CartDrawer />
           <Toast />
+          <CookieConsent />
         </CartProvider>
       </body>
     </html>

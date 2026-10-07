@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AdminMessageRow } from "@/components/admin-message-row";
+import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Messaggi" };
 
@@ -8,6 +9,7 @@ export default async function AdminMessagesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>
         Messaggi ({messages.length})
         {messages.some((m) => !m.read) ? (

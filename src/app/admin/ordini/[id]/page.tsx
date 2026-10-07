@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 import { AdminOrderStatusForm } from "@/components/admin-order-status-form";
+import { AdminCancelOrderButton } from "@/components/admin-cancel-order-button";
+import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Dettaglio ordine" };
 
@@ -15,9 +17,13 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 600 }}>
-        Ordine <span className="mono">{order.orderNumber}</span>
-      </h1>
+      <BackButton fallbackHref="/admin/ordini" />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600 }}>
+          Ordine <span className="mono">{order.orderNumber}</span>
+        </h1>
+        <AdminCancelOrderButton orderId={order.id} orderNumber={order.orderNumber} status={order.status} />
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <div className="admin-card">

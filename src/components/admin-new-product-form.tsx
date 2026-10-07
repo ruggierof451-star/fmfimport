@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProductAction } from "@/lib/admin-actions";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 const CATEGORY_OPTIONS = [
   { value: "pokemon-jp", label: "Pokémon Giapponese" },
@@ -12,12 +13,16 @@ const CATEGORY_OPTIONS = [
   { value: "one-piece-cn", label: "One Piece Cinese" },
 ];
 
-export function AdminNewProductForm() {
+const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
+
+export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: string[] }) {
   const router = useRouter();
+  const typeOptions = Array.from(new Set([...DEFAULT_TYPES, ...existingTypes])).sort((a, b) => a.localeCompare(b, "it"));
   const [name, setName] = useState("");
   const [category, setCategory] = useState("pokemon-jp");
   const [productSetName, setProductSetName] = useState("");
   const [type, setType] = useState("Booster box");
+  const [customType, setCustomType] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [costEuro, setCostEuro] = useState("");
@@ -34,13 +39,18 @@ export function AdminNewProductForm() {
       setMessage("Nome, nome set e tipo sono obbligatori.");
       return;
     }
+    const finalType = type === "__altro__" ? customType.trim() : type;
+    if (!finalType) {
+      setMessage("Specifica il tipo di prodotto.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     const result = await createProductAction({
       name: name.trim(),
       category: category as "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
       setName: productSetName.trim(),
-      type: type.trim(),
+      type: finalType,
       imageUrl: imageUrl.trim() === "" ? null : imageUrl.trim(),
       description: description.trim() === "" ? null : description,
       supplierCostCents: costEuro.trim() === "" ? null : Math.round(parseFloat(costEuro.replace(",", ".")) * 100),
@@ -84,13 +94,24 @@ export function AdminNewProductForm() {
 
       <label className="fl">
         Tipo *
-        <input className="in" value={type} onChange={(e) => setType(e.target.value)} placeholder="es. Booster box, Display, Tin…" />
+        <select className="in" value={type} onChange={(e) => setType(e.target.value)}>
+          {typeOptions.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+          <option value="__altro__">Altro…</option>
+        </select>
       </label>
 
-      <label className="fl">
-        URL immagine
-        <input className="in" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="vuoto = immagine generata automaticamente" />
-      </label>
+      {type === "__altro__" ? (
+        <label className="fl">
+          Specifica il tipo
+          <input className="in" value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="es. Scatola regalo" />
+        </label>
+      ) : null}
+
+      <ImageUploadField value={imageUrl} onChange={setImageUrl} />
 
       <label className="fl">
         Descrizione (HTML consentito)

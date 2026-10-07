@@ -118,6 +118,8 @@ model Product {
   published  Boolean @default(true)
   isNew      Boolean @default(false)
   isPreorder Boolean @default(false)
+  archived   Boolean   @default(false) // nascosto dal catalogo e dalla lista prodotti attivi, ma recuperabile
+  deletedAt  DateTime? // eliminazione "soft": il prodotto resta nel DB (serve per lo storico ordini) ma sparisce ovunque tranne che nella sezione "Eliminati"
 
   matchStatus MatchStatus @default(UNMATCHED)
 
@@ -243,11 +245,30 @@ model User {
   vatNumber   String?
   sdiCode     String?
 
-  addresses Address[]
-  orders    Order[]
+  addresses   Address[]
+  orders      Order[]
+  resetTokens PasswordResetToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Link di recupero password. Senza un servizio email configurato, il link viene
+// mostrato direttamente a schermo dopo la richiesta invece di essere inviato via
+// email — funziona comunque, ma va collegato a un provider email reale prima del
+// lancio pubblico (altrimenti chiunque conosca l'email di un utente potrebbe vedere
+// il link solo se ha accesso allo schermo di chi lo richiede: nessun rischio nuovo,
+// ma non è l'esperienza finale voluta).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Address {

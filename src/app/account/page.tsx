@@ -4,6 +4,8 @@ import { Footer } from "@/components/footer";
 import { AccountAuthForm } from "@/components/account-auth-form";
 import { LogoutButton } from "@/components/logout-button";
 import { ChangePasswordForm } from "@/components/change-password-form";
+import { AddressList } from "@/components/address-list";
+import { BillingInfoForm } from "@/components/billing-info-form";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
@@ -36,6 +38,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   }
 
   const orders = activeTab === "orders" ? await prisma.order.findMany({ where: { userId: user.id }, include: { items: true }, orderBy: { createdAt: "desc" } }) : [];
+  const addresses = activeTab === "addr" ? await prisma.address.findMany({ where: { userId: user.id }, orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] }) : [];
 
   return (
     <>
@@ -101,36 +104,25 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </div>
               )
             ) : activeTab === "addr" ? (
-              <div className="box">
-                <h2>Indirizzi salvati</h2>
-                <p className="muted" style={{ margin: 0 }}>
-                  Nessun indirizzo salvato. Verrà proposto quello usato nel prossimo ordine.
-                </p>
-              </div>
+              <AddressList addresses={addresses} />
             ) : activeTab === "security" ? (
               <ChangePasswordForm />
             ) : (
-              <div className="box">
-                <h2>Dati personali</h2>
-                <dl className="spec">
-                  <dt>Nome</dt>
-                  <dd>{user.name ?? "—"}</dd>
-                  <dt>Email</dt>
-                  <dd>{user.email}</dd>
-                  {user.companyName ? (
-                    <>
-                      <dt>Ragione sociale</dt>
-                      <dd>{user.companyName}</dd>
-                    </>
-                  ) : null}
-                  {user.vatNumber ? (
-                    <>
-                      <dt>Partita IVA</dt>
-                      <dd>{user.vatNumber}</dd>
-                    </>
-                  ) : null}
-                </dl>
-              </div>
+              <>
+                <div className="box">
+                  <h2>Email</h2>
+                  <p style={{ margin: 0 }}>{user.email}</p>
+                  <p className="muted" style={{ fontSize: 13, margin: 0 }}>
+                    L&apos;email non è modificabile. Contatta l&apos;assistenza se devi cambiarla.
+                  </p>
+                </div>
+                <BillingInfoForm
+                  name={user.name ?? ""}
+                  companyName={user.companyName ?? ""}
+                  vatNumber={user.vatNumber ?? ""}
+                  sdiCode={user.sdiCode ?? ""}
+                />
+              </>
             )}
           </div>
         </div>

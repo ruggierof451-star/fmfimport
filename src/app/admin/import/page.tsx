@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AdminImportForm } from "@/components/admin-import-form";
 import { AdminSupplierMatchRow } from "@/components/admin-supplier-match-row";
+import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Importazione catalogo" };
 
@@ -13,6 +14,7 @@ export default async function AdminImportPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Importazione catalogo</h1>
       <div className="alert info">
         Non esiste un&apos;API del fornitore collegata direttamente qui: questa è un&apos;importazione manuale da file CSV/XLSX che esporti dal

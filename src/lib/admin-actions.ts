@@ -127,6 +127,11 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
   return { ok: true, id: product.id };
 }
 
+/**
+ * Eliminazione "soft": il prodotto resta nel database (serve per non rompere lo
+ * storico ordini che lo referenziano) ma sparisce dal catalogo pubblico e dalla
+ * lista prodotti attivi. Recuperabile dalla sezione "Eliminati".
+ */
 export async function deleteProductAction(input: { id: string }): Promise<{ ok: boolean; error?: string }> {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Non autorizzato." };
@@ -135,10 +140,58 @@ export async function deleteProductAction(input: { id: string }): Promise<{ ok: 
   if (!existing) return { ok: false, error: "Prodotto non trovato." };
 
   await prisma.$transaction([
-    prisma.productChangeLog.deleteMany({ where: { productId: input.id } }),
-    prisma.supplierLink.updateMany({ where: { productId: input.id }, data: { productId: null } }),
-    prisma.orderItem.updateMany({ where: { productId: input.id }, data: { productId: null } }),
-    prisma.product.delete({ where: { id: input.id } }),
+    prisma.product.update({ where: { id: input.id }, data: { deletedAt: new Date(), published: false } }),
+    prisma.productChangeLog.create({
+      data: { productId: input.id, field: "Prodotto", oldValue: null, newValue: "Eliminato (soft)", changedBy: admin.email },
+    }),
+  ]);
+
+  revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function restoreProductAction(input: { id: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  await prisma.$transaction([
+    prisma.product.update({ where: { id: input.id }, data: { deletedAt: null } }),
+    prisma.productChangeLog.create({
+      data: { productId: input.id, field: "Prodotto", oldValue: "Eliminato (soft)", newValue: "Ripristinato", changedBy: admin.email },
+    }),
+  ]);
+
+  revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function archiveProductAction(input: { id: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  await prisma.$transaction([
+    prisma.product.update({ where: { id: input.id }, data: { archived: true, published: false } }),
+    prisma.productChangeLog.create({
+      data: { productId: input.id, field: "Prodotto", oldValue: null, newValue: "Archiviato", changedBy: admin.email },
+    }),
+  ]);
+
+  revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function unarchiveProductAction(input: { id: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  await prisma.$transaction([
+    prisma.product.update({ where: { id: input.id }, data: { archived: false, published: true } }),
+    prisma.productChangeLog.create({
+      data: { productId: input.id, field: "Prodotto", oldValue: "Archiviato", newValue: "Riattivato", changedBy: admin.email },
+    }),
   ]);
 
   revalidatePath("/admin/prodotti");

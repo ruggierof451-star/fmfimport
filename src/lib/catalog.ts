@@ -26,7 +26,7 @@ export interface ListMeta {
 }
 
 // Non trattiamo prodotti B-Grade: esclusi sempre dal catalogo pubblico, qualunque sia lo stato di pubblicazione.
-const PUBLISHED: Prisma.ProductWhereInput = { published: true, condition: "NEW" };
+const PUBLISHED: Prisma.ProductWhereInput = { published: true, condition: "NEW", archived: false, deletedAt: null };
 
 export const LIST_META: Record<string, ListMeta> = {
   "pokemon-jp": {
