@@ -1,0 +1,328 @@
+// FMF Import — schema dati
+// Tutti gli importi monetari sono interi in centesimi (Int, "...Cents") per evitare
+// errori di arrotondamento in virgola mobile. Le percentuali sono interi in millesimi
+// di punto percentuale ("...Bps", basis points: 3000 = 30,00%).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Game {
+  POKEMON
+  ONE_PIECE
+}
+
+enum Language {
+  JP
+  CN
+  KR
+}
+
+enum Condition {
+  NEW
+  B_GRADE
+}
+
+// Se il costo del fornitore è al netto o al lordo di IVA: definisce come il motore
+// prezzi deve trattare il valore memorizzato in supplierCostCents.
+enum CostVatTreatment {
+  NET_OF_VAT
+  GROSS_WITH_VAT
+}
+
+enum MatchStatus {
+  MATCHED // abbinato con certezza al fornitore (codice prodotto esatto)
+  NEEDS_REVIEW // abbinamento ambiguo, in attesa di revisione manuale
+  UNMATCHED // nessun prodotto fornitore corrispondente trovato
+  MANUAL // abbinamento confermato manualmente da un operatore
+}
+
+enum Role {
+  CUSTOMER
+  RESELLER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_CONFIRMED
+  AVAILABILITY_CHECK
+  TO_PROCURE
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  PAYPAL
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum SyncStatus {
+  SUCCESS
+  PARTIAL
+  ERROR
+}
+
+enum SyncTrigger {
+  MANUAL
+  SCHEDULED
+  IMPORT_FILE
+}
+
+model Product {
+  id String @id @default(cuid())
+
+  // Identificazione
+  supplierCode String? // codice prodotto del fornitore (Toreca), se disponibile
+  name         String // nome originale del fornitore
+  slug         String  @unique
+
+  game      Game
+  language  Language
+  category  String // bucket di catalogo: pokemon-jp, pokemon-cn, pokemon-kr, one-piece-jp, one-piece-cn, bgrade
+  setName   String
+  setCode   String?
+  type      String // Booster box, Slim box, Display, Tin, Deck, ...
+  condition Condition @default(NEW)
+
+  imageUrl String?
+
+  // Prezzo
+  supplierCostCents Int? // costo reale dal fornitore (null = non ancora noto)
+  costVatTreatment  CostVatTreatment @default(NET_OF_VAT)
+  costIsEstimated   Boolean          @default(true) // true finché non arriva un costo reale verificato
+  vatRateBps        Int              @default(2200) // aliquota IVA per il prezzo pubblico, configurabile per prodotto
+
+  // Disponibilità
+  stockQty            Int? // null = disponibilità non tracciata, 0 = esaurito, >0 = quantità nota
+  stockLastCheckedAt  DateTime?
+
+  published  Boolean @default(true)
+  isNew      Boolean @default(false)
+  isPreorder Boolean @default(false)
+
+  matchStatus MatchStatus @default(UNMATCHED)
+
+  supplierLinkId String?       @unique
+  supplierLink   SupplierLink?
+
+  orderItems  OrderItem[]
+  changeLogs  ProductChangeLog[]
+
+  createdAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([game, language, category])
+  @@index([published])
+}
+
+// Riga del catalogo fornitore (Toreca) importata da CSV/XLSX o da lettura pagina.
+// Serve come tabella "di appoggio" per l'abbinamento ai Product e per conservare
+// il dato grezzo del fornitore indipendentemente dal catalogo pubblicato.
+model SupplierLink {
+  id String @id @default(cuid())
+
+  supplierCode   String?
+  supplierName   String
+  costCents      Int?
+  costVatTreatment CostVatTreatment @default(NET_OF_VAT)
+  stockQty       Int?
+  sourceUrl      String?
+  lastSeenAt     DateTime @default(now())
+
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?  @unique
+
+  matchConfidence String? // "exact-code" | "normalized-name" | "manual" | null
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([supplierCode])
+}
+
+model ProductChangeLog {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  field     String
+  oldValue  String?
+  newValue  String?
+  changedBy String // email/id dell'operatore admin
+  changedAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model SyncLog {
+  id          String      @id @default(cuid())
+  trigger     SyncTrigger
+  source      String // es. "csv-import", "xlsx-import", "manual-edit"
+  status      SyncStatus
+  startedAt   DateTime    @default(now())
+  finishedAt  DateTime?
+  createdCount   Int @default(0)
+  updatedCount   Int @default(0)
+  unavailableCount Int @default(0)
+  errorCount     Int @default(0)
+  notes       String?
+  triggeredBy String? // email admin, o "system" per le pianificate
+
+  errors SyncError[]
+}
+
+model SyncError {
+  id          String   @id @default(cuid())
+  syncLog     SyncLog  @relation(fields: [syncLogId], references: [id])
+  syncLogId   String
+  identifier  String // codice o nome prodotto che ha causato l'errore
+  message     String
+  createdAt   DateTime @default(now())
+
+  @@index([syncLogId])
+}
+
+// Impostazioni del motore prezzi — riga singola, modificabile dall'area admin.
+model PricingSettings {
+  id Int @id @default(1)
+
+  marginBps             Int     @default(3000) // 30,00% ricarico ordinario
+  marginBulkBps         Int     @default(2000) // 20,00% ricarico oltre soglia quantità
+  bulkThresholdQty      Int     @default(10) // "oltre" questa quantità per articolo si applica il ricarico bulk
+  defaultVatRateBps     Int     @default(2200) // 22,00%
+  roundTo90Cents        Boolean @default(true) // arrotonda il prezzo pubblico a ,90
+  freeShippingThresholdCents Int @default(20000) // 200,00 €
+  standardShippingFeeCents   Int @default(790) // 7,90 € — [DA DEFINIRE]
+
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  name         String?
+  role         Role    @default(CUSTOMER)
+
+  companyName String?
+  vatNumber   String?
+  sdiCode     String?
+
+  addresses Address[]
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  label     String?
+  fullName  String
+  street    String
+  postalCode String
+  city      String
+  province  String
+  country   String  @default("IT")
+  phone     String?
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+
+  user       User?   @relation(fields: [userId], references: [id])
+  userId     String?
+  guestEmail String?
+
+  status        OrderStatus   @default(PENDING_PAYMENT)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Totali congelati al momento dell'ordine (sempre ricalcolati server-side)
+  subtotalCents Int
+  discountCents Int @default(0)
+  shippingCents Int
+  totalCents    Int
+
+  // Spedizione / fatturazione
+  shipName     String
+  shipStreet   String
+  shipPostal   String
+  shipCity     String
+  shipProvince String
+  shipCountry  String  @default("IT")
+  shipPhone    String?
+
+  invoiceRequested Boolean @default(false)
+  companyName      String?
+  vatNumber        String?
+  sdiCode          String?
+
+  customerNote String?
+
+  trackingCarrier String?
+  trackingNumber  String?
+
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  order   Order  @relation(fields: [orderId], references: [id])
+  orderId String
+
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+
+  // Snapshot al momento dell'ordine: non deve cambiare se il prodotto cambia dopo
+  nameSnapshot        String
+  unitPriceCentsSnapshot Int
+  supplierCostCentsSnapshot Int?
+  quantity            Int
+  lineTotalCents      Int
+
+  @@index([orderId])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  order     Order       @relation(fields: [orderId], references: [id])
+  orderId   String
+  status    OrderStatus
+  note      String?
+  changedBy String? // email admin, o "system"
+  changedAt DateTime    @default(now())
+
+  @@index([orderId])
+}

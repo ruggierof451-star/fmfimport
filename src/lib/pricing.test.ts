@@ -1,0 +1,153 @@
+import { describe, expect, it } from "vitest";
+import {
+  bulkPriceCents,
+  computeCartTotals,
+  netCostCents,
+  round90,
+  splitVat,
+  standardPriceCents,
+  unitPriceCentsForQty,
+  type PricingRules,
+  type ShippingRules,
+} from "./pricing";
+
+const RULES: PricingRules = {
+  marginBps: 3000, // 30%
+  marginBulkBps: 2000, // 20%
+  bulkThresholdQty: 10,
+  roundTo90Cents: true,
+};
+
+const SHIPPING: ShippingRules = {
+  freeShippingThresholdCents: 20000, // 200,00 €
+  standardShippingFeeCents: 790, // 7,90 €
+};
+
+describe("round90", () => {
+  it("rounds up to the smallest ,90 ending >= the value", () => {
+    expect(round90(4480)).toBe(4490); // 44,80 -> 44,90
+    expect(round90(4495)).toBe(4590); // 44,95 -> 45,90
+    expect(round90(4500)).toBe(4590); // 45,00 -> 45,90 (never equals a whole euro)
+    expect(round90(4490)).toBe(4490); // already exact -> unchanged
+    expect(round90(1000)).toBe(1090); // 10,00 -> 10,90
+  });
+
+  it("never rounds a price down below its pre-rounding value", () => {
+    for (const cents of [1, 50, 99, 100, 101, 4999, 5000, 5001, 999999]) {
+      expect(round90(cents)).toBeGreaterThanOrEqual(cents);
+    }
+  });
+});
+
+describe("netCostCents", () => {
+  it("returns the cost unchanged when already net of VAT", () => {
+    expect(netCostCents({ costCents: 7200, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 })).toBe(7200);
+  });
+
+  it("strips VAT when the supplier cost is gross", () => {
+    // 8784 gross at 22% VAT -> 7200 net (8784 / 1.22 = 7200)
+    expect(netCostCents({ costCents: 8784, costVatTreatment: "GROSS_WITH_VAT", vatRateBps: 2200 })).toBe(7200);
+  });
+});
+
+describe("standardPriceCents / bulkPriceCents", () => {
+  // Cost 72,00 € net, 30% margin, 22% VAT: 72 * 1.30 * 1.22 = 114.192 -> round to 11419 -> round90 -> 11490
+  it("applies margin then VAT, then rounds to ,90 (standard tier)", () => {
+    const price = standardPriceCents(
+      { costCents: 7200, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 },
+      RULES
+    );
+    expect(price).toBe(11490);
+  });
+
+  // Cost 72,00 € net, 20% margin, 22% VAT: 72 * 1.20 * 1.22 = 105.408 -> 10541 -> round90 -> 10590
+  it("applies the reduced bulk margin on the bulk tier", () => {
+    const price = bulkPriceCents(
+      { costCents: 7200, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 },
+      RULES
+    );
+    expect(price).toBe(10590);
+  });
+
+  it("the bulk price is always lower than the standard price for the same product", () => {
+    const product = { costCents: 4000, costVatTreatment: "NET_OF_VAT" as const, vatRateBps: 2200 };
+    expect(bulkPriceCents(product, RULES)).toBeLessThan(standardPriceCents(product, RULES));
+  });
+});
+
+describe("unitPriceCentsForQty — the >10 threshold", () => {
+  const product = { costCents: 7200, costVatTreatment: "NET_OF_VAT" as const, vatRateBps: 2200 };
+
+  it("uses the standard price at exactly the threshold quantity (10)", () => {
+    expect(unitPriceCentsForQty(product, RULES, 10)).toBe(standardPriceCents(product, RULES));
+  });
+
+  it("uses the bulk price only strictly above the threshold (11+)", () => {
+    expect(unitPriceCentsForQty(product, RULES, 11)).toBe(bulkPriceCents(product, RULES));
+  });
+
+  it("uses the standard price for quantity 1", () => {
+    expect(unitPriceCentsForQty(product, RULES, 1)).toBe(standardPriceCents(product, RULES));
+  });
+});
+
+describe("splitVat", () => {
+  it("splits a gross price into net + VAT at 22%", () => {
+    // 11490 gross at 22% -> net = 11490 / 1.22 = 9418.03... -> rounds to 9418, vat = 2072
+    const { netCents, vatCents } = splitVat(11490, 2200);
+    expect(netCents).toBe(9418);
+    expect(vatCents).toBe(2072);
+    expect(netCents + vatCents).toBe(11490);
+  });
+});
+
+describe("computeCartTotals", () => {
+  const cheapProduct = { costCents: 2000, costVatTreatment: "NET_OF_VAT" as const, vatRateBps: 2200 };
+  const expensiveProduct = { costCents: 10000, costVatTreatment: "NET_OF_VAT" as const, vatRateBps: 2200 };
+
+  it("charges standard shipping below the free-shipping threshold", () => {
+    const totals = computeCartTotals([{ product: cheapProduct, quantity: 1 }], RULES, SHIPPING);
+    expect(totals.qualifiesForFreeShipping).toBe(false);
+    expect(totals.shippingCents).toBe(SHIPPING.standardShippingFeeCents);
+    expect(totals.totalCents).toBe(totals.subtotalCents + SHIPPING.standardShippingFeeCents);
+  });
+
+  it("grants free shipping once the subtotal reaches the threshold", () => {
+    // standard price of expensiveProduct: 100 * 1.30 * 1.22 = 158.6 -> round90 -> 158,90; x2 = 317,80 >= 200
+    const totals = computeCartTotals([{ product: expensiveProduct, quantity: 2 }], RULES, SHIPPING);
+    expect(totals.subtotalCents).toBeGreaterThanOrEqual(SHIPPING.freeShippingThresholdCents);
+    expect(totals.qualifiesForFreeShipping).toBe(true);
+    expect(totals.shippingCents).toBe(0);
+    expect(totals.freeShippingRemainderCents).toBe(0);
+  });
+
+  it("charges nothing and ships free for an empty cart (no phantom shipping fee)", () => {
+    const totals = computeCartTotals([], RULES, SHIPPING);
+    expect(totals.subtotalCents).toBe(0);
+    expect(totals.shippingCents).toBe(0);
+    expect(totals.totalCents).toBe(0);
+  });
+
+  it("applies bulk pricing to an 11-unit line and reports the discount vs. standard pricing", () => {
+    const totals = computeCartTotals([{ product: cheapProduct, quantity: 11 }], RULES, SHIPPING);
+    const line = totals.lines[0];
+    expect(line.isBulkPricing).toBe(true);
+    expect(line.unitPriceCents).toBeLessThan(line.standardUnitPriceCents);
+    expect(totals.bulkDiscountCents).toBeGreaterThan(0);
+    expect(totals.subtotalCents).toBe(line.unitPriceCents * 11);
+  });
+
+  it("mixes a bulk line and a standard line correctly in the same cart", () => {
+    const totals = computeCartTotals(
+      [
+        { product: cheapProduct, quantity: 11 }, // bulk tier
+        { product: expensiveProduct, quantity: 2 }, // standard tier
+      ],
+      RULES,
+      SHIPPING
+    );
+    expect(totals.lines[0].isBulkPricing).toBe(true);
+    expect(totals.lines[1].isBulkPricing).toBe(false);
+    expect(totals.subtotalCents).toBe(totals.lines[0].lineTotalCents + totals.lines[1].lineTotalCents);
+  });
+});
