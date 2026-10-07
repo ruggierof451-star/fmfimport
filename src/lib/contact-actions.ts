@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendContactReplyNotice } from "@/lib/email";
 
 const contactSchema = z.object({
   email: z.string().email("Inserisci un'email valida."),
@@ -12,10 +13,8 @@ const contactSchema = z.object({
 export type ContactInput = z.infer<typeof contactSchema>;
 
 /**
- * Salva il messaggio nel database: senza un servizio email configurato, questo è il modo
- * affidabile per far arrivare le richieste del Centro assistenza — compaiono subito nella
- * dashboard admin (/admin/messaggi) invece di dipendere da un invio email esterno che qui
- * non è collegato a nessun provider reale.
+ * Salva il messaggio nel database (compare subito in /admin/messaggi) e invia una
+ * conferma di ricezione via email al cliente.
  */
 export async function submitContactMessageAction(input: ContactInput): Promise<{ ok: boolean; error?: string }> {
   const parsed = contactSchema.safeParse(input);
@@ -31,6 +30,8 @@ export async function submitContactMessageAction(input: ContactInput): Promise<{
       message: data.message,
     },
   });
+
+  sendContactReplyNotice(data.email).catch((err) => console.error("[contatti] invio conferma fallito:", err));
 
   return { ok: true };
 }

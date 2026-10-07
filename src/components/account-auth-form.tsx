@@ -52,7 +52,7 @@ export function AccountAuthForm() {
           </p>
           {resetUrl ? (
             <div className="alert info">
-              Invio email non ancora collegato: per ora ecco il link direttamente —{" "}
+              Non siamo riusciti a inviare l&apos;email in questo momento: usa questo link —{" "}
               <Link href={resetUrl}>{resetUrl}</Link>
             </div>
           ) : null}

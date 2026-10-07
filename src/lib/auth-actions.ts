@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 ora
 
@@ -109,12 +110,6 @@ export async function changePasswordAction(input: {
 
 const requestResetSchema = z.object({ email: z.string().email("Inserisci un'email valida.") });
 
-/**
- * Niente servizio email configurato: il link di reset viene ritornato direttamente
- * alla pagina invece di essere inviato via email. Funziona per l'uso reale, ma va
- * collegato a un provider email (es. Resend) prima del lancio pubblico — altrimenti
- * chiunque abbia accesso allo schermo di chi fa la richiesta vede anche il link.
- */
 export async function requestPasswordResetAction(
   input: { email: string }
 ): Promise<{ ok: boolean; error?: string; resetUrl?: string }> {
@@ -135,7 +130,13 @@ export async function requestPasswordResetAction(
     },
   });
 
-  return { ok: true, resetUrl: `/account/reimposta-password/${rawToken}` };
+  const resetPath = `/account/reimposta-password/${rawToken}`;
+  const resetUrl = `${process.env.SITE_URL || "http://localhost:3000"}${resetPath}`;
+  const emailResult = await sendPasswordResetEmail(email, resetUrl);
+
+  // Se il servizio email non è configurato o fallisce, mostriamo comunque il link a
+  // schermo come ripiego invece di bloccare l'utente fuori dal proprio account.
+  return { ok: true, resetUrl: emailResult.ok ? undefined : resetPath };
 }
 
 const resetPasswordSchema = z

@@ -6,6 +6,8 @@ import { getPricingSettings, toPricingRules, toShippingRules } from "@/lib/setti
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
+import { formatEuro } from "@/lib/pricing";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 /**
  * Crea un ordine. Il totale NON viene mai letto dal corpo della richiesta: viene
@@ -153,6 +155,18 @@ export async function POST(req: Request) {
     });
     return created;
   });
+
+  const customerEmail = session?.email ?? body.contact.email;
+  sendOrderConfirmationEmail({
+    to: customerEmail,
+    orderNumber: order.orderNumber,
+    totalFormatted: formatEuro(order.totalCents),
+    items: validLines.map(({ product, quantity }, i) => ({
+      name: cleanProductName(product.name),
+      quantity,
+      lineTotalFormatted: formatEuro(totals.lines[i].lineTotalCents),
+    })),
+  }).catch((err) => console.error("[checkout] invio email conferma fallito:", err));
 
   return NextResponse.json({
     orderId: order.id,

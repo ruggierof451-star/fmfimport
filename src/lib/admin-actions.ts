@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
+import { sendOrderStatusEmail } from "@/lib/email";
 
 const productUpdateSchema = z.object({
   id: z.string(),
@@ -353,7 +354,7 @@ export async function updateOrderStatusAction(input: {
   if (!admin) return { ok: false, error: "Non autorizzato." };
   if (!ORDER_STATUSES.includes(input.status)) return { ok: false, error: "Stato non valido." };
 
-  await prisma.$transaction([
+  const [updated] = await prisma.$transaction([
     prisma.order.update({
       where: { id: input.orderId },
       data: {
@@ -362,11 +363,24 @@ export async function updateOrderStatusAction(input: {
         trackingNumber: input.trackingNumber || undefined,
         paymentStatus: input.status === "PAYMENT_CONFIRMED" || ["PREPARING", "SHIPPED", "DELIVERED"].includes(input.status) ? "PAID" : undefined,
       },
+      include: { user: { select: { email: true } } },
     }),
     prisma.orderStatusHistory.create({
       data: { orderId: input.orderId, status: input.status, note: input.note, changedBy: admin.email },
     }),
   ]);
+
+  const customerEmail = updated.user?.email ?? updated.guestEmail;
+  if (customerEmail) {
+    sendOrderStatusEmail({
+      to: customerEmail,
+      orderNumber: updated.orderNumber,
+      status: updated.status,
+      trackingCarrier: updated.trackingCarrier,
+      trackingNumber: updated.trackingNumber,
+      orderId: updated.id,
+    }).catch((err) => console.error("[admin] invio email stato ordine fallito:", err));
+  }
 
   revalidatePath("/admin/ordini");
   revalidatePath(`/admin/ordini/${input.orderId}`);
