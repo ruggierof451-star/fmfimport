@@ -82,34 +82,39 @@ export default async function HomePage() {
           <div className="art">
             {heroCutouts.length >= 3 ? (
               <div className="hero-photos">
-                <svg className="orbit" viewBox="0 0 100 100" aria-hidden="true">
-                  <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.6" strokeDasharray="1.5 4" />
-                </svg>
-                <svg className="pokeball" viewBox="0 0 64 64" aria-hidden="true">
-                  <circle cx="32" cy="32" r="29" fill="#fff" stroke="#1A1A1A" strokeWidth="3" />
-                  <path d="M3 32h58" stroke="#1A1A1A" strokeWidth="3" />
-                  <path d="M32 3a29 29 0 0 1 29 29H3A29 29 0 0 1 32 3Z" fill="#C9A227" />
-                  <circle cx="32" cy="32" r="9" fill="#fff" stroke="#1A1A1A" strokeWidth="3" />
-                </svg>
-                <svg className="spark spark1" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 0 14 10 24 12 14 14 12 24 10 14 0 12 10 10Z" fill="#C9A227" />
-                </svg>
-                <svg className="spark spark2" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 0 14 10 24 12 14 14 12 24 10 14 0 12 10 10Z" fill="#C9A227" />
-                </svg>
-                <span className="badge-new">Novità</span>
-                {heroCutouts.map((p, i) => (
-                  <Link key={p.id} href={`/prodotto/${p.slug}`} className={`ph ph${i + 1}`}>
-                    <Image
-                      src={p.cutoutUrl}
-                      alt={cleanProductName(p.name)}
-                      fill
-                      sizes="300px"
-                      style={{ objectFit: "contain" }}
-                      unoptimized={p.cutoutUrl.startsWith("/products-cutout/")}
-                    />
-                  </Link>
-                ))}
+                <div className="glow" aria-hidden="true" />
+                <div className="ph ph-back ph1">
+                  <Image
+                    src={heroCutouts[0].cutoutUrl}
+                    alt={cleanProductName(heroCutouts[0].name)}
+                    fill
+                    sizes="240px"
+                    style={{ objectFit: "contain", objectPosition: "bottom" }}
+                    unoptimized={heroCutouts[0].cutoutUrl.startsWith("/products-cutout/")}
+                  />
+                </div>
+                <div className="ph ph-back ph3">
+                  <Image
+                    src={heroCutouts[2].cutoutUrl}
+                    alt={cleanProductName(heroCutouts[2].name)}
+                    fill
+                    sizes="240px"
+                    style={{ objectFit: "contain", objectPosition: "bottom" }}
+                    unoptimized={heroCutouts[2].cutoutUrl.startsWith("/products-cutout/")}
+                  />
+                </div>
+                <Link href={`/prodotto/${heroCutouts[1].slug}`} className="ph ph-front ph2">
+                  <Image
+                    src={heroCutouts[1].cutoutUrl}
+                    alt={cleanProductName(heroCutouts[1].name)}
+                    fill
+                    sizes="320px"
+                    style={{ objectFit: "contain", objectPosition: "bottom" }}
+                    unoptimized={heroCutouts[1].cutoutUrl.startsWith("/products-cutout/")}
+                    priority
+                  />
+                </Link>
+                <span className="hero-tag">Ultimi arrivi</span>
               </div>
             ) : null}
           </div>
