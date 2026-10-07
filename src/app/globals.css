@@ -27,16 +27,15 @@ h1,h2,h3{font-family:var(--f-display);font-weight:500;text-wrap:balance;margin:0
 .eyebrow{font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
 /* Header */
-.proto{background:var(--soft);color:var(--muted);font-size:12px;text-align:center;padding:7px 16px}
 .topbar{background:#000;color:#fff;font-size:13px}
 .topbar .wrap{display:flex;flex-wrap:wrap;gap:4px 28px;justify-content:center;padding-block:8px}
 .topbar b{color:#fff;font-weight:600}
 header.site{background:#fff;color:var(--ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:40;border-bottom:1px solid var(--line)}
 .hrow{display:flex;align-items:center;gap:16px;padding-block:14px;flex-wrap:wrap}
-.logo{flex:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 12px 5px;background:#000;text-decoration:none;line-height:1;border-radius:6px}
+.logo{flex:none;display:inline-flex;align-items:baseline;gap:7px;padding:0;background:none;text-decoration:none;line-height:1}
 .logo:hover{text-decoration:none}
-.logo b{font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:.14em;color:#fff}
-.logo span{font-size:8px;letter-spacing:.44em;color:var(--gold);font-weight:500;margin-left:.44em;margin-top:3px}
+.logo b{font-family:var(--f-display);font-weight:700;font-size:23px;letter-spacing:.04em;color:#111}
+.logo span{font-size:11px;letter-spacing:.3em;color:var(--gold);font-weight:600}
 .burger{flex:none;width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 10px;border-radius:8px}
 .burger:hover{background:var(--soft)}
 .burger span{display:block;height:2px;background:var(--ink);border-radius:2px}

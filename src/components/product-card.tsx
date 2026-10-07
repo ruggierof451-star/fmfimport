@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Product } from "@/generated/prisma";
-import { ProductArt } from "@/components/product-art";
+import { ProductImage } from "@/components/product-image";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { cleanProductName } from "@/lib/product-art";
 import { standardPriceCents, bulkPriceCents, formatEuro, type PricingRules } from "@/lib/pricing";
@@ -20,7 +20,7 @@ export function ProductCard({ product, rules }: { product: Product; rules: Prici
   return (
     <article className="card">
       <Link className="img" href={`/prodotto/${product.slug}`} tabIndex={-1} aria-hidden="true">
-        <ProductArt product={product} />
+        <ProductImage product={product} alt={cleanProductName(product.name)} sizes="(max-width: 640px) 45vw, 220px" />
         <span className="tags">
           {product.isNew ? <span className="tag gold">Nuovo</span> : null}
           {product.isPreorder ? <span className="tag">Preordine</span> : null}

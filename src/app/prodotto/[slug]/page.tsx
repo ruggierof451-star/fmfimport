@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { ProductArt } from "@/components/product-art";
+import { ProductImage } from "@/components/product-image";
 import { ProductCard } from "@/components/product-card";
 import { ProductBuyBox } from "@/components/product-buybox";
 import { getProductBySlug, getRelatedProducts, getTwinEditions, GAME_LABEL, LANG_LABEL } from "@/lib/catalog";
@@ -61,11 +61,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <section className="pp" style={{ marginTop: -24 }}>
           <div className="gal">
             <div className="main">
-              <ProductArt product={product} />
+              <ProductImage product={product} alt={cleanName} sizes="(max-width: 760px) 92vw, 460px" priority />
               <span className="lang" style={{ fontSize: 13 }}>
                 {product.language}
               </span>
-              <span className="note">Illustrazione · la foto reale arriverà dal catalogo</span>
+              {!product.imageUrl ? <span className="note">Illustrazione · la foto reale arriverà dal catalogo</span> : null}
             </div>
           </div>
           <div className="info">
@@ -174,12 +174,18 @@ function ProductTabs({ product }: { product: Awaited<ReturnType<typeof getProduc
       <div className="tabpane" style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <div>
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Descrizione</h3>
-          <p style={{ margin: "0 0 10px" }}>
-            {product.type} {product.condition === "B_GRADE" ? "B-Grade (confezione esterna con difetti estetici, contenuto sigillato)" : "originale sigillato"} dell&apos;espansione <b>{product.setName}</b>, {GAME_LABEL[product.game]} in edizione {LANG_LABEL[product.language].toLowerCase()}.
-          </p>
-          <p className="muted" style={{ margin: 0 }}>
-            Contenuto della confezione e descrizione completa verranno importati dalla scheda del fornitore.
-          </p>
+          {product.description ? (
+            <div className="prose" dangerouslySetInnerHTML={{ __html: product.description }} />
+          ) : (
+            <>
+              <p style={{ margin: "0 0 10px" }}>
+                {product.type} {product.condition === "B_GRADE" ? "B-Grade (confezione esterna con difetti estetici, contenuto sigillato)" : "originale sigillato"} dell&apos;espansione <b>{product.setName}</b>, {GAME_LABEL[product.game]} in edizione {LANG_LABEL[product.language].toLowerCase()}.
+              </p>
+              <p className="muted" style={{ margin: 0 }}>
+                Contenuto della confezione e descrizione completa verranno importati dalla scheda del fornitore.
+              </p>
+            </>
+          )}
         </div>
         <div>
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Dettagli</h3>

@@ -45,3 +45,29 @@ describe("matchSupplierRow", () => {
     expect(result).toEqual({ kind: "none" });
   });
 });
+
+describe("matchSupplierRow — B-Grade vs regular disambiguation", () => {
+  const pair: MatchCandidate[] = [
+    { id: "new1", supplierCode: "WANDERER-BOX_1", name: "Night Wanderer Booster Box JP", condition: "NEW" },
+    { id: "bg1", supplierCode: "BGRADE-WANDERERJP_1", name: "[B-GRADE] Night Wanderer Booster Box JP", condition: "B_GRADE" },
+  ];
+
+  it("resolves to the B-grade candidate when the supplier row's code signals B-GRADE", () => {
+    const result = matchSupplierRow({ supplierCode: "BGRADE-WANDERERJP_1", name: "[B-GRADE] Night Wanderer Booster Box JP" }, pair);
+    expect(result).toEqual({ kind: "exact_code", productId: "bg1" });
+  });
+
+  it("resolves to the regular candidate when the supplier row has no B-GRADE signal", () => {
+    const result = matchSupplierRow({ supplierCode: "WANDERER-BOX_1", name: "Night Wanderer Booster Box JP" }, pair);
+    expect(result).toEqual({ kind: "exact_code", productId: "new1" });
+  });
+
+  it("still reports ambiguous when conditions are identical (a real duplicate)", () => {
+    const dupPair: MatchCandidate[] = [
+      { id: "x1", supplierCode: null, name: "Some Box JP", condition: "NEW" },
+      { id: "x2", supplierCode: null, name: "Some Box JP", condition: "NEW" },
+    ];
+    const result = matchSupplierRow({ name: "Some Box JP" }, dupPair);
+    expect(result.kind).toBe("ambiguous");
+  });
+});

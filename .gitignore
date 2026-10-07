@@ -40,6 +40,10 @@ yarn-error.log*
 *.csv
 *.xlsx
 
+# dump grezzo dei dati fornitore raccolti dal browser autenticato (prezzi B2B):
+# mai committarlo, è stato usato solo per popolare il database una tantum.
+/prisma/toreca-harvest
+
 # vercel
 .vercel
 

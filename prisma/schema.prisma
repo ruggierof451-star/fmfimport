@@ -102,7 +102,8 @@ model Product {
   type      String // Booster box, Slim box, Display, Tin, Deck, ...
   condition Condition @default(NEW)
 
-  imageUrl String?
+  imageUrl    String?
+  description String? // descrizione HTML dal fornitore, quando disponibile
 
   // Prezzo
   supplierCostCents Int? // costo reale dal fornitore (null = non ancora noto)

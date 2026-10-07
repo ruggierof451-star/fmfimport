@@ -8,10 +8,6 @@ export async function Header({ activeKey = "" }: { activeKey?: string }) {
   const settings = await getPricingSettings();
   return (
     <>
-      <div className="proto">
-        Catalogo dai titoli pubblici Toreca Import · i prodotti senza costo fornitore reale mostrano un prezzo
-        indicativo finché non viene collegato il listino
-      </div>
       <div className="topbar">
         <div className="wrap">
           <span>
