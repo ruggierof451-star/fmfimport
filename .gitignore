@@ -44,6 +44,14 @@ yarn-error.log*
 # mai committarlo, è stato usato solo per popolare il database una tantum.
 /prisma/toreca-harvest
 
+# dump completo del database (password hash, dati ordini/clienti): usato solo una
+# tantum per la migrazione SQLite -> Postgres, mai da committare.
+/data-export
+
+# vecchie migrazioni SQLite archiviate durante il passaggio a Postgres: tenute solo
+# in locale per riferimento, non fanno piu' parte della cronologia migrazioni attiva.
+/prisma/migrations_sqlite_archive
+
 # vercel
 .vercel
 
