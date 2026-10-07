@@ -31,7 +31,6 @@ export function CatalogFilters({
   const langs = searchParams.getAll("lang");
   const types = searchParams.getAll("type");
   const price = searchParams.get("price") ?? "all";
-  const condition = searchParams.get("condition") ?? "all";
 
   function updateParams(mutate: (p: URLSearchParams) => void) {
     const p = new URLSearchParams(searchParams.toString());
@@ -52,7 +51,7 @@ export function CatalogFilters({
     updateParams((p) => p.set(key, value));
   }
 
-  const hasFilters = games.length || langs.length || types.length || price !== "all" || condition !== "all";
+  const hasFilters = games.length || langs.length || types.length || price !== "all";
 
   return (
     <>
@@ -106,19 +105,6 @@ export function CatalogFilters({
             <label key={k}>
               <input type="radio" name="pr" checked={price === k} onChange={() => setSingle("price", k)} />
               {v[2]}
-            </label>
-          ))}
-        </fieldset>
-        <fieldset>
-          <legend>Condizione</legend>
-          {[
-            ["all", "Tutti"],
-            ["no", "Solo confezione perfetta"],
-            ["yes", "Solo B-Grade"],
-          ].map(([k, l]) => (
-            <label key={k}>
-              <input type="radio" name="bg" checked={condition === k} onChange={() => setSingle("condition", k)} />
-              {l}
             </label>
           ))}
         </fieldset>

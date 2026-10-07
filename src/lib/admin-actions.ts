@@ -7,6 +7,16 @@ import { requireAdmin } from "@/lib/auth";
 
 const productUpdateSchema = z.object({
   id: z.string(),
+  name: z.string().min(1).optional(),
+  category: z.enum(["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]).optional(),
+  game: z.enum(["POKEMON", "ONE_PIECE"]).optional(),
+  language: z.enum(["JP", "CN", "KR"]).optional(),
+  setName: z.string().optional(),
+  type: z.string().optional(),
+  imageUrl: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  isNew: z.boolean().optional(),
+  isPreorder: z.boolean().optional(),
   supplierCode: z.string().optional(),
   supplierCostCents: z.number().int().min(0).nullable(),
   costVatTreatment: z.enum(["NET_OF_VAT", "GROSS_WITH_VAT"]),
@@ -20,6 +30,16 @@ const productUpdateSchema = z.object({
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
 
 const FIELD_LABELS: Record<string, string> = {
+  name: "Nome prodotto",
+  category: "Categoria",
+  game: "Gioco",
+  language: "Lingua",
+  setName: "Nome set",
+  type: "Tipo",
+  imageUrl: "Immagine",
+  description: "Descrizione",
+  isNew: "In evidenza (novità)",
+  isPreorder: "Preordine",
   supplierCode: "Codice fornitore",
   supplierCostCents: "Costo fornitore (centesimi)",
   costVatTreatment: "Trattamento IVA costo",
@@ -29,6 +49,102 @@ const FIELD_LABELS: Record<string, string> = {
   published: "Pubblicato",
   matchStatus: "Stato abbinamento",
 };
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const productCreateSchema = z.object({
+  name: z.string().min(1, "Il nome è obbligatorio."),
+  category: z.enum(["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]),
+  setName: z.string().min(1, "Il nome del set è obbligatorio."),
+  type: z.string().min(1, "Il tipo è obbligatorio."),
+  imageUrl: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  supplierCostCents: z.number().int().min(0).nullable(),
+  vatRateBps: z.number().int().min(0).max(10000),
+  stockQty: z.number().int().min(0).nullable(),
+  published: z.boolean(),
+  isNew: z.boolean(),
+});
+
+const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "JP" | "CN" | "KR" }> = {
+  "pokemon-jp": { game: "POKEMON", language: "JP" },
+  "pokemon-cn": { game: "POKEMON", language: "CN" },
+  "pokemon-kr": { game: "POKEMON", language: "KR" },
+  "one-piece-jp": { game: "ONE_PIECE", language: "JP" },
+  "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
+};
+
+export async function createProductAction(input: z.infer<typeof productCreateSchema>): Promise<{ ok: boolean; error?: string; id?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const parsed = productCreateSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
+  const data = parsed.data;
+  const { game, language } = CATEGORY_TO_GAME_LANG[data.category];
+
+  let slug = slugify(data.name);
+  if (!slug) slug = `prodotto-${Date.now()}`;
+  const existingSlug = await prisma.product.findUnique({ where: { slug } });
+  if (existingSlug) slug = `${slug}-${Date.now().toString(36)}`;
+
+  const product = await prisma.product.create({
+    data: {
+      name: data.name,
+      slug,
+      game,
+      language,
+      category: data.category,
+      setName: data.setName,
+      type: data.type,
+      condition: "NEW",
+      imageUrl: data.imageUrl || null,
+      description: data.description || null,
+      supplierCostCents: data.supplierCostCents,
+      costIsEstimated: data.supplierCostCents == null,
+      vatRateBps: data.vatRateBps,
+      stockQty: data.stockQty,
+      stockLastCheckedAt: data.stockQty != null ? new Date() : null,
+      published: data.published,
+      isNew: data.isNew,
+      matchStatus: "MANUAL",
+    },
+  });
+
+  await prisma.productChangeLog.create({
+    data: { productId: product.id, field: "Prodotto", oldValue: null, newValue: "Creato manualmente dall'admin", changedBy: admin.email },
+  });
+
+  revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
+  return { ok: true, id: product.id };
+}
+
+export async function deleteProductAction(input: { id: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const existing = await prisma.product.findUnique({ where: { id: input.id } });
+  if (!existing) return { ok: false, error: "Prodotto non trovato." };
+
+  await prisma.$transaction([
+    prisma.productChangeLog.deleteMany({ where: { productId: input.id } }),
+    prisma.supplierLink.updateMany({ where: { productId: input.id }, data: { productId: null } }),
+    prisma.orderItem.updateMany({ where: { productId: input.id }, data: { productId: null } }),
+    prisma.product.delete({ where: { id: input.id } }),
+  ]);
+
+  revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
 
 export async function updateProductAction(input: ProductUpdateInput): Promise<{ ok: boolean; error?: string }> {
   const admin = await requireAdmin();
@@ -43,8 +159,9 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
 
   const changeRows: { field: string; oldValue: string | null; newValue: string | null }[] = [];
   for (const key of Object.keys(FIELD_LABELS) as (keyof typeof FIELD_LABELS)[]) {
-    const oldV = (existing as unknown as Record<string, unknown>)[key];
     const newV = (data as unknown as Record<string, unknown>)[key];
+    if (newV === undefined) continue; // campo non incluso in questo salvataggio
+    const oldV = (existing as unknown as Record<string, unknown>)[key];
     if (String(oldV) !== String(newV)) {
       changeRows.push({ field: FIELD_LABELS[key], oldValue: oldV == null ? null : String(oldV), newValue: newV == null ? null : String(newV) });
     }
@@ -54,6 +171,16 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
     prisma.product.update({
       where: { id: data.id },
       data: {
+        name: data.name,
+        category: data.category,
+        game: data.game,
+        language: data.language,
+        setName: data.setName,
+        type: data.type,
+        imageUrl: data.imageUrl === undefined ? undefined : data.imageUrl || null,
+        description: data.description === undefined ? undefined : data.description || null,
+        isNew: data.isNew,
+        isPreorder: data.isPreorder,
         supplierCode: data.supplierCode || null,
         supplierCostCents: data.supplierCostCents,
         costVatTreatment: data.costVatTreatment,
@@ -74,6 +201,7 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
 
   revalidatePath("/admin/prodotti");
   revalidatePath(`/admin/prodotti/${data.id}`);
+  revalidatePath("/", "layout"); // aggiorna subito catalogo, categorie e pagina prodotto pubblici
   return { ok: true };
 }
 
@@ -149,6 +277,7 @@ export async function manualMatchSupplierLinkAction(input: { supplierLinkId: str
 
   revalidatePath("/admin/import");
   revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

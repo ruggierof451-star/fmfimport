@@ -15,8 +15,8 @@ export default async function AdminImportPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Importazione catalogo</h1>
       <div className="alert info">
-        Non esiste un&apos;API Toreca collegata: questa è un&apos;importazione manuale da file CSV/XLSX che esporti dal
-        tuo account fornitore. Abbina prima per codice prodotto esatto; i casi ambigui restano in attesa di revisione
+        Non esiste un&apos;API del fornitore collegata direttamente qui: questa è un&apos;importazione manuale da file CSV/XLSX che esporti dal
+        tuo account fornitore/magazzino. Abbina prima per codice prodotto esatto; i casi ambigui restano in attesa di revisione
         qui sotto e NON modificano automaticamente prezzi o scorte.
       </div>
 

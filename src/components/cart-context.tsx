@@ -16,6 +16,7 @@ export interface QuoteLine {
   quantity: number;
   unitPriceCents: number;
   standardUnitPriceCents: number;
+  bulkUnitPriceCents: number;
   lineTotalCents: number;
   isBulkPricing: boolean;
   isEstimatedCost: boolean;

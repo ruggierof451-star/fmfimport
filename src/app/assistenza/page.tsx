@@ -20,8 +20,7 @@ export default async function AssistenzaPage() {
       `È gratuita per ordini da ${formatEuro(settings.freeShippingThresholdCents)} in su. Sotto questa soglia il costo è indicato nel carrello prima del pagamento.`,
     ],
     ["Che differenza c'è tra giapponese, cinese e coreano?", "Sono tutte carte ufficiali. Cambiano la lingua, la composizione delle buste e spesso il prezzo. In ogni scheda trovi la lingua indicata chiaramente."],
-    ["Cosa significa B-Grade?", "La confezione esterna ha difetti estetici (ammaccature, segni), il contenuto è originale e sigillato. Per questo il prezzo è più basso."],
-    ["Posso restituire un prodotto?", "Sì, hai 14 giorni dalla consegna per esercitare il diritto di recesso. Trovi la procedura nella pagina Resi e recesso."],
+    ["Posso restituire un prodotto?", "Sì, entro 7 giorni dalla consegna se il prodotto risulta danneggiato o mancante. Contattaci dal Centro assistenza con il numero d'ordine. Trovi i dettagli nella pagina Resi e recesso."],
   ];
 
   return (

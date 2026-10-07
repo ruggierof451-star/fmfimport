@@ -13,7 +13,6 @@ export const NAV: { key: string; label: string }[] = [
   { key: "pokemon-kr", label: "Pokémon KR" },
   { key: "one-piece-jp", label: "One Piece JP" },
   { key: "one-piece-cn", label: "One Piece CN" },
-  { key: "bgrade", label: "B-Grade" },
 ];
 
 export interface ListMeta {
@@ -26,7 +25,8 @@ export interface ListMeta {
   segment?: { key: string; label: string }[];
 }
 
-const PUBLISHED: Prisma.ProductWhereInput = { published: true };
+// Non trattiamo prodotti B-Grade: esclusi sempre dal catalogo pubblico, qualunque sia lo stato di pubblicazione.
+const PUBLISHED: Prisma.ProductWhereInput = { published: true, condition: "NEW" };
 
 export const LIST_META: Record<string, ListMeta> = {
   "pokemon-jp": {
@@ -105,15 +105,7 @@ export const LIST_META: Record<string, ListMeta> = {
     description:
       "Mostriamo solo ribassi reali, con il prezzo più basso degli ultimi 30 giorni accanto allo sconto.",
     where: { id: "__none__" },
-    emptyFallbackMessage:
-      "Nessuna offerta attiva in questo momento. I prodotti B-Grade (confezione esterna con difetti estetici, contenuto sigillato) hanno già un prezzo ridotto.",
-    fallbackWhere: { condition: "B_GRADE" },
-  },
-  bgrade: {
-    title: "B-Grade",
-    description:
-      "Prodotti con difetti estetici alla confezione esterna (ammaccature, segni), contenuto originale e sigillato. Prezzo ridotto.",
-    where: { category: "bgrade" },
+    emptyFallbackMessage: "Nessuna offerta attiva in questo momento.",
   },
 };
 
@@ -122,7 +114,6 @@ export interface CatalogFilters {
   langs?: string[];
   types?: string[];
   priceBand?: "all" | "a" | "b" | "c" | "d";
-  condition?: "all" | "no" | "yes";
   sort?: "rel" | "asc" | "desc" | "name";
   q?: string;
   page?: number;
@@ -172,8 +163,6 @@ export async function listCatalog(key: string, filters: CatalogFilters) {
     ...(filters.games?.length ? { game: { in: filters.games.map((g) => g.toUpperCase()) as Game[] } } : {}),
     ...(filters.langs?.length ? { language: { in: filters.langs.map((l) => l.toUpperCase()) as Language[] } } : {}),
     ...(filters.types?.length ? { type: { in: filters.types } } : {}),
-    ...(filters.condition === "no" ? { condition: "NEW" } : {}),
-    ...(filters.condition === "yes" ? { condition: "B_GRADE" } : {}),
   };
 
   let where: Prisma.ProductWhereInput = { AND: [PUBLISHED, meta.where, combinable] };

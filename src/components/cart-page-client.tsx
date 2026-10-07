@@ -48,7 +48,7 @@ export function CartPageClient() {
                       · <b className="ok">prezzo quantità</b>
                     </>
                   ) : (
-                    <span className="muted"> · oltre {quote.bulkThresholdQty} pz: {formatEuro(line.standardUnitPriceCents)} → sconto automatico</span>
+                    <span className="muted"> · oltre {quote.bulkThresholdQty} pz: {formatEuro(line.bulkUnitPriceCents)} → sconto automatico</span>
                   )}
                 </span>
               </div>

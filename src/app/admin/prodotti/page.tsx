@@ -29,12 +29,17 @@ export default async function AdminProductsPage({
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <h1 style={{ fontSize: 26, fontWeight: 600 }}>Prodotti ({products.length})</h1>
-        <form style={{ display: "flex", gap: 8 }}>
-          <input className="in" name="q" defaultValue={sp.q ?? ""} placeholder="Cerca per nome…" style={{ width: 260 }} />
-          <button className="btn btn-dark btn-sm" type="submit">
-            Cerca
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <form style={{ display: "flex", gap: 8 }}>
+            <input className="in" name="q" defaultValue={sp.q ?? ""} placeholder="Cerca per nome…" style={{ width: 260 }} />
+            <button className="btn btn-dark btn-sm" type="submit">
+              Cerca
+            </button>
+          </form>
+          <Link href="/admin/prodotti/nuovo" className="btn btn-sm" style={{ background: "var(--gold)", color: "#000" }}>
+            + Nuovo prodotto
+          </Link>
+        </div>
       </div>
 
       <div className="admin-card" style={{ padding: 0, overflowX: "auto" }}>

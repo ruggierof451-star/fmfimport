@@ -16,10 +16,7 @@ const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "pokemon-kr", label: "Pokémon KR" },
   { key: "one-piece-jp", label: "One Piece JP" },
   { key: "one-piece-cn", label: "One Piece CN" },
-  { key: "bgrade", label: "B-Grade" },
 ];
-
-const CATEGORY_TILES = ["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn", "bgrade"];
 
 export default async function HomePage() {
   const settings = await getPricingSettings();
@@ -31,20 +28,6 @@ export default async function HomePage() {
       ...s,
       items: await prisma.product.findMany({ where: { AND: [{ published: true }, LIST_META[s.key].where] }, take: 5 }),
     }))
-  );
-
-  const tiles = await Promise.all(
-    CATEGORY_TILES.map(async (key) => {
-      const meta = LIST_META[key];
-      const [count, cover] = await Promise.all([
-        prisma.product.count({ where: { AND: [{ published: true }, meta.where] } }),
-        prisma.product.findFirst({
-          where: { AND: [{ published: true }, meta.where, { imageUrl: { not: null } }] },
-          orderBy: { isNew: "desc" },
-        }),
-      ]);
-      return { key, meta, count, cover };
-    })
   );
 
   // Tre foto reali per la vetrina dell'hero (una per gioco/edizione diversa quando possibile).
@@ -99,7 +82,7 @@ export default async function HomePage() {
                       alt={cleanProductName(p.name)}
                       fill
                       sizes="300px"
-                      style={{ objectFit: "contain", background: "#FBFBFB" }}
+                      style={{ objectFit: "contain" }}
                     />
                   </Link>
                 ))}
@@ -131,31 +114,6 @@ export default async function HomePage() {
       </section>
 
       <main className="wrap page">
-        <section className="sec" aria-labelledby="cats">
-          <div className="sechead">
-            <h2 id="cats">Categorie</h2>
-          </div>
-          <div className="catgrid">
-            {tiles.map((t) => (
-              <Link key={t.key} className="cat" href={`/${t.key}`}>
-                {t.cover?.imageUrl ? (
-                  <Image
-                    className="photo"
-                    src={t.cover.imageUrl}
-                    alt=""
-                    fill
-                    sizes="(max-width: 640px) 100vw, 30vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                ) : null}
-                <span className="c">{t.count} prodotti</span>
-                <span className="n">{t.meta.title}</span>
-                <span className="d">{t.meta.description.split(".")[0]}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         {sections
           .filter((s) => s.items.length > 0)
           .map((s) => (

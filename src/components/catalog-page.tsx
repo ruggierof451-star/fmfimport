@@ -12,7 +12,6 @@ export interface CatalogSearchParams {
   lang?: string | string[];
   type?: string | string[];
   price?: string;
-  condition?: string;
   sort?: string;
   page?: string;
   q?: string;
@@ -29,7 +28,6 @@ export async function CatalogPage({ listKey, searchParams }: { listKey: string; 
     langs: toArray(searchParams.lang),
     types: toArray(searchParams.type),
     priceBand: (searchParams.price as Filters["priceBand"]) ?? "all",
-    condition: (searchParams.condition as Filters["condition"]) ?? "all",
     sort: (searchParams.sort as Filters["sort"]) ?? "rel",
     q: searchParams.q,
     page: Number(searchParams.page ?? "1") || 1,

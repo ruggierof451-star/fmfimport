@@ -72,7 +72,7 @@ async function main() {
   await prisma.supplierLink.deleteMany({ where: { productId: null } });
 
   const syncLog = await prisma.syncLog.create({
-    data: { trigger: "MANUAL", source: "toreca-account-live-browse", status: "SUCCESS", triggeredBy: "ruggierof451@gmail.com" },
+    data: { trigger: "MANUAL", source: "fornitore-account-live-browse", status: "SUCCESS", triggeredBy: "ruggierof451@gmail.com" },
   });
 
   let updated = 0;

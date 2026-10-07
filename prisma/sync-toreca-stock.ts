@@ -93,14 +93,14 @@ async function main() {
   }
 
   console.log(
-    `Spubblicati (esauriti): ${madeUnavailable} · Spubblicati (non più su Toreca): ${noLongerListed} · ` +
+    `Spubblicati (esauriti): ${madeUnavailable} · Spubblicati (non più a magazzino): ${noLongerListed} · ` +
       `Ripubblicati: ${restored} · Quantità aggiornate: ${qtyUpdated}`
   );
 
   const syncLog = await prisma.syncLog.create({
     data: {
       trigger: "MANUAL",
-      source: "toreca-account-live-browse-stock",
+      source: "fornitore-account-live-browse-stock",
       status: "SUCCESS",
       triggeredBy: "ruggierof451@gmail.com",
       startedAt: new Date(),

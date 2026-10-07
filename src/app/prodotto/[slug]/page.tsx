@@ -140,9 +140,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <span className="muted">Da distribuzione autorizzata</span>
               </div>
               <div>
-                <b>Recesso 14 giorni</b>
+                <b>Reso 7 giorni</b>
                 <span className="muted">
-                  <Link href="/resi">Come funziona</Link>
+                  Se danneggiato o mancante · <Link href="/resi">Come funziona</Link>
                 </span>
               </div>
             </div>
@@ -215,7 +215,7 @@ function ProductTabs({ product }: { product: Awaited<ReturnType<typeof getProduc
           <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
             <li>Spedizione tracciata; il numero di tracking arriva via email e nell&apos;area ordini.</li>
             <li>
-              Diritto di recesso entro 14 giorni dalla consegna. <Link href="/resi">Leggi le condizioni</Link>.
+              Reso entro 7 giorni dalla consegna solo per prodotti danneggiati o mancanti. <Link href="/resi">Leggi le condizioni</Link>.
             </li>
           </ul>
         </div>

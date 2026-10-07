@@ -180,7 +180,10 @@ export function buildInfoPages(opts: {
           <h3>4. Spedizione</h3>
           <p>Gratuita sopra {freeShip}. Imballaggio rinforzato e tracking via email.</p>
           <h3>5. Dopo l&apos;acquisto</h3>
-          <p>Trovi stato dell&apos;ordine e tracking nella tua area account. Hai 14 giorni di tempo per il recesso.</p>
+          <p>
+            Trovi stato dell&apos;ordine e tracking nella tua area account. Hai 7 giorni di tempo per segnalare un
+            reso in caso di prodotto danneggiato o mancante.
+          </p>
         </>
       ),
     },

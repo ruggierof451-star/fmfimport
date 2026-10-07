@@ -51,7 +51,7 @@ describe("netCostCents", () => {
 });
 
 describe("standardPriceCents / bulkPriceCents — price = cost x margin, no VAT added", () => {
-  // Cost 135,77 € (real Toreca cost), 30% margin: 135.77 * 1.30 = 176.501 -> 17650 -> round90 -> 17690
+  // Cost 135,77 € (real supplier cost), 30% margin: 135.77 * 1.30 = 176.501 -> 17650 -> round90 -> 17690
   it("applies the 30% margin and rounds to ,90 (standard tier)", () => {
     const price = standardPriceCents(
       { costCents: 13577, costVatTreatment: "NET_OF_VAT", vatRateBps: 2200 },

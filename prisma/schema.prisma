@@ -90,7 +90,7 @@ model Product {
   id String @id @default(cuid())
 
   // Identificazione
-  supplierCode String? // codice prodotto del fornitore (Toreca), se disponibile
+  supplierCode String? // codice prodotto del fornitore, se disponibile
   name         String // nome originale del fornitore
   slug         String  @unique
 

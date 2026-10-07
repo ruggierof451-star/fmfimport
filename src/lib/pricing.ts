@@ -2,7 +2,7 @@
  * Motore prezzi — FMF Import.
  *
  * Regole:
- *  - Prezzo pubblico = costo fornitore (Toreca) × 1,30 (ricarico ordinario 30%).
+ *  - Prezzo pubblico = costo fornitore × 1,30 (ricarico ordinario 30%).
  *  - Prezzo quantità = costo fornitore × 1,20 (ricarico 20%) quando la quantità DELLO
  *    STESSO ARTICOLO nel carrello è SUPERIORE alla soglia (default 10, quindi da 11 pezzi).
  *  - I prezzi del sito sono SEMPRE IVA ESCLUSA: nessuna IVA viene aggiunta al prezzo
@@ -102,6 +102,7 @@ export interface CartLineInput {
 export interface CartLineResult {
   unitPriceCents: number;
   standardUnitPriceCents: number;
+  bulkUnitPriceCents: number;
   lineTotalCents: number;
   isBulkPricing: boolean;
 }
@@ -129,10 +130,12 @@ export function computeCartTotals(
 ): CartTotals {
   const lineResults: CartLineResult[] = lines.map(({ product, quantity }) => {
     const standardUnitPriceCents = standardPriceCents(product, rules);
+    const bulkUnitPriceCents = bulkPriceCents(product, rules);
     const unitPriceCents = unitPriceCentsForQty(product, rules, quantity);
     return {
       unitPriceCents,
       standardUnitPriceCents,
+      bulkUnitPriceCents,
       lineTotalCents: unitPriceCents * quantity,
       isBulkPricing: quantity > rules.bulkThresholdQty,
     };

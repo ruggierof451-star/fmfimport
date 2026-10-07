@@ -78,6 +78,7 @@ export async function POST(req: Request) {
     quantity,
     unitPriceCents: totals.lines[i].unitPriceCents,
     standardUnitPriceCents: totals.lines[i].standardUnitPriceCents,
+    bulkUnitPriceCents: totals.lines[i].bulkUnitPriceCents,
     lineTotalCents: totals.lines[i].lineTotalCents,
     isBulkPricing: totals.lines[i].isBulkPricing,
     isEstimatedCost: product.costIsEstimated,

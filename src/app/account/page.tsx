@@ -52,6 +52,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <Link href="/account?tab=data" className={activeTab === "data" ? "on" : ""}>
               Dati e fatturazione
             </Link>
+            {user.role === "ADMIN" ? (
+              <Link href="/admin" style={{ color: "var(--gold)", fontWeight: 700 }}>
+                Dashboard Admin →
+              </Link>
+            ) : null}
             <LogoutButton />
           </nav>
           <div className="content">
