@@ -54,7 +54,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <>
       <Header />
       <main className="wrap page" style={{ gap: 44, paddingTop: 20 }}>
-        <nav className="crumbs" aria-label="Percorso" style={{ color: "var(--muted)" }}>
+        <nav className="crumbs pp-crumbs" aria-label="Percorso" style={{ color: "var(--muted)" }}>
           <Link href="/" style={{ color: "var(--gold-ink)" }}>
             Home
           </Link>

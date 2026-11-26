@@ -222,7 +222,11 @@ textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
 @media (min-width:761px){.ftoggle{display:none}}
 
 /* Product page */
-.pp{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+/* Foto e colonna acquisto formano un blocco unico e bilanciato, centrato nella pagina:
+   foto ≤420px, info ≤540px, centrati in verticale l'uno rispetto all'altro. Il percorso
+   (.pp-crumbs) si allinea allo stesso blocco. */
+.pp,.pp-crumbs{width:100%;max-width:1010px;margin-inline:auto}
+.pp{display:flex;flex-wrap:wrap;gap:36px 50px;align-items:center}
 /* Foto prodotto contenuta: su desktop la colonna immagine non supera i 420px (prima si
    allargava fino a ~620px e la foto dominava la scheda); su schermi stretti, quando la
    colonna info va sotto, il riquadro resta centrato e al massimo 300px (media query
@@ -231,9 +235,9 @@ textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
 .pp .main{position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:12px;overflow:hidden;max-width:100%}
 .pp .main svg{width:100%;height:100%;display:block}
 .pp .main img{filter:drop-shadow(0 10px 16px rgba(0,0,0,.12))}
-@media (max-width:900px){.pp .gal{flex-basis:100%}.pp .main{width:100%;max-width:300px;margin-inline:auto}}
+@media (max-width:900px){.pp .gal{flex-basis:100%}.pp .info{max-width:none}.pp .main{width:100%;max-width:300px;margin-inline:auto}}
 .pp .note{position:absolute;bottom:12px;left:14px;font-size:12px;color:var(--muted)}
-.pp .info{flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.pp .info{flex:1 1 400px;max-width:540px;min-width:0;display:flex;flex-direction:column;gap:14px}
 .pp h1{font-size:clamp(23px,2.6vw,30px);font-weight:500}
 .pills{display:flex;gap:8px;flex-wrap:wrap}
 .pill{font-size:12px;font-weight:400;padding:4px 11px;border-radius:999px;background:var(--soft)}
@@ -252,6 +256,17 @@ textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
 .qty input{width:52px;height:100%;border:0;text-align:center;font-size:17px;font-weight:800;outline:none;font-variant-numeric:tabular-nums}
 .buyrow{display:flex;gap:12px;flex-wrap:wrap}
 .buyrow .btn{flex:1 1 220px;height:50px;font-size:16px}
+/* Box acquisto più compatto nella scheda prodotto: prezzo, quantità e pulsante in
+   proporzione alla foto invece che a tutta larghezza. */
+.pp .buybox{padding:18px;gap:14px}
+.pp .bigprice{font-size:28px}
+.pp .qty{height:44px}
+.pp .qty button{width:40px;font-size:20px}
+.pp .qty input{width:44px;font-size:16px}
+.pp .buyrow{gap:10px}
+.pp .buyrow .btn{flex:1 1 170px;height:44px;font-size:15px}
+.pp .assure{gap:8px}
+.pp .assure div{padding:11px 12px;font-size:13px}
 .alert{border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600}
 .alert.err{background:var(--err-wash);color:#8C1D17}
 .alert.ok{background:var(--ok-wash);color:#155C33}
