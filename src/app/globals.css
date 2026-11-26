@@ -223,10 +223,15 @@ textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
 
 /* Product page */
 .pp{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
-.pp .gal{flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:10px}
+/* Foto prodotto contenuta: su desktop la colonna immagine non supera i 420px (prima si
+   allargava fino a ~620px e la foto dominava la scheda); su schermi stretti, quando la
+   colonna info va sotto, il riquadro resta centrato e al massimo 300px (media query
+   più sotto, dopo .pp .main), così prezzo e pulsante d'acquisto si vedono prima. */
+.pp .gal{flex:0 1 420px;min-width:0;display:flex;flex-direction:column;gap:10px}
 .pp .main{position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:12px;overflow:hidden;max-width:100%}
 .pp .main svg{width:100%;height:100%;display:block}
 .pp .main img{filter:drop-shadow(0 10px 16px rgba(0,0,0,.12))}
+@media (max-width:900px){.pp .gal{flex-basis:100%}.pp .main{width:100%;max-width:300px;margin-inline:auto}}
 .pp .note{position:absolute;bottom:12px;left:14px;font-size:12px;color:var(--muted)}
 .pp .info{flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:16px}
 .pp h1{font-size:clamp(23px,2.6vw,30px);font-weight:500}
