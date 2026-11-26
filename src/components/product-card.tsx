@@ -4,20 +4,21 @@ import { ProductImage } from "@/components/product-image";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { cleanProductName } from "@/lib/product-art";
 import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
-import { stockLabel, stockTone } from "@/lib/stock";
+import { isOutOfStock } from "@/lib/stock";
 import { LANG_LABEL, GAME_LABEL } from "@/lib/catalog";
 
 export function ProductCard({ product, isReseller = false }: { product: Product; isReseller?: boolean }) {
   const price = unitPriceCentsFor(product, isReseller);
-  const tone = stockTone(product.stockQty, product.isPreorder);
+  const soldOut = isOutOfStock(product.stockQty);
 
   return (
     <article className="card">
       <Link className="img" href={`/prodotto/${product.slug}`} tabIndex={-1} aria-hidden="true">
         <ProductImage product={product} alt={cleanProductName(product.name)} sizes="(max-width: 640px) 45vw, 220px" />
         <span className="tags">
-          {product.isNew ? <span className="tag gold">Nuovo</span> : null}
+          {product.isNew && !soldOut ? <span className="tag gold">Nuovo</span> : null}
           {product.isPreorder ? <span className="tag">Preordine</span> : null}
+          {soldOut ? <span className="tag line">Esaurito</span> : null}
           {product.condition === "B_GRADE" ? <span className="tag line">B-Grade</span> : null}
         </span>
         <span className="lang">{product.language}</span>
@@ -33,9 +34,8 @@ export function ProductCard({ product, isReseller = false }: { product: Product;
           <span className="price">{formatEuro(price)}</span>
           {isReseller && product.resellerPriceCents != null ? <span className="ind"> · prezzo rivenditore</span> : null}
         </div>
-        <div className={`stock ${tone}`}>{stockLabel(product.stockQty, product.isPreorder)}</div>
         <div className="act">
-          <AddToCartButton productId={product.id} />
+          <AddToCartButton productId={product.id} disabled={soldOut} />
         </div>
       </div>
     </article>

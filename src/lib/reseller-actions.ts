@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { sendResellerRequestReceivedEmail, sendResellerRequestDecisionEmail } from "@/lib/email";
 
 const resellerRequestSchema = z.object({
   companyName: z.string().min(1, "Indica la ragione sociale."),
@@ -28,17 +29,24 @@ export async function submitResellerRequestAction(input: ResellerRequestInput): 
   }
   const data = parsed.data;
 
+  const companyName = data.companyName.trim();
+  const email = data.email.trim();
+
   await prisma.resellerRequest.create({
     data: {
-      companyName: data.companyName.trim(),
+      companyName,
       vatNumber: data.vatNumber.trim(),
       sdiCode: data.sdiCode?.trim() || null,
       contactName: data.contactName.trim(),
-      email: data.email.trim(),
+      email,
       phone: data.phone?.trim() || null,
       message: data.message?.trim() || null,
     },
   });
+
+  sendResellerRequestReceivedEmail(email, companyName).catch((err) =>
+    console.error("[rivenditori] invio conferma ricezione fallito:", err)
+  );
 
   return { ok: true };
 }
@@ -51,7 +59,7 @@ export async function reviewResellerRequestAction(input: {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Non autorizzato." };
 
-  await prisma.resellerRequest.update({
+  const updated = await prisma.resellerRequest.update({
     where: { id: input.id },
     data: {
       status: input.status,
@@ -60,6 +68,13 @@ export async function reviewResellerRequestAction(input: {
       reviewedBy: admin.email,
     },
   });
+
+  sendResellerRequestDecisionEmail({
+    to: updated.email,
+    companyName: updated.companyName,
+    approved: input.status === "APPROVED",
+    note: updated.note,
+  }).catch((err) => console.error("[rivenditori] invio esito fallito:", err));
 
   revalidatePath("/admin/rivenditori");
   return { ok: true };

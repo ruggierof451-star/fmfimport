@@ -9,7 +9,7 @@ import { getProductBySlug, getRelatedProducts, getTwinEditions, GAME_LABEL, LANG
 import { cleanProductName } from "@/lib/product-art";
 import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
 import { getPricingSettings } from "@/lib/settings";
-import { maxOrderableQty, stockLabel, stockTone } from "@/lib/stock";
+import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { getSession } from "@/lib/auth";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -37,7 +37,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const twins = await getTwinEditions(product);
   const related = await getRelatedProducts(product);
   const listKey = product.game === "ONE_PIECE" ? "onepiece" : "pokemon";
-  const tone = stockTone(product.stockQty, product.isPreorder);
+  const soldOut = isOutOfStock(product.stockQty);
   const cap = maxOrderableQty(product.stockQty);
 
   return (
@@ -72,6 +72,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="pill">{LANG_LABEL[product.language]}</span>
               {product.condition === "B_GRADE" ? <span className="pill">B-Grade</span> : <span className="pill">Sigillato</span>}
               {product.isPreorder ? <span className="pill">Preordine</span> : null}
+              {soldOut ? <span className="pill">Esaurito</span> : null}
             </div>
             <h1>{cleanName}</h1>
             <div className="muted" style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14 }}>
@@ -114,9 +115,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   </div>
                 </div>
               ) : null}
-              <div className={`stock ${tone}`} style={{ fontSize: 14 }}>
-                {stockLabel(product.stockQty, product.isPreorder)}
-              </div>
             </div>
             <div className="assure">
               <div>

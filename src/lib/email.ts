@@ -132,3 +132,43 @@ export async function sendContactReplyNotice(to: string) {
   );
   return send(to, "Messaggio ricevuto · FMF Cards", html);
 }
+
+export async function sendResellerRequestReceivedEmail(to: string, companyName: string) {
+  const html = layout(
+    "Richiesta ricevuta",
+    `<h1 style="font-size:20px;margin:0 0 12px;">Richiesta ricevuta</h1>
+     <p style="font-size:14px;line-height:1.6;color:#444;">
+       Abbiamo ricevuto la richiesta di accesso come rivenditore per <b>${companyName}</b>. La valutiamo manualmente
+       e ti scriviamo di nuovo appena abbiamo una risposta.
+     </p>`
+  );
+  return send(to, "Richiesta rivenditore ricevuta · FMF Cards", html);
+}
+
+export async function sendResellerRequestDecisionEmail(params: {
+  to: string;
+  companyName: string;
+  approved: boolean;
+  note?: string | null;
+}) {
+  const html = layout(
+    params.approved ? "Richiesta approvata" : "Richiesta non approvata",
+    params.approved
+      ? `<h1 style="font-size:20px;margin:0 0 12px;">La tua richiesta è stata accettata</h1>
+         <p style="font-size:14px;line-height:1.6;color:#444;margin:0 0 20px;">
+           Ciao, la richiesta di accesso come rivenditore per <b>${params.companyName}</b> è stata approvata. Accedi
+           al tuo account: da ora vedrai (dove previsto) le condizioni dedicate.
+         </p>
+         ${button(`${SITE_URL}/account`, "Vai al tuo account")}`
+      : `<h1 style="font-size:20px;margin:0 0 12px;">Richiesta non approvata</h1>
+         <p style="font-size:14px;line-height:1.6;color:#444;">
+           Ciao, al momento non possiamo accettare la richiesta di accesso come rivenditore per
+           <b>${params.companyName}</b>.${params.note ? ` Motivo: ${params.note}` : ""}
+         </p>`
+  );
+  return send(
+    params.to,
+    params.approved ? "Richiesta rivenditore approvata · FMF Cards" : "Richiesta rivenditore · FMF Cards",
+    html
+  );
+}

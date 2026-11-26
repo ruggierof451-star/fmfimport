@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { computeCartTotals, unitPriceCentsFor } from "@/lib/pricing";
 import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { cleanProductName } from "@/lib/product-art";
-import { isOutOfStock, maxOrderableQty, stockLabel } from "@/lib/stock";
+import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { ensureCutoutImage } from "@/lib/image-cutout";
 import { getSession } from "@/lib/auth";
 
@@ -76,8 +76,6 @@ export async function POST(req: Request) {
       unitPriceCents: totals.lines[i].unitPriceCents,
       isResellerPrice: isReseller && product.resellerPriceCents != null,
       lineTotalCents: totals.lines[i].lineTotalCents,
-      stockLabel: stockLabel(product.stockQty, product.isPreorder),
-      maxOrderableQty: maxOrderableQty(product.stockQty),
     }))
   );
 

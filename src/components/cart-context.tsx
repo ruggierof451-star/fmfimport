@@ -18,8 +18,6 @@ export interface QuoteLine {
   unitPriceCents: number;
   isResellerPrice: boolean;
   lineTotalCents: number;
-  stockLabel: string;
-  maxOrderableQty: number;
 }
 
 export interface Quote {
