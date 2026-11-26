@@ -13,9 +13,6 @@ export async function Header({ activeKey = "", transparent }: { activeKey?: stri
           <span>
             <b>Spedizione gratuita</b> per ordini superiori a {formatEuro(settings.freeShippingThresholdCents)}
           </span>
-          <span>
-            <b>Pagamenti sicuri</b>
-          </span>
         </div>
       </div>
       <HeaderClient isLoggedIn={!!session} activeKey={activeKey} transparent={transparent} />

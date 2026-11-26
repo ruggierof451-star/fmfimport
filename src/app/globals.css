@@ -88,8 +88,13 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
 .home-bg .perks{background:transparent}
+.home-bg .card .img{background:transparent}
+.home-bg .card:hover .img{background:transparent}
 .hero .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:36px;padding-block:clamp(32px,5vw,60px)}
 .hero .txt{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.discount-banner{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink);background:var(--gold-wash);border:1px solid var(--gold);border-radius:999px;padding:7px 16px}
+.discount-banner b{color:var(--ink);font-weight:700}
+.discount-banner b.mono{letter-spacing:.04em}
 .hero h1{font-size:clamp(30px,4vw,46px);font-weight:600;letter-spacing:-.01em;color:var(--ink);line-height:1.15}
 .hero p{margin:0;font-size:16px;color:var(--muted);max-width:540px}
 .hero .art{flex:1 1 360px;min-width:0;max-width:480px}

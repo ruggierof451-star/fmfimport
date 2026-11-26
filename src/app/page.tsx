@@ -67,6 +67,9 @@ export default async function HomePage() {
         <div className="wrap">
           <div className="txt">
             <span className="eyebrow">Pokémon · One Piece · Yu-Gi-Oh! · Dragon Ball</span>
+            <span className="discount-banner">
+              <b>-5% sul primo ordine</b> con il codice <b className="mono">FMFCARDS</b>
+            </span>
             <h1 id="h1">Prodotti sigillati Pokémon e One Piece, prezzi chiari per tutti.</h1>
             <p>
               Booster box, display e collection in edizione italiana e di importazione (giapponese, cinese,
