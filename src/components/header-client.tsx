@@ -38,7 +38,15 @@ const routeFor = (key: string) =>
     ? `/${key}`
     : `/${key}`;
 
-export function HeaderClient({ isLoggedIn, activeKey }: { isLoggedIn: boolean; activeKey: string }) {
+export function HeaderClient({
+  isLoggedIn,
+  activeKey,
+  transparent,
+}: {
+  isLoggedIn: boolean;
+  activeKey: string;
+  transparent?: boolean;
+}) {
   const { count, openDrawer, menuOpen, setMenuOpen } = useCart();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -77,7 +85,7 @@ export function HeaderClient({ isLoggedIn, activeKey }: { isLoggedIn: boolean; a
 
   return (
     <>
-      <header className="site">
+      <header className={transparent ? "site site-transparent" : "site"}>
         <div className="wrap hrow">
           <button
             className="burger"
@@ -155,7 +163,7 @@ export function HeaderClient({ isLoggedIn, activeKey }: { isLoggedIn: boolean; a
             ) : null}
           </div>
         </div>
-        <nav className="cats" aria-label="Categorie">
+        <nav className={transparent ? "cats site-transparent" : "cats"} aria-label="Categorie">
           <div className="wrap">
             {NAV.map((n) => (
               <Link key={n.key} href={routeFor(n.key)} className={activeKey === n.key ? "on" : ""}>

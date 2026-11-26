@@ -61,9 +61,8 @@ export default async function HomePage() {
   ).filter((p): p is typeof heroPhotos[number] & { cutout: NonNullable<typeof p.cutout> } => p.cutout !== null);
 
   return (
-    <>
-      <Header activeKey="home" />
-      <div className="home-bg">
+    <div className="home-bg">
+      <Header activeKey="home" transparent />
       <section className="hero" aria-labelledby="h1">
         <div className="wrap">
           <div className="txt">
@@ -198,9 +197,8 @@ export default async function HomePage() {
           </Link>
         </section>
       </main>
-      </div>
-      <Footer />
-    </>
+      <Footer transparent />
+    </div>
   );
 }
 

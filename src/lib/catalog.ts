@@ -15,6 +15,9 @@ export const LANG_LABEL: Record<Language, string> = {
   KR: "Coreano",
   EN: "Inglese",
 };
+// Categorie per cui ha senso mostrare la confezione (box giapponesi, venduti in più varianti).
+export const JP_PACKAGING_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
+
 export const PACKAGING_LABEL: Record<PackagingCondition, string> = {
   SEALED: "Con pellicola",
   NO_WRAP: "Senza pellicola",

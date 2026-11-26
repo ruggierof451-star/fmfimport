@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-export function Footer() {
+export function Footer({ transparent }: { transparent?: boolean } = {}) {
   return (
-    <footer className="site">
+    <footer className={transparent ? "site site-transparent" : "site"}>
       <div className="wrap cols">
         <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
           <Link href="/" className="logo" aria-label="FMF Cards">

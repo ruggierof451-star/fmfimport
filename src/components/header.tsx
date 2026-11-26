@@ -3,7 +3,7 @@ import { getPricingSettings } from "@/lib/settings";
 import { formatEuro } from "@/lib/pricing";
 import { HeaderClient } from "@/components/header-client";
 
-export async function Header({ activeKey = "" }: { activeKey?: string }) {
+export async function Header({ activeKey = "", transparent }: { activeKey?: string; transparent?: boolean }) {
   const session = await getSession();
   const settings = await getPricingSettings();
   return (
@@ -21,7 +21,7 @@ export async function Header({ activeKey = "" }: { activeKey?: string }) {
           </span>
         </div>
       </div>
-      <HeaderClient isLoggedIn={!!session} activeKey={activeKey} />
+      <HeaderClient isLoggedIn={!!session} activeKey={activeKey} transparent={transparent} />
     </>
   );
 }
