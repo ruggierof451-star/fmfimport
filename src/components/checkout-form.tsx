@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/components/cart-context";
 import { ShipBar } from "@/components/cart-drawer";
+import { CouponField } from "@/components/coupon-field";
 import { formatEuro } from "@/lib/pricing";
 
 type Errors = Record<string, string>;
@@ -24,7 +25,7 @@ export interface CheckoutPrefill {
 }
 
 export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps: number; prefill?: CheckoutPrefill }) {
-  const { items, quote, clearCart } = useCart();
+  const { items, quote, clearCart, couponCode } = useCart();
   const router = useRouter();
 
   const [email, setEmail] = useState(prefill?.email ?? "");
@@ -96,6 +97,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
           invoice: wantsInvoice ? { requested: true, companyName, vatNumber, sdiCode } : { requested: false },
           paymentMethod: payment,
           acceptedTerms: true,
+          couponCode: couponCode || undefined,
         }),
       });
       const data = await res.json();
@@ -248,12 +250,19 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                 <span>{formatEuro(line.lineTotalCents)}</span>
               </div>
             ))}
+            <CouponField />
             {totals ? (
               <>
                 <ShipBar
                   missing={totals.freeShippingRemainderCents}
                   pct={Math.min(100, (totals.subtotalCents / Math.max(1, totals.subtotalCents + totals.freeShippingRemainderCents)) * 100)}
                 />
+                {totals.discountCents > 0 ? (
+                  <div className="r ok">
+                    <span>Sconto</span>
+                    <span>−{formatEuro(totals.discountCents)}</span>
+                  </div>
+                ) : null}
                 <div className="r">
                   <span>Spedizione</span>
                   <span>{totals.shippingCents ? formatEuro(totals.shippingCents) : <b className="ok">Gratis</b>}</span>

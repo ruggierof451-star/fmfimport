@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/cart-context";
 import { ShipBar } from "@/components/cart-drawer";
+import { CouponField } from "@/components/coupon-field";
 import { formatEuro } from "@/lib/pricing";
 
 export function CartPageClient() {
@@ -87,6 +88,13 @@ export function CartPageClient() {
                 <span>Prodotti ({count})</span>
                 <span>{formatEuro(totals.subtotalCents)}</span>
               </div>
+              <CouponField />
+              {totals.discountCents > 0 ? (
+                <div className="r ok">
+                  <span>Sconto</span>
+                  <span>−{formatEuro(totals.discountCents)}</span>
+                </div>
+              ) : null}
               <div className="r">
                 <span>Spedizione</span>
                 <span>{totals.shippingCents ? formatEuro(totals.shippingCents) : <b className="ok">Gratis</b>}</span>

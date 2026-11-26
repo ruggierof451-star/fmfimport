@@ -24,6 +24,7 @@ export interface Quote {
   lines: QuoteLine[];
   totals: {
     subtotalCents: number;
+    discountCents: number;
     shippingCents: number;
     totalCents: number;
     freeShippingRemainderCents: number;
@@ -31,6 +32,7 @@ export interface Quote {
   };
   removed: { productId: string; reason: string }[];
   adjusted: { productId: string; requestedQty: number; availableQty: number }[];
+  coupon: { code: string; percentOffBps: number } | { error: string } | null;
 }
 
 interface CartContextValue {
@@ -41,6 +43,7 @@ interface CartContextValue {
   drawerOpen: boolean;
   menuOpen: boolean;
   toastMsg: string;
+  couponCode: string;
   addItem: (productId: string, quantity: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
@@ -49,11 +52,31 @@ interface CartContextValue {
   closeDrawer: () => void;
   setMenuOpen: (open: boolean) => void;
   showToast: (msg: string) => void;
+  applyCoupon: (code: string) => void;
+  removeCoupon: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = "fmf_cart";
+const COUPON_STORAGE_KEY = "fmf_coupon";
+
+function loadCoupon(): string {
+  try {
+    return localStorage.getItem(COUPON_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function saveCoupon(code: string) {
+  try {
+    if (code) localStorage.setItem(COUPON_STORAGE_KEY, code);
+    else localStorage.removeItem(COUPON_STORAGE_KEY);
+  } catch {
+    // storage non disponibile: il codice resta solo in memoria per questa sessione
+  }
+}
 
 function loadCart(): CartItem[] {
   try {
@@ -85,16 +108,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     setItems(loadCart());
+    setCouponCode(loadCoupon());
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (hydrated) saveCart(items);
   }, [items, hydrated]);
+
+  useEffect(() => {
+    if (hydrated) saveCoupon(couponCode);
+  }, [couponCode, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -108,7 +137,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       fetch("/api/cart/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, couponCode: couponCode || undefined }),
       })
         .then((r) => r.json())
         .then((data: Quote) => {
@@ -133,7 +162,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, hydrated]);
+  }, [items, hydrated, couponCode]);
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -165,7 +194,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setCouponCode("");
+  }, []);
+
+  const applyCoupon = useCallback((code: string) => setCouponCode(code.trim().toUpperCase()), []);
+  const removeCoupon = useCallback(() => setCouponCode(""), []);
 
   const count = useMemo(() => items.reduce((a, i) => a + i.quantity, 0), [items]);
 
@@ -177,6 +212,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     drawerOpen,
     menuOpen,
     toastMsg,
+    couponCode,
     addItem,
     setQuantity,
     removeItem,
@@ -185,6 +221,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     closeDrawer: () => setDrawerOpen(false),
     setMenuOpen,
     showToast,
+    applyCoupon,
+    removeCoupon,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

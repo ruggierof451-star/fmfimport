@@ -73,6 +73,30 @@ describe("computeCartTotals", () => {
     expect(totals.lines[1].lineTotalCents).toBe(26180);
     expect(totals.subtotalCents).toBe(totals.lines[0].lineTotalCents + totals.lines[1].lineTotalCents);
   });
+
+  it("applies no discount by default", () => {
+    const totals = computeCartTotals([{ unitPriceCents: 10000, quantity: 1 }], SHIPPING);
+    expect(totals.discountCents).toBe(0);
+    expect(totals.totalCents).toBe(totals.subtotalCents + totals.shippingCents);
+  });
+
+  it("applies a percentage discount to the subtotal, before adding shipping", () => {
+    // 100,00 € subtotale, 5% sconto = 5,00 €; sotto soglia spedizione gratuita quindi +7,90 €.
+    const totals = computeCartTotals([{ unitPriceCents: 10000, quantity: 1 }], SHIPPING, 500);
+    expect(totals.subtotalCents).toBe(10000);
+    expect(totals.discountCents).toBe(500);
+    expect(totals.totalCents).toBe(10000 - 500 + SHIPPING.standardShippingFeeCents);
+  });
+
+  it("evaluates the free-shipping threshold on the pre-discount subtotal", () => {
+    // 200,00 € di subtotale: sblocca la spedizione gratuita anche se lo sconto lo riduce sotto soglia.
+    const totals = computeCartTotals([{ unitPriceCents: 20000, quantity: 1 }], SHIPPING, 1000);
+    expect(totals.subtotalCents).toBe(20000);
+    expect(totals.qualifiesForFreeShipping).toBe(true);
+    expect(totals.shippingCents).toBe(0);
+    expect(totals.discountCents).toBe(2000);
+    expect(totals.totalCents).toBe(18000);
+  });
 });
 
 describe("formatEuro", () => {

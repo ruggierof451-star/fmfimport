@@ -11,10 +11,10 @@ export async function Header({ activeKey = "", transparent }: { activeKey?: stri
       <div className="topbar">
         <div className="wrap">
           <span>
-            <b>Spedizione gratuita</b> sopra {formatEuro(settings.freeShippingThresholdCents)}
+            <b>Spedizione gratuita</b> per ordini superiori a {formatEuro(settings.freeShippingThresholdCents)}
           </span>
           <span>
-            <b>Pagamenti sicuri</b> carta, PayPal, bonifico
+            <b>5% di sconto</b> sul tuo primo acquisto col codice <b>FMFCARDS</b>
           </span>
           <span>
             <b>Reso</b> entro 14 giorni

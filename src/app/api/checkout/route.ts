@@ -8,6 +8,7 @@ import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { validateDiscountCode, recordDiscountCodeUsage } from "@/lib/discounts";
 
 /**
  * Crea un ordine. Il totale NON viene mai letto dal corpo della richiesta: viene
@@ -38,6 +39,7 @@ const bodySchema = z.object({
   paymentMethod: z.enum(["CARD", "PAYPAL", "BANK_TRANSFER"]),
   acceptedTerms: z.literal(true),
   customerNote: z.string().optional(),
+  couponCode: z.string().max(40).optional(),
 });
 
 function generateOrderNumber() {
@@ -95,9 +97,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Alcuni articoli non sono più disponibili come richiesto.", problems }, { status: 409 });
   }
 
+  const discount = body.couponCode ? await validateDiscountCode(body.couponCode) : { ok: false as const };
+  if (body.couponCode && !discount.ok) {
+    return NextResponse.json({ error: discount.error ?? "Codice sconto non valido." }, { status: 400 });
+  }
+
   const totals = computeCartTotals(
     validLines.map(({ product, quantity }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller), quantity })),
-    shippingRules
+    shippingRules,
+    discount.ok ? discount.percentOffBps : 0
   );
 
   const orderNumber = generateOrderNumber();
@@ -118,7 +126,8 @@ export async function POST(req: Request) {
         paymentMethod: body.paymentMethod,
         paymentStatus: "PENDING",
         subtotalCents: totals.subtotalCents,
-        discountCents: 0,
+        discountCents: totals.discountCents,
+        couponCode: discount.ok ? discount.code : null,
         shippingCents: totals.shippingCents,
         invoiceVatCents,
         totalCents: grandTotalCents,
@@ -151,6 +160,10 @@ export async function POST(req: Request) {
     });
     return created;
   });
+
+  if (discount.ok && discount.code) {
+    recordDiscountCodeUsage(discount.code).catch((err) => console.error("[checkout] conteggio utilizzi codice sconto fallito:", err));
+  }
 
   const customerEmail = session?.email ?? body.contact.email;
   sendOrderConfirmationEmail({

@@ -7,14 +7,17 @@ import { cleanProductName } from "@/lib/product-art";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { ensureCutoutImage } from "@/lib/image-cutout";
 import { getSession } from "@/lib/auth";
+import { validateDiscountCode } from "@/lib/discounts";
 
 /**
- * Unica fonte di verità per i prezzi del carrello. Il client manda solo {productId, quantity}:
- * ogni prezzo, spedizione e disponibilità viene ricalcolato qui dal database corrente. Non
- * fidarsi MAI di un prezzo inviato dal browser (vale anche al checkout).
+ * Unica fonte di verità per i prezzi del carrello. Il client manda solo {productId, quantity}
+ * e, se presente, il codice sconto digitato: ogni prezzo, sconto, spedizione e disponibilità
+ * viene ricalcolato qui dal database corrente. Non fidarsi MAI di un prezzo o di uno sconto
+ * inviato dal browser (vale anche al checkout).
  */
 const bodySchema = z.object({
   items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive().max(999) })).max(200),
+  couponCode: z.string().max(40).optional(),
 });
 
 export async function POST(req: Request) {
@@ -23,11 +26,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
   }
 
-  const { items } = parsed.data;
+  const { items, couponCode } = parsed.data;
   const settings = await getPricingSettings();
   const shipping = toShippingRules(settings);
   const session = await getSession();
   const isReseller = session?.role === "RESELLER";
+  const discount = couponCode ? await validateDiscountCode(couponCode) : { ok: false as const };
 
   const products = await prisma.product.findMany({
     where: { id: { in: items.map((i) => i.productId) } },
@@ -61,7 +65,8 @@ export async function POST(req: Request) {
 
   const totals = computeCartTotals(
     lines.map(({ product, quantity }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller), quantity })),
-    shipping
+    shipping,
+    discount.ok ? discount.percentOffBps : 0
   );
 
   const lineDetails = await Promise.all(
@@ -84,5 +89,11 @@ export async function POST(req: Request) {
     totals,
     removed,
     adjusted,
+    coupon:
+      couponCode && couponCode.trim()
+        ? discount.ok
+          ? { code: discount.code, percentOffBps: discount.percentOffBps }
+          : { error: discount.error ?? "Codice sconto non valido." }
+        : null,
   });
 }

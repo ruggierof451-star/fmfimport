@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/cart-context";
 import { formatEuro } from "@/lib/pricing";
+import { CouponField } from "@/components/coupon-field";
 
 export function CartDrawer() {
   const { items, quote, drawerOpen, closeDrawer, setQuantity, removeItem, count } = useCart();
@@ -74,11 +75,18 @@ export function CartDrawer() {
                 (quote.totals.subtotalCents / Math.max(1, quote.totals.subtotalCents + quote.totals.freeShippingRemainderCents)) * 100
               )}
             />
+            <CouponField />
             <div className="sum" style={{ padding: 0, border: 0 }}>
               <div className="r">
                 <span>Subtotale</span>
                 <b>{formatEuro(quote.totals.subtotalCents)}</b>
               </div>
+              {quote.totals.discountCents > 0 ? (
+                <div className="r ok">
+                  <span>Sconto</span>
+                  <b>−{formatEuro(quote.totals.discountCents)}</b>
+                </div>
+              ) : null}
             </div>
             <Link href="/checkout" className="btn btn-gold" onClick={closeDrawer}>
               Vai al checkout
