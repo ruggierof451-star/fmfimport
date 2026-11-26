@@ -13,6 +13,7 @@ import { getSession } from "@/lib/auth";
 
 const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "novita", label: "Novità" },
+  { key: "pokemon-it", label: "Pokémon IT" },
   { key: "pokemon-jp", label: "Pokémon JP" },
   { key: "pokemon-cn", label: "Pokémon CN" },
   { key: "pokemon-kr", label: "Pokémon KR" },
@@ -24,7 +25,6 @@ export default async function HomePage() {
   const settings = await getPricingSettings();
   const session = await getSession();
   const isReseller = session?.role === "RESELLER";
-  const totalCount = await prisma.product.count({ where: { published: true } });
 
   const sections = await Promise.all(
     HOME_SECTIONS.map(async (s) => ({
@@ -64,11 +64,11 @@ export default async function HomePage() {
       <section className="hero" aria-labelledby="h1">
         <div className="wrap">
           <div className="txt">
-            <span className="eyebrow">Pokémon · One Piece · JP · CN · KR</span>
-            <h1 id="h1">Prodotti sigillati dall&apos;Asia, prezzi chiari per tutti.</h1>
+            <span className="eyebrow">Pokémon · One Piece · IT · JP · CN · KR</span>
+            <h1 id="h1">Prodotti sigillati Pokémon e One Piece, prezzi chiari per tutti.</h1>
             <p>
-              {totalCount} prodotti tra booster box, display e collection in edizione giapponese, cinese e coreana.
-              Prezzi chiari e uguali per tutti, visibili senza registrazione.
+              Booster box, display e collection in edizione italiana e di importazione (giapponese, cinese,
+              coreana). Prezzi chiari e uguali per tutti, visibili senza registrazione.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               <Link className="btn btn-gold" href="/pokemon">

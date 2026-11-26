@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { ProductImage } from "@/components/product-image";
 import { ProductCard } from "@/components/product-card";
 import { ProductBuyBox } from "@/components/product-buybox";
-import { getProductBySlug, getRelatedProducts, getTwinEditions, GAME_LABEL, LANG_LABEL } from "@/lib/catalog";
+import { getProductBySlug, getRelatedProducts, getTwinEditions, GAME_LABEL, LANG_LABEL, PACKAGING_LABEL } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
 import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
 import { getPricingSettings } from "@/lib/settings";
@@ -71,6 +71,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="pill">{product.type}</span>
               <span className="pill">{LANG_LABEL[product.language]}</span>
               {product.condition === "B_GRADE" ? <span className="pill">B-Grade</span> : <span className="pill">Sigillato</span>}
+              {product.packaging !== "SEALED" ? <span className="pill">{PACKAGING_LABEL[product.packaging]}</span> : null}
               {product.isPreorder ? <span className="pill">Preordine</span> : null}
               {soldOut ? <span className="pill">Esaurito</span> : null}
             </div>

@@ -5,14 +5,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
 import { sendOrderStatusEmail } from "@/lib/email";
-import { SCRAPED_PRODUCTS } from "@/lib/scraped-catalog";
 
 const productUpdateSchema = z.object({
   id: z.string(),
   name: z.string().min(1).optional(),
-  category: z.enum(["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]).optional(),
+  category: z.enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]).optional(),
   game: z.enum(["POKEMON", "ONE_PIECE"]).optional(),
-  language: z.enum(["JP", "CN", "KR"]).optional(),
+  language: z.enum(["IT", "JP", "CN", "KR"]).optional(),
   setName: z.string().optional(),
   type: z.string().optional(),
   imageUrl: z.string().nullable().optional(),
@@ -24,6 +23,7 @@ const productUpdateSchema = z.object({
   supplierCostCents: z.number().int().min(0).nullable(),
   stockQty: z.number().int().min(0).nullable(),
   published: z.boolean(),
+  packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
 });
 
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
@@ -44,6 +44,7 @@ const FIELD_LABELS: Record<string, string> = {
   supplierCostCents: "Costo di acquisto (centesimi)",
   stockQty: "Quantità in stock",
   published: "Pubblicato",
+  packaging: "Confezione",
 };
 
 function slugify(name: string): string {
@@ -57,7 +58,7 @@ function slugify(name: string): string {
 
 const productCreateSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio."),
-  category: z.enum(["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]),
+  category: z.enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]),
   setName: z.string().min(1, "Il nome del set è obbligatorio."),
   type: z.string().min(1, "Il tipo è obbligatorio."),
   imageUrl: z.string().nullable().optional(),
@@ -68,9 +69,11 @@ const productCreateSchema = z.object({
   stockQty: z.number().int().min(0).nullable(),
   published: z.boolean(),
   isNew: z.boolean(),
+  packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
 });
 
-const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "JP" | "CN" | "KR" }> = {
+const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "IT" | "JP" | "CN" | "KR" }> = {
+  "pokemon-it": { game: "POKEMON", language: "IT" },
   "pokemon-jp": { game: "POKEMON", language: "JP" },
   "pokemon-cn": { game: "POKEMON", language: "CN" },
   "pokemon-kr": { game: "POKEMON", language: "KR" },
@@ -414,67 +417,3 @@ export async function markContactMessageReadAction(input: { id: string; read: bo
   return { ok: true };
 }
 
-function normalizeForDedup(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-/**
- * Importa in blocco il catalogo scaricato da torecaimport.com (vedi src/lib/scraped-catalog.ts):
- * crea i prodotti mancanti SENZA prezzo (priceCents null) e NON pubblicati, così non appaiono sul
- * sito finché un admin non imposta il prezzo e li pubblica da /admin/prodotti. Salta i prodotti già
- * presenti (confronto sul nome normalizzato) per non duplicare: si può lanciare più volte di fila.
- */
-export async function importScrapedCatalogAction(): Promise<{ ok: boolean; error?: string; created?: number; skipped?: number }> {
-  const admin = await requireAdmin();
-  if (!admin) return { ok: false, error: "Non autorizzato." };
-
-  const existing = await prisma.product.findMany({ select: { name: true, slug: true } });
-  const existingNames = new Set(existing.map((p) => normalizeForDedup(p.name)));
-  const existingSlugs = new Set(existing.map((p) => p.slug));
-
-  let created = 0;
-  let skipped = 0;
-
-  for (const item of SCRAPED_PRODUCTS) {
-    if (existingNames.has(normalizeForDedup(item.name))) {
-      skipped++;
-      continue;
-    }
-
-    let slug = item.slug;
-    if (existingSlugs.has(slug)) {
-      slug = `${slug}-${Date.now().toString(36)}`;
-    }
-    existingSlugs.add(slug);
-    existingNames.add(normalizeForDedup(item.name));
-
-    await prisma.product.create({
-      data: {
-        name: item.name,
-        slug,
-        game: item.game,
-        language: item.language,
-        category: item.category,
-        setName: item.setName,
-        setCode: item.setCode,
-        type: item.type,
-        condition: item.condition,
-        imageUrl: item.imageUrl,
-        priceCents: null,
-        stockQty: null,
-        published: false,
-        isNew: false,
-        matchStatus: "MANUAL",
-      },
-    });
-    created++;
-  }
-
-  revalidatePath("/admin/prodotti");
-  return { ok: true, created, skipped };
-}

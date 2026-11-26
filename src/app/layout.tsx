@@ -14,11 +14,11 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "FMF Cards — Pokémon e One Piece sigillati dall'Asia",
+    default: "FMF Cards — Pokémon e One Piece sigillati, prezzi unici per tutti",
     template: "%s · FMF Cards",
   },
   description:
-    "Booster box, display e prodotti sigillati Pokémon e One Piece in edizione giapponese, cinese e coreana. Prezzi visibili senza registrazione.",
+    "Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione. Prezzi visibili senza registrazione.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

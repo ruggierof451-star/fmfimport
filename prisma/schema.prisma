@@ -19,6 +19,7 @@ enum Game {
 }
 
 enum Language {
+  IT
   JP
   CN
   KR
@@ -27,6 +28,15 @@ enum Language {
 enum Condition {
   NEW
   B_GRADE
+}
+
+// Stato della confezione esterna. Usato solo per i box giapponesi, dove si vendono fino a 3
+// varianti dello stesso prodotto (prezzi diversi): sigillato con pellicola, senza pellicola
+// (confezione apribile ma contenuto integro), danneggiato.
+enum PackagingCondition {
+  SEALED // con pellicola (sigillato)
+  NO_WRAP // senza pellicola
+  DAMAGED // danneggiato
 }
 
 // Se il costo del fornitore è al netto o al lordo di IVA: definisce come il motore
@@ -96,11 +106,12 @@ model Product {
 
   game      Game
   language  Language
-  category  String // bucket di catalogo: pokemon-jp, pokemon-cn, pokemon-kr, one-piece-jp, one-piece-cn, bgrade
+  category  String // bucket di catalogo: pokemon-it, pokemon-jp, pokemon-cn, pokemon-kr, one-piece-jp, one-piece-cn, bgrade
   setName   String
   setCode   String?
   type      String // Booster box, Slim box, Display, Tin, Deck, ...
   condition Condition @default(NEW)
+  packaging PackagingCondition @default(SEALED) // rilevante solo per i box giapponesi: vedi enum
 
   imageUrl    String?
   description String? // descrizione HTML dal fornitore, quando disponibile

@@ -7,12 +7,21 @@ import { ImageUploadField } from "@/components/image-upload-field";
 import type { Product } from "@/generated/prisma";
 
 const CATEGORY_OPTIONS = [
+  { value: "pokemon-it", label: "Pokémon Italiano" },
   { value: "pokemon-jp", label: "Pokémon Giapponese" },
   { value: "pokemon-cn", label: "Pokémon Cinese" },
   { value: "pokemon-kr", label: "Pokémon Coreano" },
   { value: "one-piece-jp", label: "One Piece Giapponese" },
   { value: "one-piece-cn", label: "One Piece Cinese" },
 ];
+
+const PACKAGING_OPTIONS = [
+  { value: "SEALED", label: "Con pellicola (sigillato)" },
+  { value: "NO_WRAP", label: "Senza pellicola" },
+  { value: "DAMAGED", label: "Danneggiato" },
+];
+
+const JP_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
 
 const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
 
@@ -37,11 +46,13 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
   const [costEuro, setCostEuro] = useState(product.supplierCostCents != null ? (product.supplierCostCents / 100).toFixed(2) : "");
   const [stockQty, setStockQty] = useState(product.stockQty != null ? String(product.stockQty) : "");
   const [published, setPublished] = useState(product.published);
+  const [packaging, setPackaging] = useState<"SEALED" | "NO_WRAP" | "DAMAGED">(product.packaging);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
 
-  const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "JP" | "CN" | "KR" }> = {
+  const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "IT" | "JP" | "CN" | "KR" }> = {
+    "pokemon-it": { game: "POKEMON", language: "IT" },
     "pokemon-jp": { game: "POKEMON", language: "JP" },
     "pokemon-cn": { game: "POKEMON", language: "CN" },
     "pokemon-kr": { game: "POKEMON", language: "KR" },
@@ -67,7 +78,7 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
     const result = await updateProductAction({
       id: product.id,
       name,
-      category: category as "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
+      category: category as "pokemon-it" | "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
       game,
       language,
       setName: productSetName,
@@ -81,6 +92,7 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       supplierCostCents: toCents(costEuro),
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
+      packaging: JP_CATEGORIES.has(category) ? packaging : "SEALED",
     });
     setSaving(false);
     if (result.ok) {
@@ -157,6 +169,19 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
         <label className="fl">
           Specifica il tipo
           <input className="in" value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="es. Scatola regalo" />
+        </label>
+      ) : null}
+
+      {JP_CATEGORIES.has(category) ? (
+        <label className="fl">
+          Confezione
+          <select className="in" value={packaging} onChange={(e) => setPackaging(e.target.value as typeof packaging)}>
+            {PACKAGING_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
         </label>
       ) : null}
 

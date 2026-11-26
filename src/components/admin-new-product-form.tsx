@@ -6,12 +6,21 @@ import { createProductAction } from "@/lib/admin-actions";
 import { ImageUploadField } from "@/components/image-upload-field";
 
 const CATEGORY_OPTIONS = [
+  { value: "pokemon-it", label: "Pokémon Italiano" },
   { value: "pokemon-jp", label: "Pokémon Giapponese" },
   { value: "pokemon-cn", label: "Pokémon Cinese" },
   { value: "pokemon-kr", label: "Pokémon Coreano" },
   { value: "one-piece-jp", label: "One Piece Giapponese" },
   { value: "one-piece-cn", label: "One Piece Cinese" },
 ];
+
+const PACKAGING_OPTIONS = [
+  { value: "SEALED", label: "Con pellicola (sigillato)" },
+  { value: "NO_WRAP", label: "Senza pellicola" },
+  { value: "DAMAGED", label: "Danneggiato" },
+];
+
+const JP_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
 
 const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
 
@@ -31,6 +40,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [stockQty, setStockQty] = useState("");
   const [published, setPublished] = useState(true);
   const [isNew, setIsNew] = useState(false);
+  const [packaging, setPackaging] = useState<"SEALED" | "NO_WRAP" | "DAMAGED">("SEALED");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -53,7 +63,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
     setMessage("");
     const result = await createProductAction({
       name: name.trim(),
-      category: category as "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
+      category: category as "pokemon-it" | "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
       setName: productSetName.trim(),
       type: finalType,
       imageUrl: imageUrl.trim() === "" ? null : imageUrl.trim(),
@@ -64,6 +74,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
       isNew,
+      packaging: JP_CATEGORIES.has(category) ? packaging : "SEALED",
     });
     setSaving(false);
     if (result.ok && result.id) {
@@ -114,6 +125,19 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
         <label className="fl">
           Specifica il tipo
           <input className="in" value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="es. Scatola regalo" />
+        </label>
+      ) : null}
+
+      {JP_CATEGORIES.has(category) ? (
+        <label className="fl">
+          Confezione
+          <select className="in" value={packaging} onChange={(e) => setPackaging(e.target.value as typeof packaging)}>
+            {PACKAGING_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
         </label>
       ) : null}
 

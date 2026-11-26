@@ -5,7 +5,7 @@ import { AddToCartButton } from "@/components/add-to-cart-button";
 import { cleanProductName } from "@/lib/product-art";
 import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
 import { isOutOfStock } from "@/lib/stock";
-import { LANG_LABEL, GAME_LABEL } from "@/lib/catalog";
+import { LANG_LABEL, GAME_LABEL, PACKAGING_LABEL } from "@/lib/catalog";
 
 export function ProductCard({ product, isReseller = false }: { product: Product; isReseller?: boolean }) {
   const price = unitPriceCentsFor(product, isReseller);
@@ -20,6 +20,7 @@ export function ProductCard({ product, isReseller = false }: { product: Product;
           {product.isPreorder ? <span className="tag">Preordine</span> : null}
           {soldOut ? <span className="tag line">Esaurito</span> : null}
           {product.condition === "B_GRADE" ? <span className="tag line">B-Grade</span> : null}
+          {product.packaging !== "SEALED" ? <span className="tag line">{PACKAGING_LABEL[product.packaging]}</span> : null}
         </span>
         <span className="lang">{product.language}</span>
       </Link>

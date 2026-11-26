@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin/guadagni", label: "Guadagni" },
   { href: "/admin/prodotti", label: "Prodotti" },
   { href: "/admin/ordini", label: "Ordini" },
+  { href: "/admin/etichette", label: "Etichette" },
   { href: "/admin/messaggi", label: "Messaggi" },
   { href: "/admin/rivenditori", label: "Rivenditori" },
   { href: "/admin/impostazioni", label: "Impostazioni" },
@@ -17,7 +18,7 @@ const LINKS = [
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <nav className="admin-nav">
       {LINKS.map((l) => (
         <Link key={l.href} href={l.href} className={pathname === l.href ? "on" : ""}>
           {l.label}

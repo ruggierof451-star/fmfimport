@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, Game, Language } from "@/generated/prisma";
+import { Prisma, Game, Language, PackagingCondition } from "@/generated/prisma";
 import { unitPriceCentsFor } from "@/lib/pricing";
 
 export const GAME_LABEL: Record<Game, string> = { POKEMON: "Pokémon", ONE_PIECE: "One Piece" };
-export const LANG_LABEL: Record<Language, string> = { JP: "Giapponese", CN: "Cinese", KR: "Coreano" };
+export const LANG_LABEL: Record<Language, string> = { IT: "Italiano", JP: "Giapponese", CN: "Cinese", KR: "Coreano" };
+export const PACKAGING_LABEL: Record<PackagingCondition, string> = {
+  SEALED: "Con pellicola",
+  NO_WRAP: "Senza pellicola",
+  DAMAGED: "Danneggiato",
+};
 
 export const NAV: { key: string; label: string }[] = [
   { key: "novita", label: "Novità" },
+  { key: "pokemon-it", label: "Pokémon IT" },
   { key: "pokemon-jp", label: "Pokémon JP" },
   { key: "pokemon-cn", label: "Pokémon CN" },
   { key: "pokemon-kr", label: "Pokémon KR" },
@@ -27,36 +33,37 @@ export interface ListMeta {
 // Non trattiamo prodotti B-Grade: esclusi sempre dal catalogo pubblico, qualunque sia lo stato di pubblicazione.
 const PUBLISHED: Prisma.ProductWhereInput = { published: true, condition: "NEW", archived: false, deletedAt: null };
 
+const POKEMON_SEGMENT = [
+  { key: "pokemon-it", label: "Italiano" },
+  { key: "pokemon-jp", label: "Giapponese" },
+  { key: "pokemon-cn", label: "Cinese" },
+  { key: "pokemon-kr", label: "Coreano" },
+];
+
 export const LIST_META: Record<string, ListMeta> = {
+  "pokemon-it": {
+    title: "Pokémon IT",
+    description: "Booster box e prodotti sigillati Pokémon in edizione italiana.",
+    where: { category: "pokemon-it" },
+    segment: POKEMON_SEGMENT,
+  },
   "pokemon-jp": {
     title: "Pokémon JP",
     description: "Booster box e special box Pokémon in edizione giapponese.",
     where: { category: "pokemon-jp" },
-    segment: [
-      { key: "pokemon-jp", label: "Giapponese" },
-      { key: "pokemon-cn", label: "Cinese" },
-      { key: "pokemon-kr", label: "Coreano" },
-    ],
+    segment: POKEMON_SEGMENT,
   },
   "pokemon-cn": {
     title: "Pokémon CN",
     description: "Booster box, display, gift box e coin display Pokémon in edizione cinese.",
     where: { category: "pokemon-cn" },
-    segment: [
-      { key: "pokemon-jp", label: "Giapponese" },
-      { key: "pokemon-cn", label: "Cinese" },
-      { key: "pokemon-kr", label: "Coreano" },
-    ],
+    segment: POKEMON_SEGMENT,
   },
   "pokemon-kr": {
     title: "Pokémon KR",
     description: "Booster box Pokémon in edizione coreana.",
     where: { category: "pokemon-kr" },
-    segment: [
-      { key: "pokemon-jp", label: "Giapponese" },
-      { key: "pokemon-cn", label: "Cinese" },
-      { key: "pokemon-kr", label: "Coreano" },
-    ],
+    segment: POKEMON_SEGMENT,
   },
   "one-piece-jp": {
     title: "One Piece JP",
@@ -78,7 +85,7 @@ export const LIST_META: Record<string, ListMeta> = {
   },
   pokemon: {
     title: "Pokémon TCG",
-    description: "Tutto il catalogo Pokémon: giapponese, cinese e coreano.",
+    description: "Tutto il catalogo Pokémon: italiano, giapponese, cinese e coreano.",
     where: { game: "POKEMON" },
   },
   onepiece: {

@@ -11,30 +11,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="admin-shell">
       <aside className="admin-side">
-        <Link href="/" style={{ color: "#fff", textDecoration: "none", fontWeight: 700, padding: "6px 12px 18px", display: "block" }}>
+        <Link href="/" className="admin-brand">
           FMF <span style={{ color: "var(--gold)" }}>Admin</span>
         </Link>
-        <Link
-          href="/"
-          style={{
-            color: "#fff",
-            textDecoration: "none",
-            fontSize: 13,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "8px 12px",
-            margin: "0 0 10px",
-            borderRadius: 8,
-            background: "rgba(255,255,255,.08)",
-          }}
-        >
+        <Link href="/" className="admin-back">
           ← Torna al sito
         </Link>
         <AdminNav />
-        <div style={{ marginTop: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ color: "#8C8C8C", fontSize: 12 }}>{admin.email}</div>
+        <div className="admin-foot">
+          <div className="admin-foot-email">{admin.email}</div>
           <LogoutButton className="admin-logout" redirectTo="/" />
         </div>
       </aside>

@@ -10,7 +10,7 @@ export function Footer() {
             <span>CARDS</span>
           </Link>
           <p style={{ margin: 0, fontSize: 14, maxWidth: 290 }}>
-            Booster box, display e prodotti sigillati Pokémon e One Piece in edizione giapponese, cinese e coreana.
+            Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione.
             Per collezionisti e negozianti.
           </p>
         </div>
@@ -18,6 +18,7 @@ export function Footer() {
           <h3>Negozio</h3>
           <nav aria-label="Negozio">
             <Link href="/novita">Novità</Link>
+            <Link href="/pokemon-it">Pokémon IT</Link>
             <Link href="/pokemon-jp">Pokémon JP</Link>
             <Link href="/pokemon-cn">Pokémon CN</Link>
             <Link href="/pokemon-kr">Pokémon KR</Link>
