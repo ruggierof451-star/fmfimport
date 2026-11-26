@@ -134,7 +134,7 @@ main.page{padding-block:36px 72px;display:flex;flex-direction:column;gap:60px}
 /* Product grid + card — niente bordi */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:30px 18px}
 @media (min-width:1100px){.grid.row5{grid-template-columns:repeat(5,minmax(0,1fr))}}
-.card{background:#fff;display:flex;flex-direction:column;gap:2px;transition:transform .22s ease}
+.card{display:flex;flex-direction:column;gap:2px;transition:transform .22s ease}
 .card .img{display:block;position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:10px;overflow:hidden}
 .card .img svg{width:100%;height:100%;display:block}
 .card .img img{transition:transform .35s cubic-bezier(.2,.8,.2,1),filter .35s ease}

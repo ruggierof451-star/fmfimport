@@ -354,6 +354,7 @@ model Order {
   // nel totale (informativa, per la fattura); totalCents = subtotale - sconto + spedizione.
   subtotalCents   Int
   discountCents   Int @default(0)
+  couponCode      String? // codice sconto applicato, se presente (vedi DiscountCode)
   shippingCents   Int
   invoiceVatCents Int @default(0)
   totalCents      Int
@@ -415,4 +416,18 @@ model OrderStatusHistory {
   changedAt DateTime    @default(now())
 
   @@index([orderId])
+}
+
+// Codice sconto (es. "FMFCARDS" per il 5% sul primo ordine). Applicabile a tutto il
+// carrello come percentuale sul subtotale. Gestito dall'area admin (/admin/sconti).
+model DiscountCode {
+  id            String    @id @default(cuid())
+  code          String    @unique // sempre maiuscolo, confrontato case-insensitive
+  percentOffBps Int // 500 = 5,00% di sconto sul subtotale
+  active        Boolean   @default(true)
+  maxUses       Int? // null = nessun limite di utilizzi totali
+  usedCount     Int       @default(0)
+  expiresAt     DateTime? // null = nessuna scadenza
+  createdAt     DateTime  @default(now())
+  createdBy     String?
 }

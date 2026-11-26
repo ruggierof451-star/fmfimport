@@ -271,3 +271,30 @@ export async function getTwinEditions(product: { id: string; game: Game; setName
     },
   });
 }
+
+/**
+ * Altre varianti di confezione dello stesso prodotto (box giapponesi venduti come
+ * con pellicola / senza pellicola / danneggiato): stesso set, tipo e lingua, confezione
+ * diversa. Permette di scegliere come riceverlo direttamente dalla scheda prodotto.
+ */
+export async function getPackagingVariants(product: {
+  id: string;
+  game: Game;
+  language: Language;
+  setName: string;
+  type: string;
+  category: string;
+}) {
+  if (!JP_PACKAGING_CATEGORIES.has(product.category)) return [];
+  return prisma.product.findMany({
+    where: {
+      id: { not: product.id },
+      game: product.game,
+      language: product.language,
+      setName: product.setName,
+      type: product.type,
+      category: product.category,
+      published: true,
+    },
+  });
+}

@@ -9,6 +9,7 @@ import {
   getProductBySlug,
   getRelatedProducts,
   getTwinEditions,
+  getPackagingVariants,
   GAME_LABEL,
   LANG_LABEL,
   PACKAGING_LABEL,
@@ -43,6 +44,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const isResellerPrice = isReseller && product.resellerPriceCents != null;
   const cleanName = cleanProductName(product.name);
   const twins = await getTwinEditions(product);
+  const packagingVariants = await getPackagingVariants(product);
   const related = await getRelatedProducts(product);
   const listKey = product.game === "ONE_PIECE" ? "onepiece" : "pokemon";
   const soldOut = isOutOfStock(product.stockQty);
@@ -107,6 +109,23 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 isPreorder={product.isPreorder}
                 isResellerPrice={isResellerPrice}
               />
+              {packagingVariants.length ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>
+                    Come vuoi riceverlo
+                  </span>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <span className="btn btn-dark btn-sm" aria-current="true">
+                      {PACKAGING_LABEL[product.packaging]}
+                    </span>
+                    {packagingVariants.map((v) => (
+                      <Link key={v.id} className="btn btn-line btn-sm" href={`/prodotto/${v.slug}`}>
+                        {PACKAGING_LABEL[v.packaging]}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {twins.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>

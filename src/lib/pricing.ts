@@ -47,6 +47,7 @@ export interface CartLineResult {
 export interface CartTotals {
   lines: CartLineResult[];
   subtotalCents: number;
+  discountCents: number;
   shippingCents: number;
   totalCents: number;
   freeShippingRemainderCents: number;
@@ -55,16 +56,21 @@ export interface CartTotals {
 
 /**
  * Calcola i totali di un carrello. Questa funzione è l'UNICA fonte di verità per i prezzi:
- * va eseguita lato server a partire dai dati del database (prezzo + ruolo utente), non
- * dai valori inviati dal client.
+ * va eseguita lato server a partire dai dati del database (prezzo + ruolo utente + codice
+ * sconto validato), non dai valori inviati dal client.
+ *
+ * discountPercentOffBps: sconto percentuale sul subtotale (es. 500 = 5,00%), 0 se nessun
+ * codice sconto valido è applicato. La soglia di spedizione gratuita si valuta sul
+ * subtotale PRIMA dello sconto.
  */
-export function computeCartTotals(lines: CartLineInput[], shipping: ShippingRules): CartTotals {
+export function computeCartTotals(lines: CartLineInput[], shipping: ShippingRules, discountPercentOffBps = 0): CartTotals {
   const lineResults: CartLineResult[] = lines.map(({ unitPriceCents, quantity }) => ({
     unitPriceCents,
     lineTotalCents: unitPriceCents * quantity,
   }));
 
   const subtotalCents = lineResults.reduce((sum, l) => sum + l.lineTotalCents, 0);
+  const discountCents = Math.round((subtotalCents * discountPercentOffBps) / 10000);
   const hasItems = lines.length > 0;
   const qualifiesForFreeShipping = subtotalCents >= shipping.freeShippingThresholdCents;
   const shippingCents = !hasItems ? 0 : qualifiesForFreeShipping ? 0 : shipping.standardShippingFeeCents;
@@ -72,8 +78,9 @@ export function computeCartTotals(lines: CartLineInput[], shipping: ShippingRule
   return {
     lines: lineResults,
     subtotalCents,
+    discountCents,
     shippingCents,
-    totalCents: subtotalCents + shippingCents,
+    totalCents: subtotalCents - discountCents + shippingCents,
     freeShippingRemainderCents: Math.max(0, shipping.freeShippingThresholdCents - subtotalCents),
     qualifiesForFreeShipping,
   };
