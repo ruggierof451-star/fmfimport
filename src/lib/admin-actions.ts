@@ -9,9 +9,11 @@ import { sendOrderStatusEmail } from "@/lib/email";
 const productUpdateSchema = z.object({
   id: z.string(),
   name: z.string().min(1).optional(),
-  category: z.enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]).optional(),
-  game: z.enum(["POKEMON", "ONE_PIECE"]).optional(),
-  language: z.enum(["IT", "JP", "CN", "KR"]).optional(),
+  category: z
+    .enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn", "yugioh", "dragon-ball"])
+    .optional(),
+  game: z.enum(["POKEMON", "ONE_PIECE", "YUGIOH", "DRAGON_BALL"]).optional(),
+  language: z.enum(["IT", "JP", "CN", "KR", "EN"]).optional(),
   setName: z.string().optional(),
   type: z.string().optional(),
   imageUrl: z.string().nullable().optional(),
@@ -58,7 +60,8 @@ function slugify(name: string): string {
 
 const productCreateSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio."),
-  category: z.enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]),
+  category: z.enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn", "yugioh", "dragon-ball"]),
+  language: z.enum(["IT", "JP", "CN", "KR", "EN"]).optional(), // override: solo per categorie senza lingua fissa (Yu-Gi-Oh!, Dragon Ball)
   setName: z.string().min(1, "Il nome del set è obbligatorio."),
   type: z.string().min(1, "Il tipo è obbligatorio."),
   imageUrl: z.string().nullable().optional(),
@@ -72,13 +75,15 @@ const productCreateSchema = z.object({
   packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
 });
 
-const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "IT" | "JP" | "CN" | "KR" }> = {
+const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE" | "YUGIOH" | "DRAGON_BALL"; language: "IT" | "JP" | "CN" | "KR" | "EN" }> = {
   "pokemon-it": { game: "POKEMON", language: "IT" },
   "pokemon-jp": { game: "POKEMON", language: "JP" },
   "pokemon-cn": { game: "POKEMON", language: "CN" },
   "pokemon-kr": { game: "POKEMON", language: "KR" },
   "one-piece-jp": { game: "ONE_PIECE", language: "JP" },
   "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
+  yugioh: { game: "YUGIOH", language: "JP" },
+  "dragon-ball": { game: "DRAGON_BALL", language: "JP" },
 };
 
 export async function createProductAction(input: z.infer<typeof productCreateSchema>): Promise<{ ok: boolean; error?: string; id?: string }> {
@@ -88,7 +93,8 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
   const parsed = productCreateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   const data = parsed.data;
-  const { game, language } = CATEGORY_TO_GAME_LANG[data.category];
+  const { game, language: defaultLanguage } = CATEGORY_TO_GAME_LANG[data.category];
+  const language = data.language ?? defaultLanguage;
 
   let slug = slugify(data.name);
   if (!slug) slug = `prodotto-${Date.now()}`;

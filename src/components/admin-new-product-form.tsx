@@ -12,6 +12,8 @@ const CATEGORY_OPTIONS = [
   { value: "pokemon-kr", label: "Pokémon Coreano" },
   { value: "one-piece-jp", label: "One Piece Giapponese" },
   { value: "one-piece-cn", label: "One Piece Cinese" },
+  { value: "yugioh", label: "Yu-Gi-Oh!" },
+  { value: "dragon-ball", label: "Dragon Ball" },
 ];
 
 const PACKAGING_OPTIONS = [
@@ -20,7 +22,16 @@ const PACKAGING_OPTIONS = [
   { value: "DAMAGED", label: "Danneggiato" },
 ];
 
+const LANGUAGE_OPTIONS = [
+  { value: "JP", label: "Giapponese" },
+  { value: "EN", label: "Inglese" },
+  { value: "IT", label: "Italiano" },
+  { value: "CN", label: "Cinese" },
+  { value: "KR", label: "Coreano" },
+];
+
 const JP_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
+const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball"]);
 
 const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
 
@@ -41,6 +52,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [published, setPublished] = useState(true);
   const [isNew, setIsNew] = useState(false);
   const [packaging, setPackaging] = useState<"SEALED" | "NO_WRAP" | "DAMAGED">("SEALED");
+  const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">("JP");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -63,7 +75,16 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
     setMessage("");
     const result = await createProductAction({
       name: name.trim(),
-      category: category as "pokemon-it" | "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
+      category: category as
+        | "pokemon-it"
+        | "pokemon-jp"
+        | "pokemon-cn"
+        | "pokemon-kr"
+        | "one-piece-jp"
+        | "one-piece-cn"
+        | "yugioh"
+        | "dragon-ball",
+      language: FREE_LANGUAGE_CATEGORIES.has(category) ? language : undefined,
       setName: productSetName.trim(),
       type: finalType,
       imageUrl: imageUrl.trim() === "" ? null : imageUrl.trim(),
@@ -125,6 +146,19 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
         <label className="fl">
           Specifica il tipo
           <input className="in" value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="es. Scatola regalo" />
+        </label>
+      ) : null}
+
+      {FREE_LANGUAGE_CATEGORIES.has(category) ? (
+        <label className="fl">
+          Lingua / edizione
+          <select className="in" value={language} onChange={(e) => setLanguage(e.target.value as typeof language)}>
+            {LANGUAGE_OPTIONS.map((l) => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
         </label>
       ) : null}
 

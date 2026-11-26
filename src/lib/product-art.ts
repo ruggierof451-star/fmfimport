@@ -7,7 +7,7 @@ export interface ArtInput {
   type: string;
   code?: string | null;
   setName: string;
-  game: "POKEMON" | "ONE_PIECE";
+  game: "POKEMON" | "ONE_PIECE" | "YUGIOH" | "DRAGON_BALL";
 }
 
 const esc = (s: string) =>
@@ -29,7 +29,8 @@ export function productArt(p: ArtInput, opt: { dark?: boolean } = {}): string {
   const ink = dark ? "#FFFFFF" : "#222222";
   const raw = p.code || p.setName;
   const lab = esc(raw.length > 13 ? raw.slice(0, 12).trim() + "…" : raw);
-  const gm = p.game === "ONE_PIECE" ? "ONE PIECE" : "POKÉMON";
+  const gm =
+    p.game === "ONE_PIECE" ? "ONE PIECE" : p.game === "YUGIOH" ? "YU-GI-OH!" : p.game === "DRAGON_BALL" ? "DRAGON BALL" : "POKÉMON";
 
   const box = (x: number, y: number, w: number, h: number, d: number, label?: string, sub?: string) => `
     <polygon points="${x},${y} ${x + d},${y - d * 0.6} ${x + w + d},${y - d * 0.6} ${x + w},${y}" fill="${top}" stroke="${st}" stroke-width="1.2" stroke-linejoin="round"/>

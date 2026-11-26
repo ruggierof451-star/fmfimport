@@ -14,10 +14,10 @@ export async function Header({ activeKey = "" }: { activeKey?: string }) {
             <b>Spedizione gratuita</b> sopra {formatEuro(settings.freeShippingThresholdCents)}
           </span>
           <span>
-            <b>Prezzo unico</b> uguale per tutti
+            <b>Pagamenti sicuri</b> carta, PayPal, bonifico
           </span>
           <span>
-            <b>Prezzi visibili</b> senza registrazione
+            <b>Reso</b> entro 14 giorni
           </span>
         </div>
       </div>

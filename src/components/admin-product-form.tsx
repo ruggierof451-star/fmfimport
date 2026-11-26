@@ -13,6 +13,8 @@ const CATEGORY_OPTIONS = [
   { value: "pokemon-kr", label: "Pokémon Coreano" },
   { value: "one-piece-jp", label: "One Piece Giapponese" },
   { value: "one-piece-cn", label: "One Piece Cinese" },
+  { value: "yugioh", label: "Yu-Gi-Oh!" },
+  { value: "dragon-ball", label: "Dragon Ball" },
 ];
 
 const PACKAGING_OPTIONS = [
@@ -21,7 +23,16 @@ const PACKAGING_OPTIONS = [
   { value: "DAMAGED", label: "Danneggiato" },
 ];
 
+const LANGUAGE_OPTIONS = [
+  { value: "JP", label: "Giapponese" },
+  { value: "EN", label: "Inglese" },
+  { value: "IT", label: "Italiano" },
+  { value: "CN", label: "Cinese" },
+  { value: "KR", label: "Coreano" },
+];
+
 const JP_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
+const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball"]);
 
 const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
 
@@ -47,17 +58,23 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
   const [stockQty, setStockQty] = useState(product.stockQty != null ? String(product.stockQty) : "");
   const [published, setPublished] = useState(product.published);
   const [packaging, setPackaging] = useState<"SEALED" | "NO_WRAP" | "DAMAGED">(product.packaging);
+  const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">(product.language);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
 
-  const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE"; language: "IT" | "JP" | "CN" | "KR" }> = {
+  const CATEGORY_TO_GAME_LANG: Record<
+    string,
+    { game: "POKEMON" | "ONE_PIECE" | "YUGIOH" | "DRAGON_BALL"; language: "IT" | "JP" | "CN" | "KR" | "EN" }
+  > = {
     "pokemon-it": { game: "POKEMON", language: "IT" },
     "pokemon-jp": { game: "POKEMON", language: "JP" },
     "pokemon-cn": { game: "POKEMON", language: "CN" },
     "pokemon-kr": { game: "POKEMON", language: "KR" },
     "one-piece-jp": { game: "ONE_PIECE", language: "JP" },
     "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
+    yugioh: { game: "YUGIOH", language: "JP" },
+    "dragon-ball": { game: "DRAGON_BALL", language: "JP" },
   };
 
   function toCents(euro: string): number | null {
@@ -68,7 +85,8 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
     e.preventDefault();
     setSaving(true);
     setMessage("");
-    const { game, language } = CATEGORY_TO_GAME_LANG[category] ?? CATEGORY_TO_GAME_LANG["pokemon-jp"];
+    const { game, language: defaultLanguage } = CATEGORY_TO_GAME_LANG[category] ?? CATEGORY_TO_GAME_LANG["pokemon-jp"];
+    const finalLanguage = FREE_LANGUAGE_CATEGORIES.has(category) ? language : defaultLanguage;
     const finalType = type === "__altro__" ? customType.trim() : type;
     if (!finalType) {
       setMessage("Specifica il tipo di prodotto.");
@@ -78,9 +96,17 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
     const result = await updateProductAction({
       id: product.id,
       name,
-      category: category as "pokemon-it" | "pokemon-jp" | "pokemon-cn" | "pokemon-kr" | "one-piece-jp" | "one-piece-cn",
+      category: category as
+        | "pokemon-it"
+        | "pokemon-jp"
+        | "pokemon-cn"
+        | "pokemon-kr"
+        | "one-piece-jp"
+        | "one-piece-cn"
+        | "yugioh"
+        | "dragon-ball",
       game,
-      language,
+      language: finalLanguage,
       setName: productSetName,
       type: finalType,
       imageUrl: imageUrl.trim() === "" ? null : imageUrl.trim(),
@@ -169,6 +195,19 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
         <label className="fl">
           Specifica il tipo
           <input className="in" value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="es. Scatola regalo" />
+        </label>
+      ) : null}
+
+      {FREE_LANGUAGE_CATEGORIES.has(category) ? (
+        <label className="fl">
+          Lingua / edizione
+          <select className="in" value={language} onChange={(e) => setLanguage(e.target.value as typeof language)}>
+            {LANGUAGE_OPTIONS.map((l) => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
         </label>
       ) : null}
 

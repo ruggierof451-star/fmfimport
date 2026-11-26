@@ -2,8 +2,19 @@ import { prisma } from "@/lib/prisma";
 import { Prisma, Game, Language, PackagingCondition } from "@/generated/prisma";
 import { unitPriceCentsFor } from "@/lib/pricing";
 
-export const GAME_LABEL: Record<Game, string> = { POKEMON: "Pokémon", ONE_PIECE: "One Piece" };
-export const LANG_LABEL: Record<Language, string> = { IT: "Italiano", JP: "Giapponese", CN: "Cinese", KR: "Coreano" };
+export const GAME_LABEL: Record<Game, string> = {
+  POKEMON: "Pokémon",
+  ONE_PIECE: "One Piece",
+  YUGIOH: "Yu-Gi-Oh!",
+  DRAGON_BALL: "Dragon Ball",
+};
+export const LANG_LABEL: Record<Language, string> = {
+  IT: "Italiano",
+  JP: "Giapponese",
+  CN: "Cinese",
+  KR: "Coreano",
+  EN: "Inglese",
+};
 export const PACKAGING_LABEL: Record<PackagingCondition, string> = {
   SEALED: "Con pellicola",
   NO_WRAP: "Senza pellicola",
@@ -18,6 +29,8 @@ export const NAV: { key: string; label: string }[] = [
   { key: "pokemon-kr", label: "Pokémon KR" },
   { key: "one-piece-jp", label: "One Piece JP" },
   { key: "one-piece-cn", label: "One Piece CN" },
+  { key: "yugioh", label: "Yu-Gi-Oh!" },
+  { key: "dragon-ball", label: "Dragon Ball" },
 ];
 
 export interface ListMeta {
@@ -82,6 +95,16 @@ export const LIST_META: Record<string, ListMeta> = {
       { key: "one-piece-jp", label: "Giapponese" },
       { key: "one-piece-cn", label: "Cinese" },
     ],
+  },
+  yugioh: {
+    title: "Yu-Gi-Oh!",
+    description: "Booster box e prodotti sigillati Yu-Gi-Oh!, edizione giapponese e inglese.",
+    where: { category: "yugioh" },
+  },
+  "dragon-ball": {
+    title: "Dragon Ball",
+    description: "Booster box e prodotti sigillati Dragon Ball Super Card Game, edizione giapponese e inglese.",
+    where: { category: "dragon-ball" },
   },
   pokemon: {
     title: "Pokémon TCG",

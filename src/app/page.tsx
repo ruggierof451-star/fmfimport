@@ -19,6 +19,8 @@ const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "pokemon-kr", label: "Pokémon KR" },
   { key: "one-piece-jp", label: "One Piece JP" },
   { key: "one-piece-cn", label: "One Piece CN" },
+  { key: "yugioh", label: "Yu-Gi-Oh!" },
+  { key: "dragon-ball", label: "Dragon Ball" },
 ];
 
 export default async function HomePage() {
@@ -64,7 +66,7 @@ export default async function HomePage() {
       <section className="hero" aria-labelledby="h1">
         <div className="wrap">
           <div className="txt">
-            <span className="eyebrow">Pokémon · One Piece · IT · JP · CN · KR</span>
+            <span className="eyebrow">Pokémon · One Piece · Yu-Gi-Oh! · Dragon Ball</span>
             <h1 id="h1">Prodotti sigillati Pokémon e One Piece, prezzi chiari per tutti.</h1>
             <p>
               Booster box, display e collection in edizione italiana e di importazione (giapponese, cinese,

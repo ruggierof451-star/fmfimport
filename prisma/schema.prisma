@@ -16,6 +16,8 @@ datasource db {
 enum Game {
   POKEMON
   ONE_PIECE
+  YUGIOH
+  DRAGON_BALL
 }
 
 enum Language {
@@ -23,6 +25,7 @@ enum Language {
   JP
   CN
   KR
+  EN
 }
 
 enum Condition {

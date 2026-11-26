@@ -24,6 +24,8 @@ export function Footer() {
             <Link href="/pokemon-kr">Pokémon KR</Link>
             <Link href="/one-piece-jp">One Piece JP</Link>
             <Link href="/one-piece-cn">One Piece CN</Link>
+            <Link href="/yugioh">Yu-Gi-Oh!</Link>
+            <Link href="/dragon-ball">Dragon Ball</Link>
           </nav>
         </div>
         <div>
