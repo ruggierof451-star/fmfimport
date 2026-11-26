@@ -42,7 +42,7 @@ export function CartPageClient() {
             <div className="line" key={`${line.productId}-${line.packaging ?? "SEALED"}`}>
               <Link className="im" href={`/prodotto/${line.slug}`} aria-hidden="true" tabIndex={-1}>
                 {line.imageUrl ? (
-                  <Image src={line.imageUrl} alt="" fill sizes="86px" style={{ objectFit: "contain" }} />
+                  <Image src={line.imageUrl} alt="" fill sizes="86px" style={{ objectFit: "contain" }} unoptimized={/^https?:\/\//.test(line.imageUrl)} />
                 ) : null}
               </Link>
               <div className="tx">

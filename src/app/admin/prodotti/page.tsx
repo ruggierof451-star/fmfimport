@@ -5,6 +5,7 @@ import { formatEuro } from "@/lib/pricing";
 import { cleanProductName } from "@/lib/product-art";
 import { BackButton } from "@/components/back-button";
 import { AdminProductQuickActions } from "@/components/admin-product-quick-actions";
+import { AdminDeleteAllProducts } from "@/components/admin-delete-all-products";
 
 export const metadata = { title: "Admin · Prodotti" };
 
@@ -90,6 +91,10 @@ export default async function AdminProductsPage({
           </Link>
         ))}
       </div>
+
+      {view !== "eliminati" ? (
+        <AdminDeleteAllProducts total={countByView.disponibili + countByView.esauriti + countByView.archiviati} />
+      ) : null}
 
       <div className="admin-card" style={{ padding: 0, overflowX: "auto" }}>
         <table className="admin">
