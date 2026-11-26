@@ -14,10 +14,7 @@ export async function Header({ activeKey = "", transparent }: { activeKey?: stri
             <b>Spedizione gratuita</b> per ordini superiori a {formatEuro(settings.freeShippingThresholdCents)}
           </span>
           <span>
-            <b>5% di sconto</b> sul tuo primo acquisto col codice <b>FMFCARDS</b>
-          </span>
-          <span>
-            <b>Reso</b> entro 14 giorni
+            <b>Pagamenti sicuri</b>
           </span>
         </div>
       </div>

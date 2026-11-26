@@ -15,8 +15,12 @@ export const LANG_LABEL: Record<Language, string> = {
   KR: "Coreano",
   EN: "Inglese",
 };
-// Categorie per cui ha senso mostrare la confezione (box giapponesi, venduti in più varianti).
-export const JP_PACKAGING_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
+// Categorie per cui ha senso scegliere la confezione: SOLO i booster box giapponesi
+// (nessun altro prodotto, nessun altro tipo), venduti in più varianti con prezzi diversi.
+const JP_PACKAGING_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
+export function isJpBoosterBox(category: string, type: string): boolean {
+  return JP_PACKAGING_CATEGORIES.has(category) && type === "Booster box";
+}
 
 export const PACKAGING_LABEL: Record<PackagingCondition, string> = {
   SEALED: "Con pellicola",
@@ -285,7 +289,7 @@ export async function getPackagingVariants(product: {
   type: string;
   category: string;
 }) {
-  if (!JP_PACKAGING_CATEGORIES.has(product.category)) return [];
+  if (!isJpBoosterBox(product.category, product.type)) return [];
   return prisma.product.findMany({
     where: {
       id: { not: product.id },

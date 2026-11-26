@@ -13,7 +13,7 @@ import {
   GAME_LABEL,
   LANG_LABEL,
   PACKAGING_LABEL,
-  JP_PACKAGING_CATEGORIES,
+  isJpBoosterBox,
 } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
 import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
@@ -81,7 +81,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="pill">{product.type}</span>
               <span className="pill">{LANG_LABEL[product.language]}</span>
               {product.condition === "B_GRADE" ? <span className="pill">B-Grade</span> : <span className="pill">Sigillato</span>}
-              {JP_PACKAGING_CATEGORIES.has(product.category) ? (
+              {isJpBoosterBox(product.category, product.type) ? (
                 <span className="pill">{PACKAGING_LABEL[product.packaging]}</span>
               ) : null}
               {product.isPreorder ? <span className="pill">Preordine</span> : null}

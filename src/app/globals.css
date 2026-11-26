@@ -30,7 +30,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:500;text-wrap:balance;margin:0
 .topbar{background:#000;color:#fff;font-size:13px}
 .topbar .wrap{display:flex;flex-wrap:wrap;gap:4px 28px;justify-content:center;padding-block:8px}
 .topbar b{color:#fff;font-weight:600}
-header.site{background:#fff;color:var(--ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:40;border-bottom:1px solid var(--line)}
+header.site{background:#fff;color:var(--ink);border-bottom:1px solid var(--line)}
 .hrow{display:flex;align-items:center;gap:16px;padding-block:14px;flex-wrap:wrap}
 .logo{flex:none;display:inline-flex;align-items:baseline;gap:10px;padding:0;background:none;text-decoration:none;line-height:1}
 .logo:hover{text-decoration:none}
@@ -82,6 +82,7 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
 .home-bg .perks{background:transparent}
+.home-bg main{background:#fff}
 @media (max-width:760px){.home-bg{background-attachment:scroll}}
 .hero .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:36px;padding-block:clamp(32px,5vw,60px)}
 .hero .txt{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:18px}

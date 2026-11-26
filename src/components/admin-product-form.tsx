@@ -118,7 +118,7 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       supplierCostCents: toCents(costEuro),
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
-      packaging: JP_CATEGORIES.has(category) ? packaging : "SEALED",
+      packaging: JP_CATEGORIES.has(category) && type === "Booster box" ? packaging : "SEALED",
     });
     setSaving(false);
     if (result.ok) {
@@ -211,7 +211,7 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
         </label>
       ) : null}
 
-      {JP_CATEGORIES.has(category) ? (
+      {JP_CATEGORIES.has(category) && type === "Booster box" ? (
         <label className="fl">
           Confezione
           <select className="in" value={packaging} onChange={(e) => setPackaging(e.target.value as typeof packaging)}>
