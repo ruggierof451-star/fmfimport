@@ -5,9 +5,12 @@ import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Guadagni" };
 
-// Ordini che contano come vendita reale: esclude annullati e rimborsati.
+// Ordini che contano come vendita reale: solo quelli con pagamento confermato (o stati
+// successivi). Esclude chi è ancora in attesa di pagamento, annullato o rimborsato.
 const SALE_STATUS_FILTER: Prisma.OrderWhereInput = {
-  status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED] },
+  status: {
+    notIn: [OrderStatus.PENDING_PAYMENT, OrderStatus.CANCELLED, OrderStatus.REFUNDED],
+  },
 };
 
 function monthLabel(d: Date) {
@@ -75,7 +78,8 @@ export default async function AdminEarningsPage() {
       <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Guadagni</h1>
       <p className="muted" style={{ margin: 0 }}>
-        Basato sugli ordini non annullati né rimborsati. Importi sempre IVA inclusa.
+        Basato solo sugli ordini con pagamento confermato (esclusi quelli in attesa di
+        pagamento, annullati o rimborsati). Importi sempre IVA inclusa.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16 }}>

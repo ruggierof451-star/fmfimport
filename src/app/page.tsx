@@ -63,6 +63,7 @@ export default async function HomePage() {
   return (
     <>
       <Header activeKey="home" />
+      <div className="home-bg">
       <section className="hero" aria-labelledby="h1">
         <div className="wrap">
           <div className="txt">
@@ -197,6 +198,7 @@ export default async function HomePage() {
           </Link>
         </section>
       </main>
+      </div>
       <Footer />
     </>
   );
