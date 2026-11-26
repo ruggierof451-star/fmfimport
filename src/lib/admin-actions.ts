@@ -158,6 +158,47 @@ export async function deleteProductAction(input: { id: string }): Promise<{ ok: 
   return { ok: true };
 }
 
+/**
+ * Eliminazione "soft" di TUTTI i prodotti non ancora eliminati (anche archiviati ed
+ * esauriti), per svuotare il catalogo prima di caricare i prodotti reali. Stessa
+ * logica dell'eliminazione singola: i prodotti restano nel database (lo storico
+ * ordini continua a funzionare) e si possono ripristinare dalla sezione "Eliminati".
+ * Richiede di digitare la frase di conferma, controllata anche lato server.
+ */
+// Nota: in un file "use server" si possono esportare solo funzioni async, quindi la
+// frase è ripetuta anche nel componente AdminDeleteAllProducts.
+const DELETE_ALL_PRODUCTS_CONFIRM = "ELIMINA TUTTO";
+
+export async function deleteAllProductsAction(input: { confirm: string }): Promise<{ ok: boolean; error?: string; count?: number }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+  if (input.confirm.trim() !== DELETE_ALL_PRODUCTS_CONFIRM) {
+    return { ok: false, error: `Per confermare scrivi esattamente "${DELETE_ALL_PRODUCTS_CONFIRM}".` };
+  }
+
+  const targets = await prisma.product.findMany({ where: { deletedAt: null }, select: { id: true } });
+  if (targets.length === 0) return { ok: true, count: 0 };
+  const ids = targets.map((t) => t.id);
+  const now = new Date();
+
+  await prisma.$transaction([
+    prisma.product.updateMany({ where: { id: { in: ids } }, data: { deletedAt: now, published: false } }),
+    prisma.productChangeLog.createMany({
+      data: ids.map((productId) => ({
+        productId,
+        field: "Prodotto",
+        oldValue: null,
+        newValue: "Eliminato (soft) · svuotamento catalogo",
+        changedBy: admin.email,
+      })),
+    }),
+  ]);
+
+  revalidatePath("/admin/prodotti");
+  revalidatePath("/", "layout");
+  return { ok: true, count: ids.length };
+}
+
 export async function restoreProductAction(input: { id: string }): Promise<{ ok: boolean; error?: string }> {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Non autorizzato." };

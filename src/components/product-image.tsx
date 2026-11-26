@@ -37,6 +37,9 @@ export async function ProductImage({
         sizes={sizes}
         style={{ objectFit: "contain" }}
         priority={priority}
+        // Foto caricate su Vercel Blob o incollate da un altro sito: servite così come
+        // sono, senza dover autorizzare ogni dominio in next.config.
+        unoptimized={/^https?:\/\//.test(product.imageUrl)}
       />
     );
   }
