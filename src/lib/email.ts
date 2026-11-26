@@ -90,14 +90,10 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   return send(to, "Reimposta la tua password · FMF Cards", html);
 }
 
-const BANK_IBAN = process.env.BANK_IBAN;
-const BANK_ACCOUNT_HOLDER = process.env.BANK_ACCOUNT_HOLDER || "FMF Cards S.R.L.S.";
-
 export async function sendOrderConfirmationEmail(params: {
   to: string;
   orderNumber: string;
   totalFormatted: string;
-  paymentMethod: "CARD" | "PAYPAL" | "BANK_TRANSFER";
   items: { name: string; quantity: number; lineTotalFormatted: string }[];
 }) {
   const rows = params.items
@@ -106,25 +102,6 @@ export async function sendOrderConfirmationEmail(params: {
         `<tr><td style="padding:8px 0;font-size:14px;color:#222;border-bottom:1px solid #F2F2F2;">${i.name} <span style="color:#999;">× ${i.quantity}</span></td><td style="padding:8px 0;font-size:14px;text-align:right;white-space:nowrap;border-bottom:1px solid #F2F2F2;">${i.lineTotalFormatted}</td></tr>`
     )
     .join("");
-
-  const bankBlock =
-    params.paymentMethod === "BANK_TRANSFER"
-      ? BANK_IBAN
-        ? `<div style="margin:20px 0;padding:16px 18px;background:#FBF7ED;border:1px solid #EEE1BC;border-radius:10px;">
-             <p style="margin:0 0 8px;font-size:14px;font-weight:700;">Dati per il bonifico</p>
-             <p style="margin:0;font-size:14px;line-height:1.7;color:#333;">
-               Intestatario: <b>${BANK_ACCOUNT_HOLDER}</b><br />
-               IBAN: <b style="letter-spacing:.5px;">${BANK_IBAN}</b><br />
-               Causale: <b>${params.orderNumber}</b>
-             </p>
-             <p style="margin:10px 0 0;font-size:13px;color:#777;">La spedizione parte alla ricezione del bonifico.</p>
-           </div>`
-        : `<div style="margin:20px 0;padding:16px 18px;background:#FBF7ED;border:1px solid #EEE1BC;border-radius:10px;">
-             <p style="margin:0;font-size:14px;color:#333;">
-               Ti invieremo a breve, con una email separata, i dati per il bonifico. Indica sempre <b>${params.orderNumber}</b> come causale.
-             </p>
-           </div>`
-      : "";
 
   const html = layout(
     `Ordine ${params.orderNumber} ricevuto — totale ${params.totalFormatted}.`,
@@ -135,7 +112,6 @@ export async function sendOrderConfirmationEmail(params: {
        <td style="font-size:15px;font-weight:700;padding-top:10px;">Totale</td>
        <td style="font-size:15px;font-weight:700;text-align:right;padding-top:10px;">${params.totalFormatted}</td>
      </tr></table>
-     ${bankBlock}
      ${button(`${SITE_URL}/ordine/${encodeURIComponent(params.orderNumber)}`, "Vedi il tuo ordine", { gold: true })}`
   );
   return send(params.to, `Ordine confermato ${params.orderNumber} · FMF Cards`, html);

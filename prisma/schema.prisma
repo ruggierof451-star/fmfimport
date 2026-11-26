@@ -114,17 +114,23 @@ model Product {
   setCode   String?
   type      String // Booster box, Slim box, Display, Tin, Deck, ...
   condition Condition @default(NEW)
-  packaging PackagingCondition @default(SEALED) // rilevante solo per i box giapponesi: vedi enum
 
   imageUrl    String?
   description String? // descrizione HTML dal fornitore, quando disponibile
 
   // Prezzo pubblico: unico, impostato a mano dall'admin, SEMPRE IVA inclusa. Nessun calcolo
   // automatico da costo/margine: è il prezzo mostrato a tutti i clienti (null = non ancora in vendita).
+  // Per i booster box giapponesi è anche il prezzo "con pellicola" (sigillato).
   priceCents Int?
   // Prezzo dedicato ai rivenditori approvati (ruolo RESELLER), impostato a mano dall'admin,
   // SEMPRE IVA inclusa. Se null, il rivenditore vede il prezzo pubblico come tutti gli altri.
   resellerPriceCents Int?
+
+  // Prezzi alternativi SOLO per i booster box giapponesi (vedi isJpBoosterBox): se impostati,
+  // il cliente può scegliere la confezione direttamente nella scheda prodotto. Null = quella
+  // variante non è in vendita per questo prodotto (il selettore non la mostra).
+  noWrapPriceCents  Int? // prezzo senza pellicola
+  damagedPriceCents Int? // prezzo danneggiato
 
   // Costo di acquisto: riferimento interno per l'admin (non mostrato ai clienti, non usato
   // per calcolare il prezzo pubblico, che è manuale).
@@ -400,6 +406,7 @@ model OrderItem {
   nameSnapshot        String
   unitPriceCentsSnapshot Int
   supplierCostCentsSnapshot Int?
+  packagingSnapshot   PackagingCondition? // confezione scelta, solo per i booster box JP
   quantity            Int
   lineTotalCents      Int
 

@@ -16,7 +16,15 @@ import { validateDiscountCode } from "@/lib/discounts";
  * inviato dal browser (vale anche al checkout).
  */
 const bodySchema = z.object({
-  items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive().max(999) })).max(200),
+  items: z
+    .array(
+      z.object({
+        productId: z.string(),
+        quantity: z.number().int().positive().max(999),
+        packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
+      })
+    )
+    .max(200),
   couponCode: z.string().max(40).optional(),
 });
 
@@ -60,17 +68,17 @@ export async function POST(req: Request) {
     if (quantity < item.quantity) {
       adjusted.push({ productId: item.productId, requestedQty: item.quantity, availableQty: cap });
     }
-    return [{ product, quantity }];
+    return [{ product, quantity, packaging: item.packaging ?? "SEALED" }];
   });
 
   const totals = computeCartTotals(
-    lines.map(({ product, quantity }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller), quantity })),
+    lines.map(({ product, quantity, packaging }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller, packaging), quantity })),
     shipping,
     discount.ok ? discount.percentOffBps : 0
   );
 
   const lineDetails = await Promise.all(
-    lines.map(async ({ product, quantity }, i) => ({
+    lines.map(async ({ product, quantity, packaging }, i) => ({
       productId: product.id,
       slug: product.slug,
       name: cleanProductName(product.name),
@@ -78,6 +86,7 @@ export async function POST(req: Request) {
       language: product.language,
       imageUrl: product.imageUrl ? (await ensureCutoutImage(product.imageUrl, product.slug))?.url ?? product.imageUrl : null,
       quantity,
+      packaging,
       unitPriceCents: totals.lines[i].unitPriceCents,
       isResellerPrice: isReseller && product.resellerPriceCents != null,
       lineTotalCents: totals.lines[i].lineTotalCents,

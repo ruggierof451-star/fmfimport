@@ -17,7 +17,15 @@ import { validateDiscountCode, recordDiscountCodeUsage } from "@/lib/discounts";
  * supera lo stock reale, l'ordine viene rifiutato (niente vendite "fantasma").
  */
 const bodySchema = z.object({
-  items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive().max(999) })).min(1),
+  items: z
+    .array(
+      z.object({
+        productId: z.string(),
+        quantity: z.number().int().positive().max(999),
+        packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
+      })
+    )
+    .min(1),
   contact: z.object({ email: z.string().email(), phone: z.string().min(5) }),
   shipping: z.object({
     firstName: z.string().min(1),
@@ -90,7 +98,7 @@ export async function POST(req: Request) {
       problems.push(`Disponibili solo ${cap} pezzi di "${cleanProductName(product.name)}".`);
       return [];
     }
-    return [{ product, quantity: item.quantity }];
+    return [{ product, quantity: item.quantity, packaging: item.packaging ?? ("SEALED" as const) }];
   });
 
   if (problems.length) {
@@ -103,7 +111,7 @@ export async function POST(req: Request) {
   }
 
   const totals = computeCartTotals(
-    validLines.map(({ product, quantity }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller), quantity })),
+    validLines.map(({ product, quantity, packaging }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller, packaging), quantity })),
     shippingRules,
     discount.ok ? discount.percentOffBps : 0
   );
@@ -144,11 +152,12 @@ export async function POST(req: Request) {
         sdiCode: body.invoice?.sdiCode,
         customerNote: body.customerNote,
         items: {
-          create: validLines.map(({ product, quantity }, i) => ({
+          create: validLines.map(({ product, quantity, packaging }, i) => ({
             productId: product.id,
             nameSnapshot: cleanProductName(product.name),
             unitPriceCentsSnapshot: totals.lines[i].unitPriceCents,
             supplierCostCentsSnapshot: product.supplierCostCents,
+            packagingSnapshot: packaging,
             quantity,
             lineTotalCents: totals.lines[i].lineTotalCents,
           })),
@@ -170,7 +179,6 @@ export async function POST(req: Request) {
     to: customerEmail,
     orderNumber: order.orderNumber,
     totalFormatted: formatEuro(order.totalCents),
-    paymentMethod: order.paymentMethod,
     items: validLines.map(({ product, quantity }, i) => ({
       name: cleanProductName(product.name),
       quantity,

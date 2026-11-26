@@ -78,11 +78,23 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 .link{background:none;border:0;padding:0;color:var(--ink);font-weight:500;text-decoration:underline;cursor:pointer}
 
 /* Hero */
-.home-bg{background:#fff url(/art/hero-bg.webp) center top/cover no-repeat fixed}
+/* Sfondo decorativo della home: livello separato (non la proprietà background diretta)
+   così il filtro di sfocatura colpisce solo l'illustrazione, mai testo o pulsanti sopra.
+   position:fixed (non background-attachment:fixed, inaffidabile su Safari iOS) resta
+   ancorato alla finestra sia su desktop sia su telefono. */
+.home-bg{position:relative;isolation:isolate;background:#fff}
+.home-bg::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:url(/art/hero-bg.webp) center top/cover no-repeat;
+  filter:blur(3px);
+  transform:scale(1.04);
+  z-index:-1;
+}
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
 .home-bg .perks{background:transparent}
-@media (max-width:760px){.home-bg{background-attachment:scroll}}
 .hero .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:36px;padding-block:clamp(32px,5vw,60px)}
 .hero .txt{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:18px}
 .hero h1{font-size:clamp(30px,4vw,46px);font-weight:600;letter-spacing:-.01em;color:var(--ink);line-height:1.15}

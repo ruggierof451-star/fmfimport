@@ -17,12 +17,6 @@ const CATEGORY_OPTIONS = [
   { value: "dragon-ball", label: "Dragon Ball" },
 ];
 
-const PACKAGING_OPTIONS = [
-  { value: "SEALED", label: "Con pellicola (sigillato)" },
-  { value: "NO_WRAP", label: "Senza pellicola" },
-  { value: "DAMAGED", label: "Danneggiato" },
-];
-
 const LANGUAGE_OPTIONS = [
   { value: "JP", label: "Giapponese" },
   { value: "EN", label: "Inglese" },
@@ -54,10 +48,15 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
   const [resellerPriceEuro, setResellerPriceEuro] = useState(
     product.resellerPriceCents != null ? (product.resellerPriceCents / 100).toFixed(2) : ""
   );
+  const [noWrapPriceEuro, setNoWrapPriceEuro] = useState(
+    product.noWrapPriceCents != null ? (product.noWrapPriceCents / 100).toFixed(2) : ""
+  );
+  const [damagedPriceEuro, setDamagedPriceEuro] = useState(
+    product.damagedPriceCents != null ? (product.damagedPriceCents / 100).toFixed(2) : ""
+  );
   const [costEuro, setCostEuro] = useState(product.supplierCostCents != null ? (product.supplierCostCents / 100).toFixed(2) : "");
   const [stockQty, setStockQty] = useState(product.stockQty != null ? String(product.stockQty) : "");
   const [published, setPublished] = useState(product.published);
-  const [packaging, setPackaging] = useState<"SEALED" | "NO_WRAP" | "DAMAGED">(product.packaging);
   const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">(product.language);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -118,7 +117,8 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       supplierCostCents: toCents(costEuro),
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
-      packaging: JP_CATEGORIES.has(category) && type === "Booster box" ? packaging : "SEALED",
+      noWrapPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(noWrapPriceEuro) : null,
+      damagedPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(damagedPriceEuro) : null,
     });
     setSaving(false);
     if (result.ok) {
@@ -211,19 +211,6 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
         </label>
       ) : null}
 
-      {JP_CATEGORIES.has(category) && type === "Booster box" ? (
-        <label className="fl">
-          Confezione
-          <select className="in" value={packaging} onChange={(e) => setPackaging(e.target.value as typeof packaging)}>
-            {PACKAGING_OPTIONS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-
       <ImageUploadField value={imageUrl} onChange={setImageUrl} />
 
       <label className="fl">
@@ -252,6 +239,20 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
         Prezzo rivenditore (€, IVA inclusa) — opzionale, visibile solo ai rivenditori approvati
         <input className="in" value={resellerPriceEuro} onChange={(e) => setResellerPriceEuro(e.target.value)} placeholder="es. 72.00" />
       </label>
+
+      {JP_CATEGORIES.has(category) && type === "Booster box" ? (
+        <>
+          <label className="fl">
+            Prezzo senza pellicola (€) — opzionale, vuoto = non disponibile in questa confezione
+            <input className="in" value={noWrapPriceEuro} onChange={(e) => setNoWrapPriceEuro(e.target.value)} placeholder="es. 84.90" />
+          </label>
+
+          <label className="fl">
+            Prezzo danneggiato (€) — opzionale, vuoto = non disponibile in questa confezione
+            <input className="in" value={damagedPriceEuro} onChange={(e) => setDamagedPriceEuro(e.target.value)} placeholder="es. 79.90" />
+          </label>
+        </>
+      ) : null}
 
       <label className="fl">
         Costo di acquisto (€) — uso interno, opzionale

@@ -4,12 +4,11 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductImage } from "@/components/product-image";
 import { ProductCard } from "@/components/product-card";
-import { ProductBuyBox } from "@/components/product-buybox";
+import { ProductBuyBox, type PackagingOption } from "@/components/product-buybox";
 import {
   getProductBySlug,
   getRelatedProducts,
   getTwinEditions,
-  getPackagingVariants,
   GAME_LABEL,
   LANG_LABEL,
   PACKAGING_LABEL,
@@ -40,12 +39,21 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const settings = await getPricingSettings();
   const session = await getSession();
   const isReseller = session?.role === "RESELLER";
-  const price = unitPriceCentsFor(product, isReseller);
   const isResellerPrice = isReseller && product.resellerPriceCents != null;
   const cleanName = cleanProductName(product.name);
   const twins = await getTwinEditions(product);
-  const packagingVariants = await getPackagingVariants(product);
   const related = await getRelatedProducts(product);
+
+  const canChoosePackaging = isJpBoosterBox(product.category, product.type);
+  const packagingOptions: PackagingOption[] = [
+    { value: "SEALED", label: PACKAGING_LABEL.SEALED, priceCents: unitPriceCentsFor(product, isReseller, "SEALED") },
+    ...(canChoosePackaging && product.noWrapPriceCents != null
+      ? [{ value: "NO_WRAP" as const, label: PACKAGING_LABEL.NO_WRAP, priceCents: unitPriceCentsFor(product, isReseller, "NO_WRAP") }]
+      : []),
+    ...(canChoosePackaging && product.damagedPriceCents != null
+      ? [{ value: "DAMAGED" as const, label: PACKAGING_LABEL.DAMAGED, priceCents: unitPriceCentsFor(product, isReseller, "DAMAGED") }]
+      : []),
+  ];
   const listKey = product.game === "ONE_PIECE" ? "onepiece" : "pokemon";
   const soldOut = isOutOfStock(product.stockQty);
   const cap = maxOrderableQty(product.stockQty);
@@ -81,9 +89,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="pill">{product.type}</span>
               <span className="pill">{LANG_LABEL[product.language]}</span>
               {product.condition === "B_GRADE" ? <span className="pill">B-Grade</span> : <span className="pill">Sigillato</span>}
-              {isJpBoosterBox(product.category, product.type) ? (
-                <span className="pill">{PACKAGING_LABEL[product.packaging]}</span>
-              ) : null}
               {product.isPreorder ? <span className="pill">Preordine</span> : null}
               {soldOut ? <span className="pill">Esaurito</span> : null}
             </div>
@@ -104,28 +109,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="buybox">
               <ProductBuyBox
                 productId={product.id}
-                priceCents={price}
+                packagingOptions={packagingOptions}
                 maxQty={cap}
                 isPreorder={product.isPreorder}
                 isResellerPrice={isResellerPrice}
               />
-              {packagingVariants.length ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>
-                    Come vuoi riceverlo
-                  </span>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span className="btn btn-dark btn-sm" aria-current="true">
-                      {PACKAGING_LABEL[product.packaging]}
-                    </span>
-                    {packagingVariants.map((v) => (
-                      <Link key={v.id} className="btn btn-line btn-sm" href={`/prodotto/${v.slug}`}>
-                        {PACKAGING_LABEL[v.packaging]}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
               {twins.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>

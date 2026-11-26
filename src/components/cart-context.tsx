@@ -1,10 +1,13 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { PackagingChoice } from "@/lib/pricing";
 
 export interface CartItem {
   productId: string;
   quantity: number;
+  /** Solo per i booster box giapponesi: quale confezione è stata scelta. Assente = "SEALED". */
+  packaging?: PackagingChoice;
 }
 
 export interface QuoteLine {
@@ -18,6 +21,11 @@ export interface QuoteLine {
   unitPriceCents: number;
   isResellerPrice: boolean;
   lineTotalCents: number;
+  packaging?: PackagingChoice;
+}
+
+function samePackaging(a: PackagingChoice | undefined, b: PackagingChoice | undefined): boolean {
+  return (a ?? "SEALED") === (b ?? "SEALED");
 }
 
 export interface Quote {
@@ -44,9 +52,9 @@ interface CartContextValue {
   menuOpen: boolean;
   toastMsg: string;
   couponCode: string;
-  addItem: (productId: string, quantity: number) => void;
-  setQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (productId: string, quantity: number, packaging?: PackagingChoice) => void;
+  setQuantity: (productId: string, quantity: number, packaging?: PackagingChoice) => void;
+  removeItem: (productId: string, packaging?: PackagingChoice) => void;
   clearCart: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -171,27 +179,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addItem = useCallback(
-    (productId: string, quantity: number) => {
+    (productId: string, quantity: number, packaging?: PackagingChoice) => {
       setItems((prev) => {
-        const existing = prev.find((i) => i.productId === productId);
+        const existing = prev.find((i) => i.productId === productId && samePackaging(i.packaging, packaging));
         if (existing) {
-          return prev.map((i) => (i.productId === productId ? { ...i, quantity: i.quantity + quantity } : i));
+          return prev.map((i) =>
+            i.productId === productId && samePackaging(i.packaging, packaging) ? { ...i, quantity: i.quantity + quantity } : i
+          );
         }
-        return [...prev, { productId, quantity }];
+        return [...prev, { productId, quantity, packaging }];
       });
       setDrawerOpen(true);
     },
     []
   );
 
-  const setQuantity = useCallback((productId: string, quantity: number) => {
+  const setQuantity = useCallback((productId: string, quantity: number, packaging?: PackagingChoice) => {
     setItems((prev) =>
-      quantity <= 0 ? prev.filter((i) => i.productId !== productId) : prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+      quantity <= 0
+        ? prev.filter((i) => !(i.productId === productId && samePackaging(i.packaging, packaging)))
+        : prev.map((i) => (i.productId === productId && samePackaging(i.packaging, packaging) ? { ...i, quantity } : i))
     );
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((productId: string, packaging?: PackagingChoice) => {
+    setItems((prev) => prev.filter((i) => !(i.productId === productId && samePackaging(i.packaging, packaging))));
   }, []);
 
   const clearCart = useCallback(() => {

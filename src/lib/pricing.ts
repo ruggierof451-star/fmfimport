@@ -18,14 +18,30 @@
  * Non usare mai Number in virgola mobile per importi: niente arrotondamenti a sorpresa.
  */
 
+export type PackagingChoice = "SEALED" | "NO_WRAP" | "DAMAGED";
+
 export interface PriceableProduct {
   priceCents: number | null;
   resellerPriceCents: number | null;
+  noWrapPriceCents?: number | null;
+  damagedPriceCents?: number | null;
 }
 
-/** Prezzo unitario da esporre per questo cliente: listino rivenditore se approvato e impostato, altrimenti il prezzo pubblico. */
-export function unitPriceCentsFor(product: PriceableProduct, isReseller: boolean): number {
+/**
+ * Prezzo unitario da esporre per questo cliente. Il listino rivenditore (se approvato e
+ * impostato) vale sempre, indipendentemente dalla confezione scelta. Altrimenti: prezzo
+ * pubblico "con pellicola" di default, oppure il prezzo della confezione scelta se
+ * impostato per quel prodotto (solo booster box JP, vedi isJpBoosterBox); se quella
+ * confezione non ha un prezzo proprio, si ricade sul prezzo pubblico standard.
+ */
+export function unitPriceCentsFor(
+  product: PriceableProduct,
+  isReseller: boolean,
+  packaging: PackagingChoice = "SEALED"
+): number {
   if (isReseller && product.resellerPriceCents != null) return product.resellerPriceCents;
+  if (packaging === "NO_WRAP" && product.noWrapPriceCents != null) return product.noWrapPriceCents;
+  if (packaging === "DAMAGED" && product.damagedPriceCents != null) return product.damagedPriceCents;
   return product.priceCents ?? 0;
 }
 

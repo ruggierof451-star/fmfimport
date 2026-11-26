@@ -25,7 +25,8 @@ const productUpdateSchema = z.object({
   supplierCostCents: z.number().int().min(0).nullable(),
   stockQty: z.number().int().min(0).nullable(),
   published: z.boolean(),
-  packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
+  noWrapPriceCents: z.number().int().min(0).nullable().optional(),
+  damagedPriceCents: z.number().int().min(0).nullable().optional(),
 });
 
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
@@ -46,7 +47,8 @@ const FIELD_LABELS: Record<string, string> = {
   supplierCostCents: "Costo di acquisto (centesimi)",
   stockQty: "Quantità in stock",
   published: "Pubblicato",
-  packaging: "Confezione",
+  noWrapPriceCents: "Prezzo senza pellicola (centesimi)",
+  damagedPriceCents: "Prezzo danneggiato (centesimi)",
 };
 
 function slugify(name: string): string {
@@ -72,7 +74,8 @@ const productCreateSchema = z.object({
   stockQty: z.number().int().min(0).nullable(),
   published: z.boolean(),
   isNew: z.boolean(),
-  packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
+  noWrapPriceCents: z.number().int().min(0).nullable().optional(),
+  damagedPriceCents: z.number().int().min(0).nullable().optional(),
 });
 
 const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE" | "YUGIOH" | "DRAGON_BALL"; language: "IT" | "JP" | "CN" | "KR" | "EN" }> = {
@@ -115,6 +118,8 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
       description: data.description || null,
       priceCents: data.priceCents,
       resellerPriceCents: data.resellerPriceCents,
+      noWrapPriceCents: data.noWrapPriceCents,
+      damagedPriceCents: data.damagedPriceCents,
       supplierCostCents: data.supplierCostCents,
       costIsEstimated: data.supplierCostCents == null,
       stockQty: data.stockQty,
@@ -243,6 +248,8 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
         isPreorder: data.isPreorder,
         priceCents: data.priceCents,
         resellerPriceCents: data.resellerPriceCents,
+        noWrapPriceCents: data.noWrapPriceCents,
+        damagedPriceCents: data.damagedPriceCents,
         supplierCostCents: data.supplierCostCents,
         stockQty: data.stockQty,
         stockLastCheckedAt: new Date(),
