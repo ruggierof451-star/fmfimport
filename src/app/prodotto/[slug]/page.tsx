@@ -90,7 +90,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="pill">{LANG_LABEL[product.language]}</span>
               {product.condition === "B_GRADE" ? <span className="pill">B-Grade</span> : <span className="pill">Sigillato</span>}
               {product.isPreorder ? <span className="pill">Preordine</span> : null}
-              {soldOut ? <span className="pill">Esaurito</span> : null}
+              {soldOut ? <span className="pill">{product.variants.length ? `${product.type} esaurito` : "Esaurito"}</span> : null}
             </div>
             <h1>{cleanName}</h1>
             <div className="muted" style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14 }}>
@@ -110,6 +110,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <ProductBuyBox
                 productId={product.id}
                 packagingOptions={packagingOptions}
+                mainLabel={product.type}
+                variants={product.variants.map((v) => ({ id: v.id, name: v.name, priceCents: v.priceCents }))}
                 maxQty={cap}
                 isPreorder={product.isPreorder}
                 isResellerPrice={isResellerPrice}

@@ -8,6 +8,8 @@ export interface CartItem {
   quantity: number;
   /** Solo per i booster box giapponesi: quale confezione è stata scelta. Assente = "SEALED". */
   packaging?: PackagingChoice;
+  /** Variante scelta (es. "Busta singola"). Assente = prodotto principale. */
+  variantId?: string;
 }
 
 export interface QuoteLine {
@@ -22,10 +24,17 @@ export interface QuoteLine {
   isResellerPrice: boolean;
   lineTotalCents: number;
   packaging?: PackagingChoice;
+  variantId?: string;
+  variantName?: string;
 }
 
 function samePackaging(a: PackagingChoice | undefined, b: PackagingChoice | undefined): boolean {
   return (a ?? "SEALED") === (b ?? "SEALED");
+}
+
+/** Stessa riga del carrello: stesso prodotto, stessa variante e stessa confezione. */
+function sameLine(i: CartItem, productId: string, packaging: PackagingChoice | undefined, variantId: string | undefined): boolean {
+  return i.productId === productId && (i.variantId ?? "") === (variantId ?? "") && samePackaging(i.packaging, packaging);
 }
 
 export interface Quote {
@@ -38,8 +47,8 @@ export interface Quote {
     freeShippingRemainderCents: number;
     qualifiesForFreeShipping: boolean;
   };
-  removed: { productId: string; reason: string }[];
-  adjusted: { productId: string; requestedQty: number; availableQty: number }[];
+  removed: { productId: string; variantId?: string; reason: string }[];
+  adjusted: { productId: string; variantId?: string; requestedQty: number; availableQty: number }[];
   coupon: { code: string; percentOffBps: number } | { error: string } | null;
 }
 
@@ -52,9 +61,9 @@ interface CartContextValue {
   menuOpen: boolean;
   toastMsg: string;
   couponCode: string;
-  addItem: (productId: string, quantity: number, packaging?: PackagingChoice) => void;
-  setQuantity: (productId: string, quantity: number, packaging?: PackagingChoice) => void;
-  removeItem: (productId: string, packaging?: PackagingChoice) => void;
+  addItem: (productId: string, quantity: number, packaging?: PackagingChoice, variantId?: string) => void;
+  setQuantity: (productId: string, quantity: number, packaging?: PackagingChoice, variantId?: string) => void;
+  removeItem: (productId: string, packaging?: PackagingChoice, variantId?: string) => void;
   clearCart: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -151,15 +160,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         .then((data: Quote) => {
           if (cancelled) return;
           setQuote(data);
+          // Righe identificate da prodotto + variante (variante assente = prodotto principale):
+          // così l'esaurimento del box non toglie dal carrello le sue buste singole.
+          const lineKey = (productId: string, variantId?: string) => `${productId}::${variantId ?? ""}`;
           // Rimuove dal carrello gli articoli che il server ha scartato (esauriti/non trovati)
           if (data.removed?.length) {
-            const removedIds = new Set(data.removed.map((r) => r.productId));
-            setItems((prev) => prev.filter((i) => !removedIds.has(i.productId)));
+            const removedKeys = new Set(data.removed.map((r) => lineKey(r.productId, r.variantId)));
+            setItems((prev) => prev.filter((i) => !removedKeys.has(lineKey(i.productId, i.variantId))));
           }
           // Riduce silenziosamente le quantità oltre la disponibilità reale
           if (data.adjusted?.length) {
-            const byId = new Map(data.adjusted.map((a) => [a.productId, a.availableQty]));
-            setItems((prev) => prev.map((i) => (byId.has(i.productId) ? { ...i, quantity: byId.get(i.productId)! } : i)));
+            const byKey = new Map(data.adjusted.map((a) => [lineKey(a.productId, a.variantId), a.availableQty]));
+            setItems((prev) =>
+              prev.map((i) => {
+                const k = lineKey(i.productId, i.variantId);
+                return byKey.has(k) ? { ...i, quantity: byKey.get(k)! } : i;
+              })
+            );
           }
         })
         .catch(() => {})
@@ -179,31 +196,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addItem = useCallback(
-    (productId: string, quantity: number, packaging?: PackagingChoice) => {
+    (productId: string, quantity: number, packaging?: PackagingChoice, variantId?: string) => {
       setItems((prev) => {
-        const existing = prev.find((i) => i.productId === productId && samePackaging(i.packaging, packaging));
+        const existing = prev.find((i) => sameLine(i, productId, packaging, variantId));
         if (existing) {
-          return prev.map((i) =>
-            i.productId === productId && samePackaging(i.packaging, packaging) ? { ...i, quantity: i.quantity + quantity } : i
-          );
+          return prev.map((i) => (sameLine(i, productId, packaging, variantId) ? { ...i, quantity: i.quantity + quantity } : i));
         }
-        return [...prev, { productId, quantity, packaging }];
+        return [...prev, variantId ? { productId, quantity, variantId } : { productId, quantity, packaging }];
       });
       setDrawerOpen(true);
     },
     []
   );
 
-  const setQuantity = useCallback((productId: string, quantity: number, packaging?: PackagingChoice) => {
+  const setQuantity = useCallback((productId: string, quantity: number, packaging?: PackagingChoice, variantId?: string) => {
     setItems((prev) =>
       quantity <= 0
-        ? prev.filter((i) => !(i.productId === productId && samePackaging(i.packaging, packaging)))
-        : prev.map((i) => (i.productId === productId && samePackaging(i.packaging, packaging) ? { ...i, quantity } : i))
+        ? prev.filter((i) => !sameLine(i, productId, packaging, variantId))
+        : prev.map((i) => (sameLine(i, productId, packaging, variantId) ? { ...i, quantity } : i))
     );
   }, []);
 
-  const removeItem = useCallback((productId: string, packaging?: PackagingChoice) => {
-    setItems((prev) => prev.filter((i) => !(i.productId === productId && samePackaging(i.packaging, packaging))));
+  const removeItem = useCallback((productId: string, packaging?: PackagingChoice, variantId?: string) => {
+    setItems((prev) => prev.filter((i) => !sameLine(i, productId, packaging, variantId)));
   }, []);
 
   const clearCart = useCallback(() => {

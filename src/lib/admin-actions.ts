@@ -6,6 +6,20 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
 import { sendOrderStatusEmail } from "@/lib/email";
 
+// Varianti acquistabili (es. "Busta singola"): nome + prezzo pubblico IVA inclusa.
+// id presente = variante già esistente da aggiornare; assente = nuova.
+const variantInputSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().trim().min(1, "Ogni variante deve avere un nome.").max(80, "Nome variante troppo lungo (max 80 caratteri)."),
+  priceCents: z.number().int().min(0, "Il prezzo della variante non può essere negativo."),
+});
+const variantsSchema = z.array(variantInputSchema).max(20, "Massimo 20 varianti per prodotto.");
+
+function variantsSummary(variants: { name: string; priceCents: number }[]): string | null {
+  if (!variants.length) return null;
+  return variants.map((v) => `${v.name} (${(v.priceCents / 100).toFixed(2).replace(".", ",")} €)`).join(", ");
+}
+
 const productUpdateSchema = z.object({
   id: z.string(),
   name: z.string().min(1).optional(),
@@ -27,6 +41,7 @@ const productUpdateSchema = z.object({
   published: z.boolean(),
   noWrapPriceCents: z.number().int().min(0).nullable().optional(),
   damagedPriceCents: z.number().int().min(0).nullable().optional(),
+  variants: variantsSchema.optional(),
 });
 
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
@@ -76,6 +91,7 @@ const productCreateSchema = z.object({
   isNew: z.boolean(),
   noWrapPriceCents: z.number().int().min(0).nullable().optional(),
   damagedPriceCents: z.number().int().min(0).nullable().optional(),
+  variants: variantsSchema.optional(),
 });
 
 const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE" | "YUGIOH" | "DRAGON_BALL"; language: "IT" | "JP" | "CN" | "KR" | "EN" }> = {
@@ -127,6 +143,9 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
       published: data.published,
       isNew: data.isNew,
       matchStatus: "MANUAL",
+      variants: data.variants?.length
+        ? { create: data.variants.map((v, i) => ({ name: v.name, priceCents: v.priceCents, position: i })) }
+        : undefined,
     },
   });
 
@@ -257,11 +276,32 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
   if (!admin) return { ok: false, error: "Non autorizzato." };
 
   const parsed = productUpdateSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Dati non validi." };
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   const data = parsed.data;
 
-  const existing = await prisma.product.findUnique({ where: { id: data.id } });
+  const existing = await prisma.product.findUnique({
+    where: { id: data.id },
+    include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
+  });
   if (!existing) return { ok: false, error: "Prodotto non trovato." };
+
+  // Varianti: la lista inviata dal form è quella definitiva. Quelle non più presenti si
+  // eliminano (gli ordini passati conservano nome e prezzo nello storico), quelle con id
+  // si aggiornano, le altre si creano. Gli id devono appartenere a questo prodotto.
+  const variantOps = [];
+  if (data.variants !== undefined) {
+    const existingIds = new Set(existing.variants.map((v) => v.id));
+    const keptIds = new Set(data.variants.flatMap((v) => (v.id && existingIds.has(v.id) ? [v.id] : [])));
+    const toDelete = existing.variants.filter((v) => !keptIds.has(v.id)).map((v) => v.id);
+    if (toDelete.length) variantOps.push(prisma.productVariant.deleteMany({ where: { id: { in: toDelete }, productId: data.id } }));
+    data.variants.forEach((v, i) => {
+      if (v.id && keptIds.has(v.id)) {
+        variantOps.push(prisma.productVariant.update({ where: { id: v.id }, data: { name: v.name, priceCents: v.priceCents, position: i } }));
+      } else {
+        variantOps.push(prisma.productVariant.create({ data: { productId: data.id, name: v.name, priceCents: v.priceCents, position: i } }));
+      }
+    });
+  }
 
   const changeRows: { field: string; oldValue: string | null; newValue: string | null }[] = [];
   for (const key of Object.keys(FIELD_LABELS) as (keyof typeof FIELD_LABELS)[]) {
@@ -271,6 +311,11 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
     if (String(oldV) !== String(newV)) {
       changeRows.push({ field: FIELD_LABELS[key], oldValue: oldV == null ? null : String(oldV), newValue: newV == null ? null : String(newV) });
     }
+  }
+  if (data.variants !== undefined) {
+    const before = variantsSummary(existing.variants);
+    const after = variantsSummary(data.variants);
+    if (before !== after) changeRows.push({ field: "Varianti", oldValue: before, newValue: after });
   }
 
   await prisma.$transaction([
@@ -297,6 +342,7 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
         published: data.published,
       },
     }),
+    ...variantOps,
     ...changeRows.map((c) =>
       prisma.productChangeLog.create({
         data: { productId: data.id, field: c.field, oldValue: c.oldValue, newValue: c.newValue, changedBy: admin.email },

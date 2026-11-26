@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { computeCartTotals, unitPriceCentsFor } from "@/lib/pricing";
+import { computeCartTotals } from "@/lib/pricing";
 import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { cleanProductName } from "@/lib/product-art";
-import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
+import { findVariant, lineIsOutOfStock, lineMaxQty, lineUnitPriceCents } from "@/lib/variants";
 import { ensureCutoutImage } from "@/lib/image-cutout";
 import { getSession } from "@/lib/auth";
 import { validateDiscountCode } from "@/lib/discounts";
@@ -22,6 +22,7 @@ const bodySchema = z.object({
         productId: z.string(),
         quantity: z.number().int().positive().max(999),
         packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
+        variantId: z.string().optional(),
       })
     )
     .max(200),
@@ -43,43 +44,59 @@ export async function POST(req: Request) {
 
   const products = await prisma.product.findMany({
     where: { id: { in: items.map((i) => i.productId) } },
+    include: { variants: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
-  const removed: { productId: string; reason: "not_found" | "unpublished" }[] = [];
-  const adjusted: { productId: string; requestedQty: number; availableQty: number }[] = [];
+  // variantId nelle risposte: indica quale riga del carrello toccare (assente = prodotto
+  // principale, in tutte le confezioni).
+  const removed: { productId: string; variantId?: string; reason: "not_found" | "unpublished" }[] = [];
+  const adjusted: { productId: string; variantId?: string; requestedQty: number; availableQty: number }[] = [];
 
   const lines = items.flatMap((item) => {
     const product = byId.get(item.productId);
     if (!product) {
-      removed.push({ productId: item.productId, reason: "not_found" });
+      removed.push({ productId: item.productId, variantId: item.variantId, reason: "not_found" });
       return [];
     }
     if (!product.published) {
-      removed.push({ productId: item.productId, reason: "unpublished" });
+      removed.push({ productId: item.productId, variantId: item.variantId, reason: "unpublished" });
       return [];
     }
-    if (isOutOfStock(product.stockQty)) {
+    const variant = findVariant(product.variants, item.variantId);
+    if (item.variantId && !variant) {
+      // variante eliminata dall'admin nel frattempo
+      removed.push({ productId: item.productId, variantId: item.variantId, reason: "not_found" });
+      return [];
+    }
+    if (lineIsOutOfStock(product.stockQty, variant)) {
       removed.push({ productId: item.productId, reason: "not_found" });
       return [];
     }
-    const cap = maxOrderableQty(product.stockQty);
+    const cap = lineMaxQty(product.stockQty, variant);
     const quantity = Math.min(item.quantity, cap);
     if (quantity < item.quantity) {
-      adjusted.push({ productId: item.productId, requestedQty: item.quantity, availableQty: cap });
+      adjusted.push({ productId: item.productId, variantId: item.variantId, requestedQty: item.quantity, availableQty: cap });
     }
-    return [{ product, quantity, packaging: item.packaging ?? "SEALED" }];
+    // Le varianti non hanno scelta di confezione.
+    const packaging = variant ? ("SEALED" as const) : (item.packaging ?? "SEALED");
+    return [{ product, variant, quantity, packaging }];
   });
 
   const totals = computeCartTotals(
-    lines.map(({ product, quantity, packaging }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller, packaging), quantity })),
+    lines.map(({ product, variant, quantity, packaging }) => ({
+      unitPriceCents: lineUnitPriceCents(product, variant, isReseller, packaging),
+      quantity,
+    })),
     shipping,
     discount.ok ? discount.percentOffBps : 0
   );
 
   const lineDetails = await Promise.all(
-    lines.map(async ({ product, quantity, packaging }, i) => ({
+    lines.map(async ({ product, variant, quantity, packaging }, i) => ({
       productId: product.id,
+      variantId: variant?.id,
+      variantName: variant?.name,
       slug: product.slug,
       name: cleanProductName(product.name),
       type: product.type,
@@ -88,7 +105,7 @@ export async function POST(req: Request) {
       quantity,
       packaging,
       unitPriceCents: totals.lines[i].unitPriceCents,
-      isResellerPrice: isReseller && product.resellerPriceCents != null,
+      isResellerPrice: !variant && isReseller && product.resellerPriceCents != null,
       lineTotalCents: totals.lines[i].lineTotalCents,
     }))
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProductAction } from "@/lib/admin-actions";
 import { ImageUploadField } from "@/components/image-upload-field";
+import { AdminVariantsEditor, variantsPayload, type VariantDraft } from "@/components/admin-variants-editor";
 
 const CATEGORY_OPTIONS = [
   { value: "pokemon-it", label: "Pokémon Italiano" },
@@ -41,6 +42,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [description, setDescription] = useState("");
   const [priceEuro, setPriceEuro] = useState("");
   const [resellerPriceEuro, setResellerPriceEuro] = useState("");
+  const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [noWrapPriceEuro, setNoWrapPriceEuro] = useState("");
   const [damagedPriceEuro, setDamagedPriceEuro] = useState("");
   const [costEuro, setCostEuro] = useState("");
@@ -64,6 +66,11 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
     const finalType = type === "__altro__" ? customType.trim() : type;
     if (!finalType) {
       setMessage("Specifica il tipo di prodotto.");
+      return;
+    }
+    const variantsResult = variantsPayload(variants);
+    if (!variantsResult.ok) {
+      setMessage(variantsResult.error);
       return;
     }
     setSaving(true);
@@ -92,6 +99,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       isNew,
       noWrapPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(noWrapPriceEuro) : null,
       damagedPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(damagedPriceEuro) : null,
+      variants: variantsResult.variants,
     });
     setSaving(false);
     if (result.ok && result.id) {
@@ -187,6 +195,8 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
           </label>
         </>
       ) : null}
+
+      <AdminVariantsEditor value={variants} onChange={setVariants} mainLabel={type === "__altro__" ? customType : type} />
 
       <label className="fl">
         Costo di acquisto (€) — uso interno, opzionale

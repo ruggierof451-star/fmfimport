@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { computeCartTotals, extractVatCents, unitPriceCentsFor } from "@/lib/pricing";
+import { computeCartTotals, extractVatCents } from "@/lib/pricing";
 import { getPricingSettings, toShippingRules } from "@/lib/settings";
-import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
+import { findVariant, lineDisplayName, lineIsOutOfStock, lineMaxQty, lineUnitPriceCents } from "@/lib/variants";
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/pricing";
@@ -23,6 +23,7 @@ const bodySchema = z.object({
         productId: z.string(),
         quantity: z.number().int().positive().max(999),
         packaging: z.enum(["SEALED", "NO_WRAP", "DAMAGED"]).optional(),
+        variantId: z.string().optional(),
       })
     )
     .min(1),
@@ -79,7 +80,10 @@ export async function POST(req: Request) {
   const session = await getSession();
   const isReseller = session?.role === "RESELLER";
 
-  const products = await prisma.product.findMany({ where: { id: { in: body.items.map((i) => i.productId) } } });
+  const products = await prisma.product.findMany({
+    where: { id: { in: body.items.map((i) => i.productId) } },
+    include: { variants: true },
+  });
   const byId = new Map(products.map((p) => [p.id, p]));
 
   const problems: string[] = [];
@@ -89,16 +93,24 @@ export async function POST(req: Request) {
       problems.push(`Un articolo del carrello non è più disponibile.`);
       return [];
     }
-    if (isOutOfStock(product.stockQty)) {
-      problems.push(`"${cleanProductName(product.name)}" è esaurito.`);
+    const variant = findVariant(product.variants, item.variantId);
+    if (item.variantId && !variant) {
+      problems.push(`Una variante di "${cleanProductName(product.name)}" non è più disponibile.`);
       return [];
     }
-    const cap = maxOrderableQty(product.stockQty);
+    const displayName = lineDisplayName(cleanProductName(product.name), variant);
+    if (lineIsOutOfStock(product.stockQty, variant)) {
+      problems.push(`"${displayName}" è esaurito.`);
+      return [];
+    }
+    const cap = lineMaxQty(product.stockQty, variant);
     if (item.quantity > cap) {
-      problems.push(`Disponibili solo ${cap} pezzi di "${cleanProductName(product.name)}".`);
+      problems.push(`Disponibili solo ${cap} pezzi di "${displayName}".`);
       return [];
     }
-    return [{ product, quantity: item.quantity, packaging: item.packaging ?? ("SEALED" as const) }];
+    // Le varianti non hanno scelta di confezione.
+    const packaging = variant ? ("SEALED" as const) : (item.packaging ?? ("SEALED" as const));
+    return [{ product, variant, displayName, quantity: item.quantity, packaging }];
   });
 
   if (problems.length) {
@@ -111,7 +123,10 @@ export async function POST(req: Request) {
   }
 
   const totals = computeCartTotals(
-    validLines.map(({ product, quantity, packaging }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller, packaging), quantity })),
+    validLines.map(({ product, variant, quantity, packaging }) => ({
+      unitPriceCents: lineUnitPriceCents(product, variant, isReseller, packaging),
+      quantity,
+    })),
     shippingRules,
     discount.ok ? discount.percentOffBps : 0
   );
@@ -152,12 +167,16 @@ export async function POST(req: Request) {
         sdiCode: body.invoice?.sdiCode,
         customerNote: body.customerNote,
         items: {
-          create: validLines.map(({ product, quantity, packaging }, i) => ({
+          create: validLines.map(({ product, variant, displayName, quantity, packaging }, i) => ({
             productId: product.id,
-            nameSnapshot: cleanProductName(product.name),
+            variantId: variant?.id ?? null,
+            variantNameSnapshot: variant?.name ?? null,
+            nameSnapshot: displayName,
             unitPriceCentsSnapshot: totals.lines[i].unitPriceCents,
-            supplierCostCentsSnapshot: product.supplierCostCents,
-            packagingSnapshot: packaging,
+            // il costo d'acquisto è quello del prodotto principale: per una variante (es. busta
+            // singola) non ha senso, quindi resta vuoto e non falsa i margini in Guadagni
+            supplierCostCentsSnapshot: variant ? null : product.supplierCostCents,
+            packagingSnapshot: variant ? null : packaging,
             quantity,
             lineTotalCents: totals.lines[i].lineTotalCents,
           })),
@@ -179,8 +198,8 @@ export async function POST(req: Request) {
     to: customerEmail,
     orderNumber: order.orderNumber,
     totalFormatted: formatEuro(order.totalCents),
-    items: validLines.map(({ product, quantity }, i) => ({
-      name: cleanProductName(product.name),
+    items: validLines.map(({ displayName, quantity }, i) => ({
+      name: displayName,
       quantity,
       lineTotalFormatted: formatEuro(totals.lines[i].lineTotalCents),
     })),
@@ -192,7 +211,7 @@ export async function POST(req: Request) {
     totalFormatted: formatEuro(order.totalCents),
     customerEmail,
     paymentMethod: order.paymentMethod,
-    itemsSummary: validLines.map(({ product, quantity }) => `${quantity}× ${cleanProductName(product.name)}`).join(", "),
+    itemsSummary: validLines.map(({ displayName, quantity }) => `${quantity}× ${displayName}`).join(", "),
   }).catch((err) => console.error("[checkout] invio notifica admin fallito:", err));
 
   return NextResponse.json({
