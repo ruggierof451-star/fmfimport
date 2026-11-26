@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
 import { sendOrderStatusEmail } from "@/lib/email";
+import { SCRAPED_PRODUCTS } from "@/lib/scraped-catalog";
 
 const productUpdateSchema = z.object({
   id: z.string(),
@@ -411,4 +412,69 @@ export async function markContactMessageReadAction(input: { id: string; read: bo
   await prisma.contactMessage.update({ where: { id: input.id }, data: { read: input.read } });
   revalidatePath("/admin/messaggi");
   return { ok: true };
+}
+
+function normalizeForDedup(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Importa in blocco il catalogo scaricato da torecaimport.com (vedi src/lib/scraped-catalog.ts):
+ * crea i prodotti mancanti SENZA prezzo (priceCents null) e NON pubblicati, così non appaiono sul
+ * sito finché un admin non imposta il prezzo e li pubblica da /admin/prodotti. Salta i prodotti già
+ * presenti (confronto sul nome normalizzato) per non duplicare: si può lanciare più volte di fila.
+ */
+export async function importScrapedCatalogAction(): Promise<{ ok: boolean; error?: string; created?: number; skipped?: number }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const existing = await prisma.product.findMany({ select: { name: true, slug: true } });
+  const existingNames = new Set(existing.map((p) => normalizeForDedup(p.name)));
+  const existingSlugs = new Set(existing.map((p) => p.slug));
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const item of SCRAPED_PRODUCTS) {
+    if (existingNames.has(normalizeForDedup(item.name))) {
+      skipped++;
+      continue;
+    }
+
+    let slug = item.slug;
+    if (existingSlugs.has(slug)) {
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+    existingSlugs.add(slug);
+    existingNames.add(normalizeForDedup(item.name));
+
+    await prisma.product.create({
+      data: {
+        name: item.name,
+        slug,
+        game: item.game,
+        language: item.language,
+        category: item.category,
+        setName: item.setName,
+        setCode: item.setCode,
+        type: item.type,
+        condition: item.condition,
+        imageUrl: item.imageUrl,
+        priceCents: null,
+        stockQty: null,
+        published: false,
+        isNew: false,
+        matchStatus: "MANUAL",
+      },
+    });
+    created++;
+  }
+
+  revalidatePath("/admin/prodotti");
+  return { ok: true, created, skipped };
 }

@@ -5,6 +5,7 @@ import { formatEuro } from "@/lib/pricing";
 import { cleanProductName } from "@/lib/product-art";
 import { BackButton } from "@/components/back-button";
 import { AdminProductQuickActions } from "@/components/admin-product-quick-actions";
+import { AdminImportScrapedCatalogButton } from "@/components/admin-import-scraped-catalog-button";
 
 export const metadata = { title: "Admin · Prodotti" };
 
@@ -75,6 +76,7 @@ export default async function AdminProductsPage({
           <Link href="/admin/prodotti/nuovo" className="btn btn-sm" style={{ background: "var(--gold)", color: "#000" }}>
             + Nuovo prodotto
           </Link>
+          <AdminImportScrapedCatalogButton />
         </div>
       </div>
 
