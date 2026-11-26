@@ -4,7 +4,8 @@
 # fallire subito tutta la build, ritenta con una breve attesa crescente.
 set -e
 
-MAX_ATTEMPTS=5
+MAX_ATTEMPTS=8
+MAX_DELAY=30
 ATTEMPT=1
 DELAY=5
 
@@ -17,4 +18,7 @@ until npx prisma migrate deploy; do
   sleep "$DELAY"
   ATTEMPT=$((ATTEMPT + 1))
   DELAY=$((DELAY * 2))
+  if [ "$DELAY" -gt "$MAX_DELAY" ]; then
+    DELAY=$MAX_DELAY
+  fi
 done
