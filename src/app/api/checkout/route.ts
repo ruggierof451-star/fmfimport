@@ -190,6 +190,7 @@ export async function POST(req: Request) {
     const stripe = getStripe();
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
+      allowed_payment_method_types: ["card"],
       customer_email: customerEmail,
       line_items: [
         {
