@@ -7,9 +7,10 @@ import { ProductCard } from "@/components/product-card";
 import { ProductBuyBox } from "@/components/product-buybox";
 import { getProductBySlug, getRelatedProducts, getTwinEditions, GAME_LABEL, LANG_LABEL } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
-import { standardPriceCents, bulkPriceCents, formatEuro } from "@/lib/pricing";
-import { getPricingSettings, toPricingRules } from "@/lib/settings";
+import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
+import { getPricingSettings } from "@/lib/settings";
 import { maxOrderableQty, stockLabel, stockTone } from "@/lib/stock";
+import { getSession } from "@/lib/auth";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = cleanProductName(product.name);
   return {
     title: name,
-    description: `${name} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}. Spedizione da FMF Import.`,
+    description: `${name} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}. Spedizione da FMF Cards.`,
   };
 }
 
@@ -28,14 +29,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product || !product.published) notFound();
 
   const settings = await getPricingSettings();
-  const rules = toPricingRules(settings);
-  const pricingInput = {
-    costCents: product.supplierCostCents ?? 0,
-    costVatTreatment: product.costVatTreatment,
-    vatRateBps: product.vatRateBps,
-  };
-  const price = standardPriceCents(pricingInput, rules);
-  const bulk = bulkPriceCents(pricingInput, rules);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
+  const price = unitPriceCentsFor(product, isReseller);
+  const isResellerPrice = isReseller && product.resellerPriceCents != null;
   const cleanName = cleanProductName(product.name);
   const twins = await getTwinEditions(product);
   const related = await getRelatedProducts(product);
@@ -93,17 +90,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="buybox">
               <ProductBuyBox
                 productId={product.id}
-                standardPriceCents={price}
-                bulkPriceCents={bulk}
-                bulkThresholdQty={rules.bulkThresholdQty}
+                priceCents={price}
                 maxQty={cap}
                 isPreorder={product.isPreorder}
+                isResellerPrice={isResellerPrice}
               />
-              {product.costIsEstimated ? (
-                <div className="alert info" style={{ fontWeight: 500 }}>
-                  Prezzo indicativo: verrà sostituito automaticamente dal listino del fornitore.
-                </div>
-              ) : null}
               {twins.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>
@@ -155,7 +146,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
             <div className="grid">
               {related.map((p) => (
-                <ProductCard key={p.id} product={p} rules={rules} />
+                <ProductCard key={p.id} product={p} isReseller={isReseller} />
               ))}
             </div>
           </section>
@@ -181,7 +172,7 @@ function ProductTabs({ product }: { product: Awaited<ReturnType<typeof getProduc
                 {product.type} {product.condition === "B_GRADE" ? "B-Grade (confezione esterna con difetti estetici, contenuto sigillato)" : "originale sigillato"} dell&apos;espansione <b>{product.setName}</b>, {GAME_LABEL[product.game]} in edizione {LANG_LABEL[product.language].toLowerCase()}.
               </p>
               <p className="muted" style={{ margin: 0 }}>
-                Contenuto della confezione e descrizione completa verranno importati dalla scheda del fornitore.
+                Descrizione completa in arrivo a breve.
               </p>
             </>
           )}
@@ -205,8 +196,6 @@ function ProductTabs({ product }: { product: Awaited<ReturnType<typeof getProduc
             <dd>{product.type}</dd>
             <dt>Condizione</dt>
             <dd>{product.condition === "B_GRADE" ? "B-Grade" : "Nuovo, sigillato"}</dd>
-            <dt>Nome fornitore</dt>
-            <dd>{product.name}</dd>
           </dl>
         </div>
         <div>

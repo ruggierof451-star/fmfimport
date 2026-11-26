@@ -6,6 +6,7 @@ import { CatalogFilters, SortSelect, LoadMoreButton } from "@/components/catalog
 import { listCatalog, type CatalogFilters as Filters } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { Game, Language } from "@/generated/prisma";
+import { getSession } from "@/lib/auth";
 
 export interface CatalogSearchParams {
   game?: string | string[];
@@ -33,8 +34,10 @@ export async function CatalogPage({ listKey, searchParams }: { listKey: string; 
     page: Number(searchParams.page ?? "1") || 1,
   };
 
-  const result = await listCatalog(listKey, filters);
-  const { meta, usedFallback, total, shown, hasMore, availableTypes, manyGames, manyLangs, rules } = result;
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
+  const result = await listCatalog(listKey, filters, isReseller);
+  const { meta, usedFallback, total, shown, hasMore, availableTypes, manyGames, manyLangs } = result;
 
   // Conteggi per i filtri — calcolati sul pool pre-filtro (coerente col prototipo: mostra quante
   // opzioni rimarrebbero disponibili, non quante sono già selezionate).
@@ -92,7 +95,7 @@ export async function CatalogPage({ listKey, searchParams }: { listKey: string; 
               <>
                 <div className="grid">
                   {shown.map(({ product }) => (
-                    <ProductCard key={product.id} product={product} rules={rules} />
+                    <ProductCard key={product.id} product={product} isReseller={isReseller} />
                   ))}
                 </div>
                 <div className="more">

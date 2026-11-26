@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, Game, Language } from "@/generated/prisma";
-import { standardPriceCents } from "@/lib/pricing";
-import { getPricingSettings, toPricingRules } from "@/lib/settings";
+import { unitPriceCentsFor } from "@/lib/pricing";
 
 export const GAME_LABEL: Record<Game, string> = { POKEMON: "Pokémon", ONE_PIECE: "One Piece" };
 export const LANG_LABEL: Record<Language, string> = { JP: "Giapponese", CN: "Cinese", KR: "Coreano" };
@@ -149,15 +148,12 @@ function searchWhere(q: string): Prisma.ProductWhereInput {
  * i filtri combinabili. I prezzi sono calcolati qui, server-side, dal costo + regole correnti:
  * non sono mai letti da un valore già calcolato lato client.
  */
-export async function listCatalog(key: string, filters: CatalogFilters) {
+export async function listCatalog(key: string, filters: CatalogFilters, isReseller = false) {
   const meta: ListMeta =
     key === "cerca"
       ? { title: "Risultati di ricerca", description: "", where: searchWhere(filters.q ?? "") }
       : LIST_META[key];
   if (!meta) throw new Error(`Categoria sconosciuta: ${key}`);
-
-  const settings = await getPricingSettings();
-  const rules = toPricingRules(settings);
 
   const combinable: Prisma.ProductWhereInput = {
     ...(filters.games?.length ? { game: { in: filters.games.map((g) => g.toUpperCase()) as Game[] } } : {}),
@@ -175,14 +171,10 @@ export async function listCatalog(key: string, filters: CatalogFilters) {
     usedFallback = true;
   }
 
-  // Il filtro di prezzo si applica dopo aver calcolato il prezzo pubblico (dipende dal costo).
   const band = PRICE_BANDS[filters.priceBand ?? "all"];
   const withPrice = all.map((p) => ({
     product: p,
-    price: standardPriceCents(
-      { costCents: p.supplierCostCents ?? 0, costVatTreatment: p.costVatTreatment, vatRateBps: p.vatRateBps },
-      rules
-    ),
+    price: unitPriceCentsFor(p, isReseller),
   }));
   let filtered = withPrice.filter(({ price }) => price / 100 >= band[0] && price / 100 < band[1]);
 
@@ -215,7 +207,7 @@ export async function listCatalog(key: string, filters: CatalogFilters) {
     availableTypes,
     manyGames: availableGames.size > 1,
     manyLangs: availableLangs.size > 1,
-    rules,
+    isReseller,
   };
 }
 

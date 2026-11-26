@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { computeCartTotals } from "@/lib/pricing";
-import { getPricingSettings, toPricingRules, toShippingRules } from "@/lib/settings";
+import { computeCartTotals, unitPriceCentsFor } from "@/lib/pricing";
+import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { cleanProductName } from "@/lib/product-art";
 import { isOutOfStock, maxOrderableQty, stockLabel } from "@/lib/stock";
 import { ensureCutoutImage } from "@/lib/image-cutout";
+import { getSession } from "@/lib/auth";
 
 /**
  * Unica fonte di verità per i prezzi del carrello. Il client manda solo {productId, quantity}:
- * ogni prezzo, sconto quantità, spedizione e disponibilità viene ricalcolato qui dal database
- * corrente. Non fidarsi MAI di un prezzo inviato dal browser (vale anche al checkout).
+ * ogni prezzo, spedizione e disponibilità viene ricalcolato qui dal database corrente. Non
+ * fidarsi MAI di un prezzo inviato dal browser (vale anche al checkout).
  */
 const bodySchema = z.object({
   items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive().max(999) })).max(200),
@@ -24,8 +25,9 @@ export async function POST(req: Request) {
 
   const { items } = parsed.data;
   const settings = await getPricingSettings();
-  const rules = toPricingRules(settings);
   const shipping = toShippingRules(settings);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
 
   const products = await prisma.product.findMany({
     where: { id: { in: items.map((i) => i.productId) } },
@@ -58,44 +60,31 @@ export async function POST(req: Request) {
   });
 
   const totals = computeCartTotals(
-    lines.map(({ product, quantity }) => ({
-      product: {
-        costCents: product.supplierCostCents ?? 0,
-        costVatTreatment: product.costVatTreatment,
-        vatRateBps: product.vatRateBps,
-      },
-      quantity,
-    })),
-    rules,
+    lines.map(({ product, quantity }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller), quantity })),
     shipping
   );
 
   const lineDetails = await Promise.all(
     lines.map(async ({ product, quantity }, i) => ({
-    productId: product.id,
-    slug: product.slug,
-    name: cleanProductName(product.name),
-    type: product.type,
-    language: product.language,
-    imageUrl: product.imageUrl ? (await ensureCutoutImage(product.imageUrl, product.slug))?.url ?? product.imageUrl : null,
-    quantity,
-    unitPriceCents: totals.lines[i].unitPriceCents,
-    standardUnitPriceCents: totals.lines[i].standardUnitPriceCents,
-    bulkUnitPriceCents: totals.lines[i].bulkUnitPriceCents,
-    lineTotalCents: totals.lines[i].lineTotalCents,
-    isBulkPricing: totals.lines[i].isBulkPricing,
-    isEstimatedCost: product.costIsEstimated,
-    stockLabel: stockLabel(product.stockQty, product.isPreorder),
-    maxOrderableQty: maxOrderableQty(product.stockQty),
+      productId: product.id,
+      slug: product.slug,
+      name: cleanProductName(product.name),
+      type: product.type,
+      language: product.language,
+      imageUrl: product.imageUrl ? (await ensureCutoutImage(product.imageUrl, product.slug))?.url ?? product.imageUrl : null,
+      quantity,
+      unitPriceCents: totals.lines[i].unitPriceCents,
+      isResellerPrice: isReseller && product.resellerPriceCents != null,
+      lineTotalCents: totals.lines[i].lineTotalCents,
+      stockLabel: stockLabel(product.stockQty, product.isPreorder),
+      maxOrderableQty: maxOrderableQty(product.stockQty),
     }))
   );
 
   return NextResponse.json({
     lines: lineDetails,
     totals,
-    bulkThresholdQty: rules.bulkThresholdQty,
     removed,
     adjusted,
-    hasEstimatedPrices: lineDetails.some((l) => l.isEstimatedCost),
   });
 }

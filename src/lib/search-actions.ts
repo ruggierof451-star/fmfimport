@@ -1,10 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { standardPriceCents, formatEuro, type PricingRules } from "@/lib/pricing";
-import { getPricingSettings, toPricingRules } from "@/lib/settings";
+import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
 import { cleanProductName } from "@/lib/product-art";
 import { GAME_LABEL, LANG_LABEL } from "@/lib/catalog";
+import { getSession } from "@/lib/auth";
 
 export interface SearchSuggestion {
   slug: string;
@@ -28,18 +28,13 @@ export async function searchSuggestions(query: string): Promise<SearchSuggestion
     take: 6,
   });
 
-  const settings = await getPricingSettings();
-  const rules: PricingRules = toPricingRules(settings);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
 
   return products.map((p) => ({
     slug: p.slug,
     name: cleanProductName(p.name),
     type: p.type,
-    priceLabel: `${GAME_LABEL[p.game]} · ${LANG_LABEL[p.language]} · ${p.type} · ${formatEuro(
-      standardPriceCents(
-        { costCents: p.supplierCostCents ?? 0, costVatTreatment: p.costVatTreatment, vatRateBps: p.vatRateBps },
-        rules
-      )
-    )}`,
+    priceLabel: `${GAME_LABEL[p.game]} · ${LANG_LABEL[p.language]} · ${p.type} · ${formatEuro(unitPriceCentsFor(p, isReseller))}`,
   }));
 }

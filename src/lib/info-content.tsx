@@ -7,10 +7,9 @@ export interface InfoPage {
 export function buildInfoPages(opts: {
   freeShip: string;
   shipFee: string;
-  bulkThreshold: number;
   invoiceVatRate: string;
 }): InfoPage[] {
-  const { freeShip, shipFee, bulkThreshold, invoiceVatRate } = opts;
+  const { freeShip, shipFee, invoiceVatRate } = opts;
   return [
     {
       slug: "spedizioni",
@@ -121,9 +120,10 @@ export function buildInfoPages(opts: {
           </p>
           <h3>Prezzi</h3>
           <p>
-            Tutti i prezzi esposti sul sito sono <b>IVA inclusa</b> (aliquota {invoiceVatRate}%). Per quantità
-            superiori a {bulkThreshold} pezzi dello stesso articolo si applica il prezzo quantità indicato in
-            scheda. Il prezzo valido è quello mostrato al momento della conferma dell&apos;ordine.
+            Tutti i prezzi esposti sul sito sono <b>IVA inclusa</b> (aliquota {invoiceVatRate}%) e sono gli stessi
+            per tutti i clienti. Il prezzo valido è quello mostrato al momento della conferma dell&apos;ordine. I
+            rivenditori approvati con partita IVA possono avere un listino dedicato: vedi la pagina{" "}
+            <a href="/lavora-con-noi">Lavora con noi</a>.
           </p>
           <h3>Fatturazione e IVA</h3>
           <p>
@@ -154,7 +154,7 @@ export function buildInfoPages(opts: {
       body: (
         <>
           <p>
-            Questa pagina descrive i cookie utilizzati dal sito fmfimport.it e come gestirli.
+            Questa pagina descrive i cookie utilizzati da questo sito e come gestirli.
           </p>
           <h3>Cookie tecnici</h3>
           <p>
@@ -181,19 +181,19 @@ export function buildInfoPages(opts: {
       body: (
         <>
           <p>
-            FMF Import nasce da <b>FMF Cards</b>, attività di vendita di carte collezionabili avviata online e
-            cresciuta sulle live. Dopo anni passati a comprare, aprire e spedire migliaia di prodotti, abbiamo aperto
-            il canale di importazione diretta.
+            <b>FMF Cards</b> nasce da un&apos;attività di vendita di carte collezionabili avviata online e cresciuta
+            sulle live. Dopo anni passati a comprare, aprire e spedire migliaia di prodotti, abbiamo aperto il canale
+            di importazione diretta.
           </p>
           <h3>Cosa facciamo</h3>
           <p>
             Importiamo prodotti sigillati Pokémon e One Piece dalle edizioni giapponese, cinese e coreana, e li
-            rivendiamo a collezionisti e negozianti con prezzi uguali per tutti.
+            rivendiamo a collezionisti e negozianti con un prezzo unico, uguale per tutti.
           </p>
           <h3>Perché senza registrazione</h3>
           <p>
             Nel nostro settore quasi tutti nascondono i prezzi dietro un login. Noi li mostriamo: puoi confrontare
-            prima di decidere, e se compri in quantità lo sconto si applica da solo.
+            prima di decidere, senza dover creare un account.
           </p>
           <h3>Dati societari</h3>
           <p>
@@ -209,10 +209,11 @@ export function buildInfoPages(opts: {
         <>
           <h3>1. Scegli</h3>
           <p>Il catalogo mostra solo prodotti effettivamente disponibili. Lingua, espansione e tipologia sono indicate in ogni scheda.</p>
-          <h3>2. Il prezzo si adatta alla quantità</h3>
+          <h3>2. Prezzo unico, per tutti</h3>
           <p>
-            Fino a {bulkThreshold} pezzi dello stesso articolo paghi il prezzo pieno. Oltre {bulkThreshold}, il prezzo
-            unitario scende in automatico nel carrello: nessun codice, nessuna richiesta da inviare.
+            Il prezzo che vedi in scheda è quello che paghi, senza bisogno di account o di codici. Se hai una
+            partita IVA e acquisti per rivendere, puoi richiedere l&apos;accesso a un listino dedicato dalla pagina{" "}
+            <a href="/lavora-con-noi">Lavora con noi</a>.
           </p>
           <h3>3. Ordina come preferisci</h3>
           <p>
@@ -240,9 +241,10 @@ export function buildInfoPages(opts: {
             <br />
             Rispondiamo dal martedì al venerdì, dalle 8:00 alle 19:00.
           </p>
-          <h3>Ordini all&apos;ingrosso</h3>
+          <h3>Rivenditori e distribuzione</h3>
           <p>
-            Per volumi continuativi scrivi a fmfcardssrls@gmail.com oppure usa il modulo nella pagina Ingrosso.
+            Hai una partita IVA e vuoi rivendere i nostri prodotti? Scrivi a fmfcardssrls@gmail.com oppure compila
+            il modulo nella pagina <a href="/lavora-con-noi">Lavora con noi</a>.
           </p>
           <h3>Sede legale</h3>
           <p>FMF Cards S.R.L.S. · Traversa Garibaldi 24, 80040 Striano (NA), Italia</p>

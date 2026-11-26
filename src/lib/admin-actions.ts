@@ -18,14 +18,11 @@ const productUpdateSchema = z.object({
   description: z.string().nullable().optional(),
   isNew: z.boolean().optional(),
   isPreorder: z.boolean().optional(),
-  supplierCode: z.string().optional(),
+  priceCents: z.number().int().min(0).nullable(),
+  resellerPriceCents: z.number().int().min(0).nullable(),
   supplierCostCents: z.number().int().min(0).nullable(),
-  costVatTreatment: z.enum(["NET_OF_VAT", "GROSS_WITH_VAT"]),
-  costIsEstimated: z.boolean(),
-  vatRateBps: z.number().int().min(0).max(10000),
   stockQty: z.number().int().min(0).nullable(),
   published: z.boolean(),
-  matchStatus: z.enum(["MATCHED", "NEEDS_REVIEW", "UNMATCHED", "MANUAL"]),
 });
 
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
@@ -41,14 +38,11 @@ const FIELD_LABELS: Record<string, string> = {
   description: "Descrizione",
   isNew: "In evidenza (novità)",
   isPreorder: "Preordine",
-  supplierCode: "Codice fornitore",
-  supplierCostCents: "Costo fornitore (centesimi)",
-  costVatTreatment: "Trattamento IVA costo",
-  costIsEstimated: "Costo stimato",
-  vatRateBps: "Aliquota IVA",
+  priceCents: "Prezzo di vendita (centesimi)",
+  resellerPriceCents: "Prezzo rivenditore (centesimi)",
+  supplierCostCents: "Costo di acquisto (centesimi)",
   stockQty: "Quantità in stock",
   published: "Pubblicato",
-  matchStatus: "Stato abbinamento",
 };
 
 function slugify(name: string): string {
@@ -67,8 +61,9 @@ const productCreateSchema = z.object({
   type: z.string().min(1, "Il tipo è obbligatorio."),
   imageUrl: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
+  priceCents: z.number().int().min(0).nullable(),
+  resellerPriceCents: z.number().int().min(0).nullable(),
   supplierCostCents: z.number().int().min(0).nullable(),
-  vatRateBps: z.number().int().min(0).max(10000),
   stockQty: z.number().int().min(0).nullable(),
   published: z.boolean(),
   isNew: z.boolean(),
@@ -108,9 +103,10 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
       condition: "NEW",
       imageUrl: data.imageUrl || null,
       description: data.description || null,
+      priceCents: data.priceCents,
+      resellerPriceCents: data.resellerPriceCents,
       supplierCostCents: data.supplierCostCents,
       costIsEstimated: data.supplierCostCents == null,
-      vatRateBps: data.vatRateBps,
       stockQty: data.stockQty,
       stockLastCheckedAt: data.stockQty != null ? new Date() : null,
       published: data.published,
@@ -235,15 +231,12 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
         description: data.description === undefined ? undefined : data.description || null,
         isNew: data.isNew,
         isPreorder: data.isPreorder,
-        supplierCode: data.supplierCode || null,
+        priceCents: data.priceCents,
+        resellerPriceCents: data.resellerPriceCents,
         supplierCostCents: data.supplierCostCents,
-        costVatTreatment: data.costVatTreatment,
-        costIsEstimated: data.costIsEstimated,
-        vatRateBps: data.vatRateBps,
         stockQty: data.stockQty,
         stockLastCheckedAt: new Date(),
         published: data.published,
-        matchStatus: data.matchStatus,
       },
     }),
     ...changeRows.map((c) =>
@@ -260,11 +253,7 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
 }
 
 const pricingSettingsSchema = z.object({
-  marginBps: z.number().int().min(0).max(100000),
-  marginBulkBps: z.number().int().min(0).max(100000),
-  bulkThresholdQty: z.number().int().min(1),
   invoiceVatRateBps: z.number().int().min(0).max(10000),
-  roundTo90Cents: z.boolean(),
   freeShippingThresholdCents: z.number().int().min(0),
   standardShippingFeeCents: z.number().int().min(0),
 });
@@ -295,53 +284,6 @@ const ORDER_STATUSES = [
   "CANCELLED",
   "REFUNDED",
 ] as const;
-
-export async function manualMatchSupplierLinkAction(input: { supplierLinkId: string; productId: string }) {
-  const admin = await requireAdmin();
-  if (!admin) return { ok: false, error: "Non autorizzato." };
-
-  const link = await prisma.supplierLink.findUnique({ where: { id: input.supplierLinkId } });
-  if (!link) return { ok: false, error: "Riga fornitore non trovata." };
-
-  await prisma.$transaction([
-    prisma.product.update({
-      where: { id: input.productId },
-      data: {
-        ...(link.costCents != null ? { supplierCostCents: link.costCents, costVatTreatment: link.costVatTreatment, costIsEstimated: false } : {}),
-        ...(link.stockQty != null ? { stockQty: link.stockQty } : {}),
-        stockLastCheckedAt: new Date(),
-        matchStatus: "MANUAL",
-        supplierCode: link.supplierCode ?? undefined,
-      },
-    }),
-    prisma.supplierLink.update({
-      where: { id: link.id },
-      data: { productId: input.productId, matchConfidence: "manual" },
-    }),
-    prisma.productChangeLog.create({
-      data: {
-        productId: input.productId,
-        field: "Abbinamento fornitore",
-        oldValue: null,
-        newValue: `Abbinato manualmente a "${link.supplierName}"`,
-        changedBy: admin.email,
-      },
-    }),
-  ]);
-
-  revalidatePath("/admin/import");
-  revalidatePath("/admin/prodotti");
-  revalidatePath("/", "layout");
-  return { ok: true };
-}
-
-export async function dismissSupplierLinkAction(input: { supplierLinkId: string }) {
-  const admin = await requireAdmin();
-  if (!admin) return { ok: false, error: "Non autorizzato." };
-  await prisma.supplierLink.delete({ where: { id: input.supplierLinkId } });
-  revalidatePath("/admin/import");
-  return { ok: true };
-}
 
 export async function updateOrderStatusAction(input: {
   orderId: string;
@@ -426,6 +368,36 @@ export async function revokeAdminAction(input: { userId: string }): Promise<{ ok
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Non autorizzato." };
   if (admin.id === input.userId) return { ok: false, error: "Non puoi rimuovere i tuoi stessi permessi admin." };
+
+  await prisma.user.update({ where: { id: input.userId }, data: { role: "CUSTOMER" } });
+  revalidatePath("/admin/utenti");
+  return { ok: true };
+}
+
+const setResellerSchema = z.object({ email: z.string().email("Inserisci un'email valida.") });
+
+/** Promuove un cliente esistente a rivenditore (ruolo RESELLER): vede i prezzi dedicati impostati sui prodotti. */
+export async function setResellerRoleAction(input: { email: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const parsed = setResellerSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
+  const email = parsed.data.email.toLowerCase().trim();
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return { ok: false, error: "Nessun account con questa email: il cliente deve prima registrarsi." };
+  if (user.role === "ADMIN") return { ok: false, error: "Questo account è già admin." };
+
+  await prisma.user.update({ where: { id: user.id }, data: { role: "RESELLER" } });
+  revalidatePath("/admin/utenti");
+  revalidatePath("/admin/rivenditori");
+  return { ok: true };
+}
+
+export async function revokeResellerRoleAction(input: { userId: string }): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
 
   await prisma.user.update({ where: { id: input.userId }, data: { role: "CUSTOMER" } });
   revalidatePath("/admin/utenti");

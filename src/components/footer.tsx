@@ -5,9 +5,9 @@ export function Footer() {
     <footer className="site">
       <div className="wrap cols">
         <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
-          <Link href="/" className="logo" aria-label="FMF Import">
+          <Link href="/" className="logo" aria-label="FMF Cards">
             <b>FMF</b>
-            <span>IMPORT</span>
+            <span>CARDS</span>
           </Link>
           <p style={{ margin: 0, fontSize: 14, maxWidth: 290 }}>
             Booster box, display e prodotti sigillati Pokémon e One Piece in edizione giapponese, cinese e coreana.
@@ -30,7 +30,7 @@ export function Footer() {
           <nav aria-label="Azienda">
             <Link href="/chi-siamo">Chi siamo</Link>
             <Link href="/come-funziona">Come funziona</Link>
-            <Link href="/negozianti">Ingrosso</Link>
+            <Link href="/lavora-con-noi">Lavora con noi</Link>
             <Link href="/assistenza">Centro assistenza</Link>
             <Link href="/contatti">Contatti</Link>
           </nav>
@@ -50,10 +50,10 @@ export function Footer() {
       <div className="legal">
         <div className="wrap">
           <span>
-            © 2026 FMF Import · FMF Cards S.R.L.S. · P.IVA 11105221219 · Traversa Garibaldi 24, 80040 Striano (NA), Italia
+            © 2026 FMF Cards · FMF Cards S.R.L.S. · P.IVA 11105221219 · Traversa Garibaldi 24, 80040 Striano (NA), Italia
           </span>
           <span style={{ maxWidth: 640 }}>
-            Pokémon e One Piece sono marchi dei rispettivi titolari. FMF Import è un rivenditore indipendente.
+            Pokémon e One Piece sono marchi dei rispettivi titolari. FMF Cards è un rivenditore indipendente.
           </span>
         </div>
       </div>

@@ -14,8 +14,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "FMF Import — Pokémon e One Piece sigillati dall'Asia",
-    template: "%s · FMF Import",
+    default: "FMF Cards — Pokémon e One Piece sigillati dall'Asia",
+    template: "%s · FMF Cards",
   },
   description:
     "Booster box, display e prodotti sigillati Pokémon e One Piece in edizione giapponese, cinese e coreana. Prezzi visibili senza registrazione.",

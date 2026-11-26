@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "come-funziona",
     "contatti",
     "assistenza",
-    "negozianti",
+    "lavora-con-noi",
   ].map((path) => ({
     url: `${SITE_URL}/${path}`,
     changeFrequency: "daily" as const,

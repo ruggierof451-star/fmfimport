@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { computeCartTotals, extractVatCents } from "@/lib/pricing";
-import { getPricingSettings, toPricingRules, toShippingRules } from "@/lib/settings";
+import { computeCartTotals, extractVatCents, unitPriceCentsFor } from "@/lib/pricing";
+import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
@@ -65,8 +65,9 @@ export async function POST(req: Request) {
   }
 
   const settings = await getPricingSettings();
-  const rules = toPricingRules(settings);
   const shippingRules = toShippingRules(settings);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
 
   const products = await prisma.product.findMany({ where: { id: { in: body.items.map((i) => i.productId) } } });
   const byId = new Map(products.map((p) => [p.id, p]));
@@ -95,15 +96,10 @@ export async function POST(req: Request) {
   }
 
   const totals = computeCartTotals(
-    validLines.map(({ product, quantity }) => ({
-      product: { costCents: product.supplierCostCents ?? 0, costVatTreatment: product.costVatTreatment, vatRateBps: product.vatRateBps },
-      quantity,
-    })),
-    rules,
+    validLines.map(({ product, quantity }) => ({ unitPriceCents: unitPriceCentsFor(product, isReseller), quantity })),
     shippingRules
   );
 
-  const session = await getSession();
   const orderNumber = generateOrderNumber();
 
   // I prezzi del sito sono SEMPRE IVA inclusa: la fattura non aggiunge alcun supplemento,
@@ -122,7 +118,7 @@ export async function POST(req: Request) {
         paymentMethod: body.paymentMethod,
         paymentStatus: "PENDING",
         subtotalCents: totals.subtotalCents,
-        discountCents: totals.bulkDiscountCents,
+        discountCents: 0,
         shippingCents: totals.shippingCents,
         invoiceVatCents,
         totalCents: grandTotalCents,

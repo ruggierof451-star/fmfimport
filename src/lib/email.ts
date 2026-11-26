@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = process.env.EMAIL_FROM || "FMF Import <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM || "FMF Cards <onboarding@resend.dev>";
 const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
 
 function layout(title: string, bodyHtml: string): string {
@@ -13,13 +13,13 @@ function layout(title: string, bodyHtml: string): string {
     <tr><td align="center">
       <table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;">
         <tr><td style="background:#000;padding:24px 32px;">
-          <span style="font-size:20px;font-weight:700;color:#fff;letter-spacing:.5px;">FMF <span style="color:#C9A646;">IMPORT</span></span>
+          <span style="font-size:20px;font-weight:700;color:#fff;letter-spacing:.5px;">FMF <span style="color:#C9A646;">CARDS</span></span>
         </td></tr>
         <tr><td style="padding:32px;">${bodyHtml}</td></tr>
         <tr><td style="padding:20px 32px;background:#FAFAFA;border-top:1px solid #EAEAEA;">
           <p style="margin:0;font-size:12px;color:#8A8A8A;line-height:1.6;">
             FMF Cards S.R.L.S. · P.IVA 11105221219 · Traversa Garibaldi 24, 80040 Striano (NA)<br />
-            Hai ricevuto questa email perché hai un account o un ordine su <a href="${SITE_URL}" style="color:#8A8A8A;">fmfimport.it</a>.
+            Hai ricevuto questa email perché hai un account o un ordine su <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.it</a>.
           </p>
         </td></tr>
       </table>
@@ -53,13 +53,13 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     "Reimposta la tua password",
     `<h1 style="font-size:20px;margin:0 0 12px;">Reimposta la tua password</h1>
      <p style="font-size:14px;line-height:1.6;color:#444;margin:0 0 20px;">
-       Hai richiesto di reimpostare la password del tuo account FMF Import. Il link è valido per 1 ora.
+       Hai richiesto di reimpostare la password del tuo account FMF Cards. Il link è valido per 1 ora.
        Se non sei stato tu a fare questa richiesta, ignora questa email: la tua password resterà invariata.
      </p>
      ${button(resetUrl, "Reimposta password")}
      <p style="font-size:12px;color:#999;margin-top:24px;">Se il pulsante non funziona, copia questo link nel browser:<br /><span style="word-break:break-all;">${resetUrl}</span></p>`
   );
-  return send(to, "Reimposta la tua password · FMF Import", html);
+  return send(to, "Reimposta la tua password · FMF Cards", html);
 }
 
 export async function sendOrderConfirmationEmail(params: {
@@ -85,7 +85,7 @@ export async function sendOrderConfirmationEmail(params: {
      </tr></table>
      ${button(`${SITE_URL}/ordine/${encodeURIComponent(params.orderNumber)}`, "Vedi il tuo ordine")}`
   );
-  return send(params.to, `Ordine confermato ${params.orderNumber} · FMF Import`, html);
+  return send(params.to, `Ordine confermato ${params.orderNumber} · FMF Cards`, html);
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -121,7 +121,7 @@ export async function sendOrderStatusEmail(params: {
      ${tracking}
      ${button(`${SITE_URL}/ordine/${params.orderId}`, "Vedi il tuo ordine")}`
   );
-  return send(params.to, `Ordine ${params.orderNumber}: ${label} · FMF Import`, html);
+  return send(params.to, `Ordine ${params.orderNumber}: ${label} · FMF Cards`, html);
 }
 
 export async function sendContactReplyNotice(to: string) {
@@ -130,5 +130,5 @@ export async function sendContactReplyNotice(to: string) {
     `<h1 style="font-size:20px;margin:0 0 12px;">Abbiamo ricevuto il tuo messaggio</h1>
      <p style="font-size:14px;line-height:1.6;color:#444;">Ti risponderemo il prima possibile, di solito entro 24 ore lavorative (mar-ven 8-19).</p>`
   );
-  return send(to, "Messaggio ricevuto · FMF Import", html);
+  return send(to, "Messaggio ricevuto · FMF Cards", html);
 }

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
-import { formatEuro, standardPriceCents } from "@/lib/pricing";
-import { getPricingSettings, toPricingRules } from "@/lib/settings";
+import { formatEuro } from "@/lib/pricing";
 import { cleanProductName } from "@/lib/product-art";
 import { BackButton } from "@/components/back-button";
 import { AdminProductQuickActions } from "@/components/admin-product-quick-actions";
@@ -21,15 +20,13 @@ const TABS: { key: View; label: string }[] = [
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; match?: string; estimated?: string; view?: string }>;
+  searchParams: Promise<{ q?: string; view?: string }>;
 }) {
   const sp = await searchParams;
   const view: View = (TABS.some((t) => t.key === sp.view) ? sp.view : "disponibili") as View;
 
   const where: Prisma.ProductWhereInput = {};
   if (sp.q) where.name = { contains: sp.q };
-  if (sp.match) where.matchStatus = sp.match as "MATCHED" | "NEEDS_REVIEW" | "UNMATCHED" | "MANUAL";
-  if (sp.estimated === "1") where.costIsEstimated = true;
 
   if (view === "eliminati") {
     where.deletedAt = { not: null };
@@ -46,9 +43,8 @@ export default async function AdminProductsPage({
     where.OR = [{ stockQty: null }, { stockQty: { gt: 0 } }];
   }
 
-  const [products, settings, counts] = await Promise.all([
+  const [products, counts] = await Promise.all([
     prisma.product.findMany({ where, orderBy: { updatedAt: "desc" }, take: 100 }),
-    getPricingSettings(),
     Promise.all([
       prisma.product.count({ where: { deletedAt: null, archived: false, OR: [{ stockQty: null }, { stockQty: { gt: 0 } }] } }),
       prisma.product.count({ where: { deletedAt: null, archived: false, stockQty: 0 } }),
@@ -56,7 +52,6 @@ export default async function AdminProductsPage({
       prisma.product.count({ where: { deletedAt: { not: null } } }),
     ]),
   ]);
-  const rules = toPricingRules(settings);
   const countByView: Record<View, number> = {
     disponibili: counts[0],
     esauriti: counts[1],
@@ -102,10 +97,9 @@ export default async function AdminProductsPage({
             <tr>
               <th>Prodotto</th>
               <th>Categoria</th>
-              <th>Costo</th>
-              <th>Prezzo pubblico</th>
+              <th>Prezzo</th>
+              <th>Prezzo rivenditore</th>
               <th>Stock</th>
-              <th>Abbinamento</th>
               <th>Pubblicato</th>
               <th></th>
               <th></th>
@@ -116,22 +110,9 @@ export default async function AdminProductsPage({
               <tr key={p.id}>
                 <td>{cleanProductName(p.name)}</td>
                 <td>{p.category}</td>
-                <td>
-                  {p.supplierCostCents != null ? formatEuro(p.supplierCostCents) : "—"}
-                  {p.costIsEstimated ? <span className="badge-status" style={{ marginLeft: 6 }}>stimato</span> : null}
-                </td>
-                <td>
-                  {formatEuro(
-                    standardPriceCents(
-                      { costCents: p.supplierCostCents ?? 0, costVatTreatment: p.costVatTreatment, vatRateBps: p.vatRateBps },
-                      rules
-                    )
-                  )}
-                </td>
+                <td>{p.priceCents != null ? formatEuro(p.priceCents) : <span className="muted">non in vendita</span>}</td>
+                <td>{p.resellerPriceCents != null ? formatEuro(p.resellerPriceCents) : "—"}</td>
                 <td>{p.stockQty ?? "n/d"}</td>
-                <td>
-                  <span className="badge-status">{p.matchStatus}</span>
-                </td>
                 <td>{p.published ? "Sì" : "No"}</td>
                 <td>
                   <Link href={`/admin/prodotti/${p.id}`}>Modifica</Link>
@@ -143,7 +124,7 @@ export default async function AdminProductsPage({
             ))}
             {products.length === 0 ? (
               <tr>
-                <td colSpan={9} className="muted">
+                <td colSpan={8} className="muted">
                   Nessun prodotto in questa sezione.
                 </td>
               </tr>

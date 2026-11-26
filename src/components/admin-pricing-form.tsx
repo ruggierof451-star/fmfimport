@@ -7,11 +7,7 @@ import type { PricingSettings } from "@/generated/prisma";
 
 export function AdminPricingForm({ settings }: { settings: PricingSettings }) {
   const router = useRouter();
-  const [margin, setMargin] = useState((settings.marginBps / 100).toString());
-  const [marginBulk, setMarginBulk] = useState((settings.marginBulkBps / 100).toString());
-  const [bulkThreshold, setBulkThreshold] = useState(String(settings.bulkThresholdQty));
   const [vat, setVat] = useState((settings.invoiceVatRateBps / 100).toString());
-  const [round90, setRound90] = useState(settings.roundTo90Cents);
   const [freeShip, setFreeShip] = useState((settings.freeShippingThresholdCents / 100).toFixed(2));
   const [shipFee, setShipFee] = useState((settings.standardShippingFeeCents / 100).toFixed(2));
   const [saving, setSaving] = useState(false);
@@ -21,11 +17,7 @@ export function AdminPricingForm({ settings }: { settings: PricingSettings }) {
     e.preventDefault();
     setSaving(true);
     const result = await updatePricingSettingsAction({
-      marginBps: Math.round(parseFloat(margin.replace(",", ".")) * 100),
-      marginBulkBps: Math.round(parseFloat(marginBulk.replace(",", ".")) * 100),
-      bulkThresholdQty: parseInt(bulkThreshold, 10),
       invoiceVatRateBps: Math.round(parseFloat(vat.replace(",", ".")) * 100),
-      roundTo90Cents: round90,
       freeShippingThresholdCents: Math.round(parseFloat(freeShip.replace(",", ".")) * 100),
       standardShippingFeeCents: Math.round(parseFloat(shipFee.replace(",", ".")) * 100),
     });
@@ -38,30 +30,13 @@ export function AdminPricingForm({ settings }: { settings: PricingSettings }) {
     <form onSubmit={handleSubmit} className="admin-card" style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 480 }}>
       {message ? <div className={`alert ${message.startsWith("Impostazioni") ? "ok" : "err"}`}>{message}</div> : null}
       <div className="alert info">
-        Queste regole valgono per TUTTO il catalogo. Modificarle cambia i prezzi pubblici immediatamente su tutto il
-        sito. I prezzi esposti sono SEMPRE IVA INCLUSA: l&apos;aliquota qui sotto si applica a ogni prezzo pubblico
-        (catalogo, carrello, checkout), non solo come riga in fattura. Verifica questa impostazione con il
+        I prezzi esposti sono SEMPRE IVA INCLUSA. L&apos;aliquota qui sotto serve solo a scorporare la quota IVA
+        mostrata in fattura: non cambia il totale pagato dal cliente. Verifica questa impostazione con il
         commercialista.
       </div>
       <label className="fl">
-        Ricarico ordinario (%)
-        <input className="in" value={margin} onChange={(e) => setMargin(e.target.value)} />
-      </label>
-      <label className="fl">
-        Ricarico quantità (%)
-        <input className="in" value={marginBulk} onChange={(e) => setMarginBulk(e.target.value)} />
-      </label>
-      <label className="fl">
-        Soglia quantità (pezzi — il ricarico ridotto si applica OLTRE questo numero)
-        <input className="in" value={bulkThreshold} onChange={(e) => setBulkThreshold(e.target.value)} />
-      </label>
-      <label className="fl">
-        Aliquota IVA inclusa in ogni prezzo pubblico (%)
+        Aliquota IVA di fattura (%)
         <input className="in" value={vat} onChange={(e) => setVat(e.target.value)} />
-      </label>
-      <label className="check">
-        <input type="checkbox" checked={round90} onChange={(e) => setRound90(e.target.checked)} />
-        Arrotonda il prezzo pubblico a ,90 (arrotondamento commerciale)
       </label>
       <label className="fl">
         Soglia spedizione gratuita (€)
@@ -72,7 +47,7 @@ export function AdminPricingForm({ settings }: { settings: PricingSettings }) {
         <input className="in" value={shipFee} onChange={(e) => setShipFee(e.target.value)} />
       </label>
       <button className="btn btn-dark" type="submit" disabled={saving} style={{ alignSelf: "flex-start" }}>
-        {saving ? "Salvataggio…" : "Salva regole di prezzo"}
+        {saving ? "Salvataggio…" : "Salva impostazioni"}
       </button>
     </form>
   );

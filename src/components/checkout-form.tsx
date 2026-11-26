@@ -254,12 +254,6 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                   missing={totals.freeShippingRemainderCents}
                   pct={Math.min(100, (totals.subtotalCents / Math.max(1, totals.subtotalCents + totals.freeShippingRemainderCents)) * 100)}
                 />
-                {totals.bulkDiscountCents > 0 ? (
-                  <div className="r ok">
-                    <span>Sconto quantità</span>
-                    <span>−{formatEuro(totals.bulkDiscountCents)}</span>
-                  </div>
-                ) : null}
                 <div className="r">
                   <span>Spedizione</span>
                   <span>{totals.shippingCents ? formatEuro(totals.shippingCents) : <b className="ok">Gratis</b>}</span>

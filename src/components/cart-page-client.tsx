@@ -47,14 +47,12 @@ export function CartPageClient() {
                 <Link href={`/prodotto/${line.slug}`}>{line.name}</Link>
                 <span className="muted" style={{ fontSize: 13 }}>
                   {line.language} · {formatEuro(line.unitPriceCents)} cad.
-                  {line.isBulkPricing ? (
+                  {line.isResellerPrice ? (
                     <>
                       {" "}
-                      · <b className="ok">prezzo quantità</b>
+                      · <b className="ok">prezzo rivenditore</b>
                     </>
-                  ) : (
-                    <span className="muted"> · oltre {quote.bulkThresholdQty} pz: {formatEuro(line.bulkUnitPriceCents)} → sconto automatico</span>
-                  )}
+                  ) : null}
                 </span>
               </div>
               <div className="rt">
@@ -74,10 +72,6 @@ export function CartPageClient() {
               </div>
             </div>
           ))}
-          <div className="alert info" style={{ fontWeight: 500 }}>
-            Prezzo quantità: oltre {quote?.bulkThresholdQty ?? 10} pezzi dello stesso articolo il prezzo unitario scende
-            automaticamente.
-          </div>
           <Link href="/" style={{ fontWeight: 700 }}>
             ← Continua lo shopping
           </Link>
@@ -91,14 +85,8 @@ export function CartPageClient() {
               />
               <div className="r">
                 <span>Prodotti ({count})</span>
-                <span>{formatEuro(totals.fullPriceSubtotalCents)}</span>
+                <span>{formatEuro(totals.subtotalCents)}</span>
               </div>
-              {totals.bulkDiscountCents > 0 ? (
-                <div className="r ok">
-                  <span>Sconto quantità</span>
-                  <span>−{formatEuro(totals.bulkDiscountCents)}</span>
-                </div>
-              ) : null}
               <div className="r">
                 <span>Spedizione</span>
                 <span>{totals.shippingCents ? formatEuro(totals.shippingCents) : <b className="ok">Gratis</b>}</span>
@@ -107,7 +95,6 @@ export function CartPageClient() {
                 <span>Totale</span>
                 <span>{formatEuro(totals.totalCents)}</span>
               </div>
-              {quote?.hasEstimatedPrices ? <span className="muted" style={{ fontSize: 13 }}>Contiene prezzi indicativi.</span> : null}
               <Link href="/checkout" className="btn btn-gold">
                 Procedi al checkout
               </Link>

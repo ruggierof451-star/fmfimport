@@ -1,4 +1,4 @@
-# FMF Import
+# FMF Cards
 
 E-commerce Pokémon / One Piece (box, display, prodotti sigillati JP/CN/KR), costruito su Next.js 16 + Prisma +
 SQLite, a partire dal prototipo grafico (`reference-prototype.html`, conservato come riferimento visivo).

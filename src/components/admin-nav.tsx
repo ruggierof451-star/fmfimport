@@ -9,8 +9,8 @@ const LINKS = [
   { href: "/admin/prodotti", label: "Prodotti" },
   { href: "/admin/ordini", label: "Ordini" },
   { href: "/admin/messaggi", label: "Messaggi" },
-  { href: "/admin/import", label: "Importazione catalogo" },
-  { href: "/admin/impostazioni", label: "Regole di prezzo" },
+  { href: "/admin/rivenditori", label: "Rivenditori" },
+  { href: "/admin/impostazioni", label: "Impostazioni" },
   { href: "/admin/utenti", label: "Utenti admin" },
 ];
 

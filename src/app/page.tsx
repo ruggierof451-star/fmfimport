@@ -4,11 +4,12 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
 import { prisma } from "@/lib/prisma";
-import { getPricingSettings, toPricingRules } from "@/lib/settings";
+import { getPricingSettings } from "@/lib/settings";
 import { formatEuro } from "@/lib/pricing";
 import { LIST_META } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
+import { getSession } from "@/lib/auth";
 
 const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "novita", label: "Novità" },
@@ -21,7 +22,8 @@ const HOME_SECTIONS: { key: string; label: string }[] = [
 
 export default async function HomePage() {
   const settings = await getPricingSettings();
-  const rules = toPricingRules(settings);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
   const totalCount = await prisma.product.count({ where: { published: true } });
 
   const sections = await Promise.all(
@@ -66,7 +68,7 @@ export default async function HomePage() {
             <h1 id="h1">Prodotti sigillati dall&apos;Asia, prezzi chiari per tutti.</h1>
             <p>
               {totalCount} prodotti tra booster box, display e collection in edizione giapponese, cinese e coreana.
-              Prezzi visibili senza registrazione; oltre {rules.bulkThresholdQty} pezzi il prezzo scende in automatico.
+              Prezzi chiari e uguali per tutti, visibili senza registrazione.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               <Link className="btn btn-gold" href="/pokemon">
@@ -123,12 +125,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="perks" aria-label="Perché FMF Import">
+      <section className="perks" aria-label="Perché FMF Cards">
         <div className="wrap">
           <Perk title="Originali e sigillati" desc="Da distribuzione autorizzata, mai riconfezionati." path="M12 19.5l5 5 10-11" />
           <Perk
-            title="Prezzo quantità"
-            desc={`Oltre ${rules.bulkThresholdQty} pezzi per articolo: ricarico ridotto in automatico.`}
+            title="Prezzo unico e trasparente"
+            desc="Stesso prezzo per tutti, visibile senza bisogno di registrarti."
             path="M11 27L27 11M13 13a2.5 2.5 0 1 0 0 0zM25 25a2.5 2.5 0 1 0 0 0z"
           />
           <Perk
@@ -155,7 +157,7 @@ export default async function HomePage() {
               </div>
               <div className="grid row5">
                 {s.items.map((p) => (
-                  <ProductCard key={p.id} product={p} rules={rules} />
+                  <ProductCard key={p.id} product={p} isReseller={isReseller} />
                 ))}
               </div>
             </section>
@@ -178,18 +180,18 @@ export default async function HomePage() {
         >
           <div style={{ flex: "1 1 420px", display: "flex", flexDirection: "column", gap: 8 }}>
             <span className="eyebrow" style={{ color: "var(--on-night-muted)" }}>
-              Negozi · live seller · vending
+              Negozi · rivenditori · distribuzione
             </span>
             <h2 id="pro" style={{ fontSize: 25, fontWeight: 500 }}>
-              Compri in quantità?
+              Sei un negozio o un rivenditore?
             </h2>
             <p style={{ margin: 0, color: "var(--on-night-muted)", maxWidth: 620, fontSize: 14 }}>
-              Oltre {rules.bulkThresholdQty} pezzi dello stesso articolo il prezzo scende in automatico nel carrello.
-              Fattura con P.IVA e codice SDI, condizioni dedicate per volumi continuativi.
+              Registrati con la tua partita IVA: valutiamo la richiesta e, se approvata, ti garantiamo un listino
+              dedicato da distributore.
             </p>
           </div>
-          <Link className="btn" style={{ background: "#fff", color: "#000" }} href="/negozianti">
-            Condizioni per negozianti
+          <Link className="btn" style={{ background: "#fff", color: "#000" }} href="/lavora-con-noi">
+            Lavora con noi
           </Link>
         </section>
       </main>

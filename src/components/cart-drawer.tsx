@@ -38,10 +38,10 @@ export function CartDrawer() {
                   <Link href={`/prodotto/${line.slug}`}>{line.name}</Link>
                   <span className="muted" style={{ fontSize: 13 }}>
                     {formatEuro(line.unitPriceCents)} cad.
-                    {line.isBulkPricing ? (
+                    {line.isResellerPrice ? (
                       <>
                         {" "}
-                        · <b className="ok">prezzo quantità</b>
+                        · <b className="ok">prezzo rivenditore</b>
                       </>
                     ) : null}
                   </span>

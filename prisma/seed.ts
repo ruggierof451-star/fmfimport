@@ -123,6 +123,14 @@ function setNameOf(n: string): string {
 
 const NEW_PER_CAT = 4;
 
+/** Prezzo pubblico di partenza per i dati di seed: costo stimato + 30% margine + 22% IVA, arrotondato a ,90. */
+function seedPriceCents(costCents: number): number {
+  const withMargin = Math.round((costCents * 13000) / 10000); // +30%
+  const withVat = Math.round((withMargin * 12200) / 10000); // +22% IVA
+  const floor90 = Math.floor(withVat / 100) * 100 + 90;
+  return floor90 >= withVat ? floor90 : floor90 + 100;
+}
+
 async function main() {
   console.log("Seeding: impostazioni prezzo...");
   await prisma.pricingSettings.upsert({
@@ -168,6 +176,7 @@ async function main() {
           setCode,
           type,
           condition: bgrade ? Condition.B_GRADE : Condition.NEW,
+          priceCents: seedPriceCents(Math.round(costEstimateEuro * 100)),
           supplierCostCents: Math.round(costEstimateEuro * 100),
           costVatTreatment: "NET_OF_VAT",
           costIsEstimated: true,

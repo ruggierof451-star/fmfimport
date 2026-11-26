@@ -1,4 +1,4 @@
-// FMF Import — schema dati
+// FMF Cards — schema dati
 // Tutti gli importi monetari sono interi in centesimi (Int, "...Cents") per evitare
 // errori di arrotondamento in virgola mobile. Le percentuali sono interi in millesimi
 // di punto percentuale ("...Bps", basis points: 3000 = 30,00%).
@@ -105,8 +105,16 @@ model Product {
   imageUrl    String?
   description String? // descrizione HTML dal fornitore, quando disponibile
 
-  // Prezzo
-  supplierCostCents Int? // costo reale dal fornitore (null = non ancora noto)
+  // Prezzo pubblico: unico, impostato a mano dall'admin, SEMPRE IVA inclusa. Nessun calcolo
+  // automatico da costo/margine: è il prezzo mostrato a tutti i clienti (null = non ancora in vendita).
+  priceCents Int?
+  // Prezzo dedicato ai rivenditori approvati (ruolo RESELLER), impostato a mano dall'admin,
+  // SEMPRE IVA inclusa. Se null, il rivenditore vede il prezzo pubblico come tutti gli altri.
+  resellerPriceCents Int?
+
+  // Costo di acquisto: riferimento interno per l'admin (non mostrato ai clienti, non usato
+  // per calcolare il prezzo pubblico, che è manuale).
+  supplierCostCents Int? // costo di acquisto, null = non tracciato
   costVatTreatment  CostVatTreatment @default(NET_OF_VAT)
   costIsEstimated   Boolean          @default(true) // true finché non arriva un costo reale verificato
   vatRateBps        Int              @default(2200) // aliquota IVA per il prezzo pubblico, configurabile per prodotto
@@ -216,22 +224,49 @@ model ContactMessage {
   @@index([read])
 }
 
-// Impostazioni del motore prezzi — riga singola, modificabile dall'area admin.
+// Impostazioni generali — riga singola, modificabile dall'area admin. I prezzi dei
+// prodotti sono manuali (vedi Product.priceCents): qui restano solo le regole che
+// valgono per tutto il sito (IVA in fattura, spedizione).
 model PricingSettings {
   id Int @id @default(1)
 
-  marginBps             Int     @default(3000) // 30,00% ricarico ordinario
-  marginBulkBps         Int     @default(2000) // 20,00% ricarico oltre soglia quantità
-  bulkThresholdQty      Int     @default(10) // "oltre" questa quantità per articolo si applica il ricarico bulk
-  // I prezzi del sito sono SEMPRE IVA INCLUSA. Questa aliquota si applica a ogni prezzo
-  // pubblico (catalogo, carrello, checkout); la fattura non aggiunge alcun supplemento.
+  // I prezzi del sito sono SEMPRE IVA INCLUSA. Questa aliquota serve solo a scorporare
+  // la quota IVA mostrata in fattura; non cambia il totale pagato.
   invoiceVatRateBps     Int     @default(2200) // 22,00%
-  roundTo90Cents        Boolean @default(true) // arrotonda il prezzo pubblico a ,90
   freeShippingThresholdCents Int @default(20000) // 200,00 €
   standardShippingFeeCents   Int @default(790) // 7,90 €
 
   updatedAt DateTime @updatedAt
   updatedBy String?
+}
+
+enum ResellerRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Richiesta di accesso come rivenditore/distributore ("Lavora con noi"). Valutata
+// manualmente da un admin: non crea da sola un account né un listino scontato.
+model ResellerRequest {
+  id String @id @default(cuid())
+
+  companyName String
+  vatNumber   String
+  sdiCode     String?
+  contactName String
+  email       String
+  phone       String?
+  message     String?
+
+  status ResellerRequestStatus @default(PENDING)
+  note   String? // nota interna admin (es. motivo del rifiuto, condizioni concordate)
+
+  createdAt  DateTime  @default(now())
+  reviewedAt DateTime?
+  reviewedBy String?
+
+  @@index([status])
 }
 
 model User {

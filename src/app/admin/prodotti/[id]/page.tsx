@@ -20,7 +20,7 @@ export default async function AdminProductEditPage({ params }: { params: Promise
       <BackButton fallbackHref="/admin/prodotti" />
       <h1 style={{ fontSize: 24, fontWeight: 600 }}>{cleanProductName(product.name)}</h1>
       <p className="muted" style={{ margin: 0 }}>
-        Nome fornitore originale: {product.name} · Slug: {product.slug}
+        Slug: {product.slug}
       </p>
       <AdminProductForm product={product} existingTypes={types.map((t) => t.type)} />
 

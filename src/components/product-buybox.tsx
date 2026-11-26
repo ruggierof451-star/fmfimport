@@ -6,23 +6,19 @@ import { formatEuro } from "@/lib/pricing";
 
 export function ProductBuyBox({
   productId,
-  standardPriceCents,
-  bulkPriceCents,
-  bulkThresholdQty,
+  priceCents,
   maxQty,
   isPreorder,
+  isResellerPrice,
 }: {
   productId: string;
-  standardPriceCents: number;
-  bulkPriceCents: number;
-  bulkThresholdQty: number;
+  priceCents: number;
   maxQty: number;
   isPreorder: boolean;
+  isResellerPrice?: boolean;
 }) {
   const { addItem, showToast } = useCart();
   const [qty, setQty] = useState(1);
-  const isBulk = qty > bulkThresholdQty;
-  const unit = isBulk ? bulkPriceCents : standardPriceCents;
 
   function clamp(n: number) {
     return Math.max(1, Math.min(maxQty, n));
@@ -31,25 +27,15 @@ export function ProductBuyBox({
   return (
     <>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-        <span className="bigprice">{formatEuro(unit)}</span>
+        <span className="bigprice">{formatEuro(priceCents)}</span>
         <span className="muted" style={{ fontSize: 14 }}>
           cad.
         </span>
-        {isBulk ? (
+        {isResellerPrice ? (
           <span className="pill" style={{ background: "var(--ok-wash)", borderColor: "var(--ok-wash)", color: "#155C33" }}>
-            Prezzo quantità applicato
+            Prezzo rivenditore
           </span>
         ) : null}
-      </div>
-      <div className="tiers">
-        <div className={isBulk ? "" : "on"}>
-          <span>da 1 a {bulkThresholdQty} pezzi</span>
-          <b>{formatEuro(standardPriceCents)}</b>
-        </div>
-        <div className={isBulk ? "on" : ""}>
-          <span>oltre {bulkThresholdQty} pezzi</span>
-          <b>{formatEuro(bulkPriceCents)}</b>
-        </div>
       </div>
       <div className="buyrow">
         <div className="qty">
@@ -81,14 +67,9 @@ export function ProductBuyBox({
             showToast("Aggiunto al carrello");
           }}
         >
-          {maxQty <= 0 ? "Esaurito" : `Aggiungi · ${formatEuro(unit * qty)}`}
+          {maxQty <= 0 ? "Esaurito" : `Aggiungi · ${formatEuro(priceCents * qty)}`}
         </button>
       </div>
-      {!isBulk ? (
-        <div className="muted" style={{ fontSize: 14 }}>
-          Con {bulkThresholdQty + 1} o più pezzi paghi {formatEuro(bulkPriceCents)} cad.
-        </div>
-      ) : null}
       {isPreorder ? (
         <div className="alert info">Preordine: spedizione all&apos;uscita del prodotto.</div>
       ) : null}

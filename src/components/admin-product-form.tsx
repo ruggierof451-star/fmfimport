@@ -30,14 +30,13 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
   const [description, setDescription] = useState(product.description ?? "");
   const [isNew, setIsNew] = useState(product.isNew);
   const [isPreorder, setIsPreorder] = useState(product.isPreorder);
-  const [supplierCode, setSupplierCode] = useState(product.supplierCode ?? "");
+  const [priceEuro, setPriceEuro] = useState(product.priceCents != null ? (product.priceCents / 100).toFixed(2) : "");
+  const [resellerPriceEuro, setResellerPriceEuro] = useState(
+    product.resellerPriceCents != null ? (product.resellerPriceCents / 100).toFixed(2) : ""
+  );
   const [costEuro, setCostEuro] = useState(product.supplierCostCents != null ? (product.supplierCostCents / 100).toFixed(2) : "");
-  const [costVatTreatment, setCostVatTreatment] = useState(product.costVatTreatment);
-  const [costIsEstimated, setCostIsEstimated] = useState(product.costIsEstimated);
-  const [vatRate, setVatRate] = useState((product.vatRateBps / 100).toString());
   const [stockQty, setStockQty] = useState(product.stockQty != null ? String(product.stockQty) : "");
   const [published, setPublished] = useState(product.published);
-  const [matchStatus, setMatchStatus] = useState(product.matchStatus);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
@@ -49,6 +48,10 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
     "one-piece-jp": { game: "ONE_PIECE", language: "JP" },
     "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
   };
+
+  function toCents(euro: string): number | null {
+    return euro.trim() === "" ? null : Math.round(parseFloat(euro.replace(",", ".")) * 100);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,14 +76,11 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       description: description.trim() === "" ? null : description,
       isNew,
       isPreorder,
-      supplierCode: supplierCode || undefined,
-      supplierCostCents: costEuro.trim() === "" ? null : Math.round(parseFloat(costEuro.replace(",", ".")) * 100),
-      costVatTreatment,
-      costIsEstimated,
-      vatRateBps: Math.round(parseFloat(vatRate.replace(",", ".")) * 100),
+      priceCents: toCents(priceEuro),
+      resellerPriceCents: toCents(resellerPriceEuro),
+      supplierCostCents: toCents(costEuro),
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
-      matchStatus,
     });
     setSaving(false);
     if (result.ok) {
@@ -180,46 +180,23 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       <hr style={{ border: "none", borderTop: "1px solid #2A2A2A", margin: "4px 0" }} />
 
       <label className="fl">
-        Codice fornitore
-        <input className="in" value={supplierCode} onChange={(e) => setSupplierCode(e.target.value)} />
+        Prezzo di vendita (€, IVA inclusa) — vuoto = non in vendita
+        <input className="in" value={priceEuro} onChange={(e) => setPriceEuro(e.target.value)} placeholder="es. 89.90" />
       </label>
 
       <label className="fl">
-        Costo fornitore (€)
-        <input className="in" value={costEuro} onChange={(e) => setCostEuro(e.target.value)} placeholder="es. 72.00" />
+        Prezzo rivenditore (€, IVA inclusa) — opzionale, visibile solo ai rivenditori approvati
+        <input className="in" value={resellerPriceEuro} onChange={(e) => setResellerPriceEuro(e.target.value)} placeholder="es. 72.00" />
       </label>
 
       <label className="fl">
-        Trattamento IVA del costo
-        <select className="in" value={costVatTreatment} onChange={(e) => setCostVatTreatment(e.target.value as typeof costVatTreatment)}>
-          <option value="NET_OF_VAT">Netto IVA (il costo NON include IVA)</option>
-          <option value="GROSS_WITH_VAT">Lordo (il costo include già IVA)</option>
-        </select>
-      </label>
-
-      <label className="check">
-        <input type="checkbox" checked={costIsEstimated} onChange={(e) => setCostIsEstimated(e.target.checked)} />
-        Costo stimato (non verificato con il fornitore) — mostra &quot;indicativo&quot; ai clienti
-      </label>
-
-      <label className="fl">
-        Aliquota IVA (%)
-        <input className="in" value={vatRate} onChange={(e) => setVatRate(e.target.value)} />
+        Costo di acquisto (€) — uso interno, opzionale
+        <input className="in" value={costEuro} onChange={(e) => setCostEuro(e.target.value)} placeholder="es. 60.00" />
       </label>
 
       <label className="fl">
         Quantità in stock (vuoto = non tracciata)
         <input className="in" value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder="es. 12, oppure vuoto" />
-      </label>
-
-      <label className="fl">
-        Stato abbinamento fornitore
-        <select className="in" value={matchStatus} onChange={(e) => setMatchStatus(e.target.value as typeof matchStatus)}>
-          <option value="UNMATCHED">Non abbinato</option>
-          <option value="NEEDS_REVIEW">Da rivedere (ambiguo)</option>
-          <option value="MATCHED">Abbinato (automatico)</option>
-          <option value="MANUAL">Abbinato manualmente</option>
-        </select>
       </label>
 
       <label className="check">

@@ -14,8 +14,8 @@ export default async function AssistenzaPage() {
     ["I prodotti sono originali?", "Sì. Vendiamo solo prodotti ufficiali e sigillati, acquistati da distribuzione autorizzata."],
     ["Devo registrarmi o avere la partita IVA?", "No. I prezzi sono visibili a tutti e puoi comprare come ospite. La fattura è disponibile se inserisci i dati aziendali al checkout."],
     [
-      "Come funziona lo sconto quantità?",
-      `Quando nel carrello metti più di ${settings.bulkThresholdQty} pezzi dello stesso articolo, il prezzo unitario scende automaticamente per tutti i pezzi di quell'articolo.`,
+      "I prezzi sono uguali per tutti?",
+      "Sì, il prezzo in scheda è unico e uguale per ogni cliente. Solo i rivenditori approvati con partita IVA possono avere un listino dedicato: vedi la pagina Lavora con noi.",
     ],
     [
       "Quanto costa la spedizione?",
@@ -61,8 +61,8 @@ export default async function AssistenzaPage() {
               <p className="muted" style={{ margin: 0 }}>
                 Rispondiamo dal martedì al venerdì, dalle 8:00 alle 19:00.
               </p>
-              <Link href="/negozianti" style={{ fontSize: 14 }}>
-                Sei un negozio? Vai alle condizioni per rivenditori →
+              <Link href="/lavora-con-noi" style={{ fontSize: 14 }}>
+                Sei un negozio o un rivenditore? Scopri come lavorare con noi →
               </Link>
             </div>
           </div>

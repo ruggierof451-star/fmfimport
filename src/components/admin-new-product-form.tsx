@@ -25,13 +25,18 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [customType, setCustomType] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [priceEuro, setPriceEuro] = useState("");
+  const [resellerPriceEuro, setResellerPriceEuro] = useState("");
   const [costEuro, setCostEuro] = useState("");
-  const [vatRate, setVatRate] = useState("22");
   const [stockQty, setStockQty] = useState("");
   const [published, setPublished] = useState(true);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  function toCents(euro: string): number | null {
+    return euro.trim() === "" ? null : Math.round(parseFloat(euro.replace(",", ".")) * 100);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,8 +58,9 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       type: finalType,
       imageUrl: imageUrl.trim() === "" ? null : imageUrl.trim(),
       description: description.trim() === "" ? null : description,
-      supplierCostCents: costEuro.trim() === "" ? null : Math.round(parseFloat(costEuro.replace(",", ".")) * 100),
-      vatRateBps: Math.round(parseFloat(vatRate.replace(",", ".") || "0") * 100),
+      priceCents: toCents(priceEuro),
+      resellerPriceCents: toCents(resellerPriceEuro),
+      supplierCostCents: toCents(costEuro),
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
       isNew,
@@ -119,13 +125,18 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       </label>
 
       <label className="fl">
-        Costo fornitore (€)
-        <input className="in" value={costEuro} onChange={(e) => setCostEuro(e.target.value)} placeholder="es. 72.00 — vuoto = costo da verificare" />
+        Prezzo di vendita (€, IVA inclusa) — vuoto = non in vendita
+        <input className="in" value={priceEuro} onChange={(e) => setPriceEuro(e.target.value)} placeholder="es. 89.90" />
       </label>
 
       <label className="fl">
-        Aliquota IVA (%)
-        <input className="in" value={vatRate} onChange={(e) => setVatRate(e.target.value)} />
+        Prezzo rivenditore (€, IVA inclusa) — opzionale
+        <input className="in" value={resellerPriceEuro} onChange={(e) => setResellerPriceEuro(e.target.value)} placeholder="es. 72.00" />
+      </label>
+
+      <label className="fl">
+        Costo di acquisto (€) — uso interno, opzionale
+        <input className="in" value={costEuro} onChange={(e) => setCostEuro(e.target.value)} placeholder="es. 60.00" />
       </label>
 
       <label className="fl">

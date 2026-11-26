@@ -16,11 +16,8 @@ export interface QuoteLine {
   imageUrl: string | null;
   quantity: number;
   unitPriceCents: number;
-  standardUnitPriceCents: number;
-  bulkUnitPriceCents: number;
+  isResellerPrice: boolean;
   lineTotalCents: number;
-  isBulkPricing: boolean;
-  isEstimatedCost: boolean;
   stockLabel: string;
   maxOrderableQty: number;
 }
@@ -29,17 +26,13 @@ export interface Quote {
   lines: QuoteLine[];
   totals: {
     subtotalCents: number;
-    fullPriceSubtotalCents: number;
-    bulkDiscountCents: number;
     shippingCents: number;
     totalCents: number;
     freeShippingRemainderCents: number;
     qualifiesForFreeShipping: boolean;
   };
-  bulkThresholdQty: number;
   removed: { productId: string; reason: string }[];
   adjusted: { productId: string; requestedQty: number; availableQty: number }[];
-  hasEstimatedPrices: boolean;
 }
 
 interface CartContextValue {

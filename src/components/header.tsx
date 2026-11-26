@@ -14,7 +14,7 @@ export async function Header({ activeKey = "" }: { activeKey?: string }) {
             <b>Spedizione gratuita</b> sopra {formatEuro(settings.freeShippingThresholdCents)}
           </span>
           <span>
-            <b>Prezzo quantità</b> oltre {settings.bulkThresholdQty} pezzi per articolo
+            <b>Prezzo unico</b> uguale per tutti
           </span>
           <span>
             <b>Prezzi visibili</b> senza registrazione

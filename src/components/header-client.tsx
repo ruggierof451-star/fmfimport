@@ -26,7 +26,7 @@ const MENU = [
     items: [
       { key: "chi-siamo", label: "Chi siamo" },
       { key: "come-funziona", label: "Come funziona" },
-      { key: "negozianti", label: "Ingrosso" },
+      { key: "lavora-con-noi", label: "Lavora con noi" },
       { key: "assistenza", label: "Centro assistenza" },
       { key: "contatti", label: "Contatti" },
     ],
@@ -89,9 +89,9 @@ export function HeaderClient({ isLoggedIn, activeKey }: { isLoggedIn: boolean; a
             <span></span>
             <span></span>
           </button>
-          <Link href="/" className="logo" aria-label="FMF Import, homepage">
+          <Link href="/" className="logo" aria-label="FMF Cards, homepage">
             <b>FMF</b>
-            <span>IMPORT</span>
+            <span>CARDS</span>
           </Link>
           <div className="hicons">
             <Link className="hicon" href={isLoggedIn ? "/account" : "/account"}>
