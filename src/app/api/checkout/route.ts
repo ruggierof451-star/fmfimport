@@ -6,9 +6,10 @@ import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
-import { formatEuro } from "@/lib/pricing";
-import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
 import { validateDiscountCode, recordDiscountCodeUsage } from "@/lib/discounts";
+import { getStripe, isStripeConfigured } from "@/lib/stripe";
+
+const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
 
 /**
  * Crea un ordine. Il totale NON viene mai letto dal corpo della richiesta: viene
@@ -44,7 +45,6 @@ const bodySchema = z.object({
       sdiCode: z.string().optional(),
     })
     .optional(),
-  paymentMethod: z.enum(["CARD", "PAYPAL", "BANK_TRANSFER"]),
   acceptedTerms: z.literal(true),
   customerNote: z.string().optional(),
   couponCode: z.string().max(40).optional(),
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
         userId: session?.userId,
         guestEmail: session ? undefined : body.contact.email,
         status: "PENDING_PAYMENT",
-        paymentMethod: body.paymentMethod,
+        paymentMethod: "CARD",
         paymentStatus: "PENDING",
         subtotalCents: totals.subtotalCents,
         discountCents: totals.discountCents,
@@ -174,32 +174,55 @@ export async function POST(req: Request) {
     recordDiscountCodeUsage(discount.code).catch((err) => console.error("[checkout] conteggio utilizzi codice sconto fallito:", err));
   }
 
+  // Il pagamento vero avviene su Stripe: l'ordine resta PENDING_PAYMENT finché il webhook
+  // non conferma il pagamento (vedi /api/webhooks/stripe). Niente email di conferma qui:
+  // partono solo a pagamento confermato, per non promettere un ordine non ancora pagato.
   const customerEmail = session?.email ?? body.contact.email;
-  sendOrderConfirmationEmail({
-    to: customerEmail,
-    orderNumber: order.orderNumber,
-    totalFormatted: formatEuro(order.totalCents),
-    items: validLines.map(({ product, quantity }, i) => ({
-      name: cleanProductName(product.name),
-      quantity,
-      lineTotalFormatted: formatEuro(totals.lines[i].lineTotalCents),
-    })),
-  }).catch((err) => console.error("[checkout] invio email conferma fallito:", err));
 
-  sendAdminNewOrderNotification({
-    orderNumber: order.orderNumber,
-    orderId: order.id,
-    totalFormatted: formatEuro(order.totalCents),
-    customerEmail,
-    paymentMethod: order.paymentMethod,
-    itemsSummary: validLines.map(({ product, quantity }) => `${quantity}× ${cleanProductName(product.name)}`).join(", "),
-  }).catch((err) => console.error("[checkout] invio notifica admin fallito:", err));
+  if (!isStripeConfigured()) {
+    return NextResponse.json(
+      { error: "Il pagamento online non è ancora configurato. Contatta l'assistenza per completare l'ordine." },
+      { status: 503 }
+    );
+  }
 
-  return NextResponse.json({
-    orderId: order.id,
-    orderNumber: order.orderNumber,
-    totalCents: order.totalCents,
-    invoiceVatCents: order.invoiceVatCents,
-    paymentMethod: order.paymentMethod,
-  });
+  try {
+    const stripe = getStripe();
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: customerEmail,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "eur",
+            unit_amount: grandTotalCents,
+            product_data: {
+              name: `Ordine ${order.orderNumber} · FMF Cards`,
+              description: validLines.map(({ product, quantity }) => `${quantity}× ${cleanProductName(product.name)}`).join(", "),
+            },
+          },
+        },
+      ],
+      metadata: { orderId: order.id },
+      success_url: `${SITE_URL}/ordine/${order.id}?pagamento=ok`,
+      cancel_url: `${SITE_URL}/checkout?pagamento=annullato`,
+    });
+
+    if (!checkoutSession.url) throw new Error("Stripe non ha restituito un URL di checkout.");
+
+    return NextResponse.json({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      totalCents: order.totalCents,
+      invoiceVatCents: order.invoiceVatCents,
+      checkoutUrl: checkoutSession.url,
+    });
+  } catch (err) {
+    console.error("[checkout] creazione sessione Stripe fallita:", err);
+    return NextResponse.json(
+      { error: "Impossibile avviare il pagamento. Riprova tra poco." },
+      { status: 502 }
+    );
+  }
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/components/cart-context";
 import { ShipBar } from "@/components/cart-drawer";
@@ -26,7 +25,6 @@ export interface CheckoutPrefill {
 
 export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps: number; prefill?: CheckoutPrefill }) {
   const { items, quote, clearCart, couponCode } = useCart();
-  const router = useRouter();
 
   const [email, setEmail] = useState(prefill?.email ?? "");
   const [phone, setPhone] = useState(prefill?.phone ?? "");
@@ -40,7 +38,6 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
   const [companyName, setCompanyName] = useState(prefill?.companyName ?? "");
   const [vatNumber, setVatNumber] = useState(prefill?.vatNumber ?? "");
   const [sdiCode, setSdiCode] = useState(prefill?.sdiCode ?? "");
-  const [payment, setPayment] = useState<"CARD" | "PAYPAL" | "BANK_TRANSFER">("BANK_TRANSFER");
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -95,7 +92,6 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
           contact: { email, phone },
           shipping: { firstName, lastName, street, postalCode, city, province, country: "IT" },
           invoice: wantsInvoice ? { requested: true, companyName, vatNumber, sdiCode } : { requested: false },
-          paymentMethod: payment,
           acceptedTerms: true,
           couponCode: couponCode || undefined,
         }),
@@ -107,7 +103,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
         return;
       }
       clearCart();
-      router.push(`/ordine/${data.orderId}`);
+      window.location.href = data.checkoutUrl;
     } catch {
       setServerError("Impossibile completare l'ordine. Controlla la connessione e riprova.");
       setSubmitting(false);
@@ -217,11 +213,11 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
             <label className="opt">
               <input type="radio" name="pay" checked readOnly />
               <span>
-                <b>Bonifico bancario</b>
+                <b>Carta di credito/debito</b>
                 <br />
                 <span className="muted" style={{ fontSize: 14 }}>
-                  Ricevi l&apos;IBAN via email dopo la conferma dell&apos;ordine. La spedizione parte alla ricezione
-                  del bonifico.
+                  Pagamento sicuro tramite Stripe. Al passo successivo vieni portato su una pagina Stripe per
+                  inserire i dati della carta; la spedizione parte appena il pagamento è confermato.
                 </span>
               </span>
             </label>
@@ -275,7 +271,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                   Prezzi IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}% = {formatEuro(includedVatPreviewCents)}).
                 </span>
                 <button type="submit" className="btn btn-gold" disabled={submitting}>
-                  {submitting ? "Invio in corso…" : `Conferma ordine · ${formatEuro(totals.totalCents)}`}
+                  {submitting ? "Reindirizzamento a Stripe…" : `Vai al pagamento · ${formatEuro(totals.totalCents)}`}
                 </button>
               </>
             ) : null}
