@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { sendContactReplyNotice } from "@/lib/email";
+import { sendContactReplyNotice, sendAdminNewContactMessageNotification } from "@/lib/email";
 
 const contactSchema = z.object({
   email: z.string().email("Inserisci un'email valida."),
@@ -32,6 +32,11 @@ export async function submitContactMessageAction(input: ContactInput): Promise<{
   });
 
   sendContactReplyNotice(data.email).catch((err) => console.error("[contatti] invio conferma fallito:", err));
+  sendAdminNewContactMessageNotification({
+    email: data.email,
+    orderNumber: data.orderNumber?.trim() || null,
+    message: data.message,
+  }).catch((err) => console.error("[contatti] invio notifica admin fallito:", err));
 
   return { ok: true };
 }

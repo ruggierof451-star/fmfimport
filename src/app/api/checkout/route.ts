@@ -7,7 +7,7 @@ import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/pricing";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
 import { validateDiscountCode, recordDiscountCodeUsage } from "@/lib/discounts";
 
 /**
@@ -170,12 +170,22 @@ export async function POST(req: Request) {
     to: customerEmail,
     orderNumber: order.orderNumber,
     totalFormatted: formatEuro(order.totalCents),
+    paymentMethod: order.paymentMethod,
     items: validLines.map(({ product, quantity }, i) => ({
       name: cleanProductName(product.name),
       quantity,
       lineTotalFormatted: formatEuro(totals.lines[i].lineTotalCents),
     })),
   }).catch((err) => console.error("[checkout] invio email conferma fallito:", err));
+
+  sendAdminNewOrderNotification({
+    orderNumber: order.orderNumber,
+    orderId: order.id,
+    totalFormatted: formatEuro(order.totalCents),
+    customerEmail,
+    paymentMethod: order.paymentMethod,
+    itemsSummary: validLines.map(({ product, quantity }) => `${quantity}× ${cleanProductName(product.name)}`).join(", "),
+  }).catch((err) => console.error("[checkout] invio notifica admin fallito:", err));
 
   return NextResponse.json({
     orderId: order.id,

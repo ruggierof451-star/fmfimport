@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { sendResellerRequestReceivedEmail, sendResellerRequestDecisionEmail } from "@/lib/email";
+import { sendResellerRequestReceivedEmail, sendResellerRequestDecisionEmail, sendAdminNewResellerRequestNotification } from "@/lib/email";
 
 const resellerRequestSchema = z.object({
   companyName: z.string().min(1, "Indica la ragione sociale."),
@@ -47,6 +47,12 @@ export async function submitResellerRequestAction(input: ResellerRequestInput): 
   sendResellerRequestReceivedEmail(email, companyName).catch((err) =>
     console.error("[rivenditori] invio conferma ricezione fallito:", err)
   );
+  sendAdminNewResellerRequestNotification({
+    companyName,
+    vatNumber: data.vatNumber.trim(),
+    contactName: data.contactName.trim(),
+    email,
+  }).catch((err) => console.error("[rivenditori] invio notifica admin fallito:", err));
 
   return { ok: true };
 }
