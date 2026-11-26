@@ -82,7 +82,6 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
 .home-bg .perks{background:transparent}
-.home-bg main{background:#fff}
 @media (max-width:760px){.home-bg{background-attachment:scroll}}
 .hero .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:36px;padding-block:clamp(32px,5vw,60px)}
 .hero .txt{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:18px}
