@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { syncContactSafely } from "@/lib/marketing";
 import { requireAdmin, hashPassword } from "@/lib/auth";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { recordDiscountCodeUsage } from "@/lib/discounts";
@@ -463,10 +462,6 @@ export async function updateOrderStatusAction(input: {
     }),
   ]);
 
-  if (before && before.paymentStatus !== "PAID" && updated.paymentStatus === "PAID") {
-    // Email marketing: il cliente (se ha il consenso) entra nel segmento "Clienti".
-    await syncContactSafely(updated.user?.email ?? updated.guestEmail);
-  }
   if (before && before.paymentStatus !== "PAID" && updated.paymentStatus === "PAID" && before.couponCode) {
     recordDiscountCodeUsage(before.couponCode).catch((err) => console.error("[admin] conteggio utilizzi codice sconto fallito:", err));
   }

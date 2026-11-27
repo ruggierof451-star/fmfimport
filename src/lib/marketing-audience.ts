@@ -35,7 +35,7 @@ export interface AudienceInput {
   /** utenti con marketingOptIn = true */
   users: { email: string; name: string | null; role: string }[];
   /** iscritti newsletter con status CONFIRMED */
-  subscribers: { email: string; interests: string[] }[];
+  subscribers: { email: string; interests: string[]; firstName?: string | null }[];
   /** ordini pagati (di chiunque: chi non ha consenso viene ignorato) */
   paidOrders: { email: string | null; games: string[] }[];
 }
@@ -66,7 +66,7 @@ export function computeAudience(input: AudienceInput): Map<string, AudienceMembe
     if (u.role === "RESELLER") m.segments.add("rivenditori");
   }
   for (const s of input.subscribers) {
-    const m = add(s.email, null);
+    const m = add(s.email, s.firstName?.trim() || null);
     for (const i of s.interests) if ((INTEREST_KEYS as string[]).includes(i)) m.segments.add(i as InterestKey);
   }
   for (const o of input.paidOrders) {

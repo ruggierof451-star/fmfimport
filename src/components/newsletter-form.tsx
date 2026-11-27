@@ -14,6 +14,7 @@ const INTEREST_OPTIONS = [
 /** Modulo di iscrizione alla newsletter (footer): email, interessi e consenso esplicito. */
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
@@ -34,6 +35,7 @@ export function NewsletterForm() {
     setResult(null);
     const res = await subscribeNewsletterAction({
       email,
+      firstName: firstName.trim() || undefined,
       interests: interests as ("pokemon" | "onepiece" | "yugioh" | "dragonball")[],
       consent: true,
       website,
@@ -42,6 +44,7 @@ export function NewsletterForm() {
     if (res.ok) {
       setResult({ ok: true, text: res.message ?? "Controlla la tua email per confermare." });
       setEmail("");
+      setFirstName("");
     } else {
       setResult({ ok: false, text: res.error ?? "Iscrizione non riuscita." });
     }
@@ -54,6 +57,19 @@ export function NewsletterForm() {
         <p>Nuovi arrivi, preordini e offerte, prima di tutti. Niente spam, ti disiscrivi con un clic.</p>
       </div>
       <div className="nl-row">
+        <label htmlFor="nl-name" className="sr">
+          Il tuo nome (facoltativo)
+        </label>
+        <input
+          id="nl-name"
+          className="in nl-name"
+          type="text"
+          autoComplete="given-name"
+          placeholder="Nome"
+          maxLength={60}
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
         <label htmlFor="nl-email" className="sr">
           La tua email
         </label>

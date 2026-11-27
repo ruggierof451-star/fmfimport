@@ -294,15 +294,23 @@ export async function sendResellerRequestDecisionEmail(params: {
 }
 
 /**
- * HTML completo di una campagna di marketing, con la grafica delle email del sito.
- * Il link di disiscrizione è il segnaposto di Resend {{{RESEND_UNSUBSCRIBE_URL}}}: Resend
- * lo sostituisce per ogni destinatario e gestisce la disiscrizione (che poi torna al sito
- * tramite webhook). Per l'email di prova il segnaposto diventa un link alla home.
+ * Base HTML di una email di marketing (campagna o automazione), prima della
+ * personalizzazione per il singolo destinatario (vedi marketing-engine.ts).
+ * - HTML completo (es. copiato da Claude Design): usato così com'è.
+ * - Solo contenuto: inserito nel modello grafico delle email del sito.
+ * Il link di disiscrizione resta come segnaposto {{disiscrizione}}.
  */
-export function renderMarketingEmail(params: { subject: string; previewText?: string | null; bodyHtml: string; forTest?: boolean }): string {
-  const unsubscribeUrl = params.forTest ? SITE_URL : "{{{RESEND_UNSUBSCRIBE_URL}}}";
-  return layout(params.previewText || params.subject, params.bodyHtml, { unsubscribeUrl });
+export function marketingBaseHtml(params: { subject: string; previewText?: string | null; bodyHtml: string }): string {
+  if (/<html[\s>]/i.test(params.bodyHtml) || /<body[\s>]/i.test(params.bodyHtml)) return params.bodyHtml;
+  return layout(params.previewText || params.subject, params.bodyHtml, { unsubscribeUrl: "{{disiscrizione}}" });
 }
+
+/** Piè di pagina aggiunto alle email complete che non contengono già {{disiscrizione}}. */
+export const MARKETING_FOOTER_HTML = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 16px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:#8A8A8A;line-height:1.6;">
+FMF Cards S.R.L.S. · P.IVA 11105221219 · Traversa Garibaldi 24, 80040 Striano (NA)<br />
+Hai ricevuto questa email perché hai accettato di ricevere offerte e novità da FMF Cards.
+<a href="{{disiscrizione}}" style="color:#8A8A8A;text-decoration:underline;">Annulla l&apos;iscrizione</a>.
+</td></tr></table>`;
 
 /** Email di conferma iscrizione alla newsletter (doppio consenso). */
 export async function sendNewsletterConfirmEmail(to: string, confirmUrl: string) {

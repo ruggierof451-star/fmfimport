@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { BackButton } from "@/components/back-button";
-import { AdminMarketingSyncButton } from "@/components/admin-marketing-sync-button";
-import { isMarketingConfigured, pendingSyncEmails, SEGMENTS, segmentCounts, segmentLabel } from "@/lib/marketing";
-import { refreshScheduledCampaigns } from "@/lib/marketing-actions";
+import { AdminMarketingQueueButton } from "@/components/admin-marketing-queue-button";
+import { SEGMENTS, segmentCounts, segmentLabel } from "@/lib/marketing";
+import { DAILY_EMAIL_LIMIT, isMarketingConfigured, queueOverview, RESERVED_FOR_ORDERS } from "@/lib/marketing-engine";
+import { estimatedDays } from "@/lib/marketing-render";
 
 export const metadata = { title: "Admin · Marketing" };
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: "Bozza",
-  SENDING: "Invio in corso…",
+  SENDING: "In invio",
   SENT: "Inviata",
   FAILED: "Invio fallito",
   SCHEDULED: "Programmata",
@@ -19,61 +20,72 @@ const STATUS_LABEL: Record<string, string> = {
 const fmt = (d: Date) => d.toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Rome" });
 
 export default async function AdminMarketingPage() {
-  await refreshScheduledCampaigns();
   const configured = isMarketingConfigured();
-  const [campaigns, counts, pending, pendingNewsletter, confirmedNewsletter, optInUsers] = await Promise.all([
+  const [campaigns, counts, queue, pendingNewsletter, progress] = await Promise.all([
     prisma.marketingCampaign.findMany({ orderBy: { createdAt: "desc" } }),
     segmentCounts(),
-    pendingSyncEmails(),
+    queueOverview(),
     prisma.newsletterSubscriber.count({ where: { status: "PENDING" } }),
-    prisma.newsletterSubscriber.count({ where: { status: "CONFIRMED" } }),
-    prisma.user.count({ where: { marketingOptIn: true } }),
+    prisma.marketingSend.groupBy({ by: ["campaignId", "status"], where: { campaignId: { not: null } }, _count: { _all: true } }),
   ]);
-  const webhookConfigured = !!process.env.RESEND_WEBHOOK_SECRET;
+  const sentOf = (id: string) => progress.filter((p) => p.campaignId === id && p.status === "SENT").reduce((a, p) => a + p._count._all, 0);
+  const days = estimatedDays(queue.queued, queue.perDay);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Marketing</h1>
-      <p className="muted" style={{ margin: 0, maxWidth: 720 }}>
-        Campagne email inviate con Resend solo a chi ha dato il consenso: utenti con la spunta in registrazione o
-        nell&apos;account e iscritti alla newsletter del sito che hanno confermato via email. Ogni email ha il link di
-        disiscrizione gestito da Resend.
-      </p>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Link href="/admin/marketing/nuovo" className="btn btn-dark">
+          Nuova campagna
+        </Link>
+        <Link href="/admin/marketing/contatti" className="btn btn-line">
+          Contatti
+        </Link>
+        <Link href="/admin/marketing/automazioni" className="btn btn-line">
+          Automazioni
+        </Link>
+      </div>
 
-      {!configured ? <div className="alert err">RESEND_API_KEY non configurata: le campagne non possono partire.</div> : null}
-      {configured && !webhookConfigured ? (
-        <div className="alert info">
-          Manca RESEND_WEBHOOK_SECRET: chi si disiscrive da un link nelle email viene escluso da Resend, ma qui nel sito
-          risulta ancora iscritto finché non colleghi il webhook (vedi istruzioni nell&apos;aggiornamento).
-        </div>
-      ) : null}
+      {!configured ? <div className="alert err">RESEND_API_KEY non configurata: le email non possono partire.</div> : null}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
         <div className="admin-card">
-          <div className="muted" style={{ fontSize: 13 }}>Iscritti totali</div>
+          <div className="muted" style={{ fontSize: 13 }}>Iscritti</div>
           <div style={{ fontSize: 28, fontWeight: 600 }}>{counts.all}</div>
+          {pendingNewsletter ? <div className="muted" style={{ fontSize: 12 }}>+{pendingNewsletter} in attesa di conferma</div> : null}
         </div>
         <div className="admin-card">
-          <div className="muted" style={{ fontSize: 13 }}>Utenti con consenso</div>
-          <div style={{ fontSize: 28, fontWeight: 600 }}>{optInUsers}</div>
+          <div className="muted" style={{ fontSize: 13 }}>Inviate nelle ultime 24 ore</div>
+          <div style={{ fontSize: 28, fontWeight: 600 }}>
+            {queue.sent24h}
+            <span className="muted" style={{ fontSize: 15, fontWeight: 400 }}> / {queue.perDay}</span>
+          </div>
+          <div className="muted" style={{ fontSize: 12 }}>Ancora disponibili ora: {queue.freeNow}</div>
         </div>
         <div className="admin-card">
-          <div className="muted" style={{ fontSize: 13 }}>Newsletter confermati</div>
-          <div style={{ fontSize: 28, fontWeight: 600 }}>{confirmedNewsletter}</div>
-        </div>
-        <div className="admin-card">
-          <div className="muted" style={{ fontSize: 13 }}>In attesa di conferma</div>
-          <div style={{ fontSize: 28, fontWeight: 600 }}>{pendingNewsletter}</div>
+          <div className="muted" style={{ fontSize: 13 }}>In coda</div>
+          <div style={{ fontSize: 28, fontWeight: 600 }}>{queue.queued}</div>
+          <div className="muted" style={{ fontSize: 12 }}>
+            {queue.queued ? (days === Infinity ? "In attesa di posti liberi" : `Circa ${days} ${days === 1 ? "giorno" : "giorni"} per completare`) : "Niente in attesa"}
+          </div>
         </div>
       </div>
 
-      <div className="admin-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="admin-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <span className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>
+          Piano gratuito di Resend: {DAILY_EMAIL_LIMIT} email in 24 ore in totale. Ne restano sempre {RESERVED_FOR_ORDERS} libere per le
+          email degli ordini, quindi al massimo {queue.perDay} di marketing al giorno: le campagne più grandi partono a blocchi nei giorni
+          successivi, da sole. La coda gira dopo le visite al sito (al massimo ogni 15 minuti) e ogni mattina alle 9.
+        </span>
+        {queue.queued && configured ? <AdminMarketingQueueButton disabled={queue.freeNow === 0} /> : null}
+      </div>
+
+      <div className="admin-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <b>Gruppi di destinatari</b>
         <span className="muted" style={{ fontSize: 13 }}>
-          Calcolati in automatico: interessi scelti nel modulo newsletter, giochi già acquistati, clienti con almeno un
-          ordine pagato, rivenditori approvati. Si aggiornano da soli su Resend a ogni iscrizione, ordine pagato o
-          disiscrizione.
+          Automatici: interessi scelti nel modulo newsletter o assegnati da Contatti, giochi già acquistati, clienti con almeno un ordine
+          pagato, rivenditori approvati.
         </span>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {SEGMENTS.map((s) => (
@@ -82,12 +94,7 @@ export default async function AdminMarketingPage() {
             </span>
           ))}
         </div>
-        {configured ? <AdminMarketingSyncButton pending={pending.total} /> : null}
       </div>
-
-      <Link href="/admin/marketing/nuovo" className="btn btn-dark" style={{ alignSelf: "flex-start" }}>
-        Nuova campagna
-      </Link>
 
       <div className="admin-card" style={{ padding: 0, overflowX: "auto" }}>
         <table className="admin">
@@ -96,8 +103,8 @@ export default async function AdminMarketingPage() {
               <th>Oggetto</th>
               <th>Stato</th>
               <th>Destinatari</th>
-              <th>Creata</th>
-              <th>Invio</th>
+              <th>Avanzamento</th>
+              <th>Data</th>
               <th></th>
             </tr>
           </thead>
@@ -108,12 +115,11 @@ export default async function AdminMarketingPage() {
                 <td>
                   <span className="badge-status">{STATUS_LABEL[c.status] ?? c.status}</span>
                 </td>
+                <td>{segmentLabel(c.segmentKey)}</td>
+                <td>{c.recipientCount ? `${sentOf(c.id)} / ${c.recipientCount}` : "—"}</td>
                 <td>
-                  {segmentLabel(c.segmentKey)}
-                  {c.recipientCount != null ? ` · ${c.recipientCount}` : ""}
+                  {c.status === "SCHEDULED" && c.scheduledAt ? `prog. ${fmt(c.scheduledAt)}` : c.sentAt ? fmt(c.sentAt) : c.createdAt.toLocaleDateString("it-IT")}
                 </td>
-                <td>{c.createdAt.toLocaleDateString("it-IT")}</td>
-                <td>{c.sentAt ? fmt(c.sentAt) : c.scheduledAt && c.status === "SCHEDULED" ? `prog. ${fmt(c.scheduledAt)}` : "—"}</td>
                 <td>
                   <Link className="btn btn-line btn-sm" href={`/admin/marketing/${c.id}`}>
                     {c.status === "DRAFT" ? "Modifica" : "Apri"}

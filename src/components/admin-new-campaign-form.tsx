@@ -56,17 +56,21 @@ export function AdminNewCampaignForm({ segments }: { segments: SegmentOption[] }
         </select>
       </label>
       <label className="fl">
-        Contenuto (HTML consentito)
+        HTML dell&apos;email
         <textarea
           className="in"
-          rows={12}
+          rows={14}
           value={bodyHtml}
           onChange={(e) => setBodyHtml(e.target.value)}
-          placeholder="<h1>Titolo</h1><p>Testo dell'offerta...</p>"
+          placeholder="Incolla qui l'HTML preparato in Claude Design"
+          style={{ fontFamily: "ui-monospace,Menlo,monospace", fontSize: 13 }}
         />
-        <span className="muted" style={{ fontSize: 13 }}>
-          Viene inserito dentro il modello email di FMF Cards (logo, piè di pagina, link di disiscrizione): scrivi solo il
-          contenuto centrale. Dopo aver creato la bozza vedi l&apos;anteprima e puoi mandarti una prova.
+        <span className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>
+          Incolla l&apos;HTML completo preparato in Claude Design (con pulsanti, immagini e stile): viene inviato così com&apos;è. Se incolli
+          solo un pezzo di contenuto, il sito lo inserisce nel modello grafico FMF Cards. Segnaposto utilizzabili:{" "}
+          <code>{"{{nome}}"}</code> (nome del destinatario, se lo conosciamo; <code>{"{{nome|amico}}"}</code> usa &quot;amico&quot; quando manca), <code>{"{{email}}"}</code> e{" "}
+          <code>{"{{disiscrizione}}"}</code> (link per disiscriversi: se non lo metti, il sito aggiunge in fondo un piè di pagina con il
+          link). Le immagini devono avere un indirizzo pubblico (https://…).
         </span>
       </label>
       <button className="btn btn-dark" type="submit" disabled={saving} style={{ alignSelf: "flex-start" }}>
