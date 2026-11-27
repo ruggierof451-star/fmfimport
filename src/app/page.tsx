@@ -99,7 +99,9 @@ export default async function HomePage() {
             "@context": "https://schema.org",
             "@type": "WebSite",
             name: SITE_NAME,
+            alternateName: ["FMF", "FMFCards", "fmfcards.com"],
             url: absoluteUrl("/"),
+            publisher: { "@id": `${absoluteUrl("/")}#organizzazione` },
             inLanguage: "it-IT",
             potentialAction: {
               "@type": "SearchAction",

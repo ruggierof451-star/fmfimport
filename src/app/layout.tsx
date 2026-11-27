@@ -26,7 +26,7 @@ const DEFAULT_DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_ORIGIN),
   title: {
-    default: "FMF Cards — Pokémon e One Piece sigillati, prezzi unici per tutti",
+    default: "FMF Cards — Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball sigillati",
     template: "%s · FMF Cards",
   },
   description: DEFAULT_DESCRIPTION,
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     type: "website",
     siteName: SITE_NAME,
     locale: "it_IT",
-    title: "FMF Cards — Pokémon e One Piece sigillati",
+    title: "FMF Cards — Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball sigillati",
     description: DEFAULT_DESCRIPTION,
     images: [DEFAULT_OG_IMAGE],
   },
