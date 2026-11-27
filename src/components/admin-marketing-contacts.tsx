@@ -26,7 +26,7 @@ export function AdminMarketingContacts({ contacts, segments }: { contacts: Conta
   const router = useRouter();
   const [q, setQ] = useState("");
   const [segment, setSegment] = useState("");
-  const [showPending, setShowPending] = useState(false);
+  const [showPending, setShowPending] = useState(true);
   const [csv, setCsv] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState("");
@@ -79,7 +79,7 @@ export function AdminMarketingContacts({ contacts, segments }: { contacts: Conta
       </div>
 
       <div className="muted" style={{ fontSize: 13 }}>
-        {subscribed} iscritti · {filtered.length} mostrati
+        {subscribed} iscritti confermati{pending ? ` · ${pending} in attesa di conferma` : ""} · {filtered.length} mostrati
       </div>
 
       <div className="admin-card" style={{ padding: 0, overflowX: "auto" }}>
