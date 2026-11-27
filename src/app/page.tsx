@@ -138,6 +138,15 @@ export default async function HomePage() {
               <span>Pagamento sicuro con carta o bonifico</span>
             </div>
           </div>
+          <div className="promo-mobile">
+            <span className="promo-pct">-5%</span>
+            <span className="promo-txt">
+              sul primo ordine
+              <small>
+                con il codice <b>FMFCARDS</b>
+              </small>
+            </span>
+          </div>
           <div className="art">
             {heroCutouts.length >= 3 ? (
               <HeroCarousel
@@ -165,7 +174,7 @@ export default async function HomePage() {
       <main className="wrap page">
         {sections
           .filter((s) => s.items.length > 0)
-          .map((s, i, arr) => (
+          .map((s, i) => (
             <Fragment key={s.key}>
             <section className="sec" aria-labelledby={`s-${s.key}`}>
               <div className="sechead">
@@ -178,9 +187,13 @@ export default async function HomePage() {
                 ))}
               </div>
             </section>
-            {(i === arr.length - 1 ? perks.slice(i) : perks.slice(i, i + 1)).map((pk) => (
-              <Perk key={pk.title} className="perk-banner" {...pk} />
-            ))}
+            {i === 0 ? (
+              <div className="perks-mobile" aria-label="Perché FMF Cards">
+                {perks.map((pk) => (
+                  <Perk key={pk.title} className="perk-banner" {...pk} />
+                ))}
+              </div>
+            ) : null}
             </Fragment>
           ))}
 
