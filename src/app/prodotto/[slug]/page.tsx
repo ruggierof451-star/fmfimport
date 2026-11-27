@@ -18,15 +18,34 @@ import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
 import { getPricingSettings } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { getSession } from "@/lib/auth";
+import { JsonLd } from "@/components/json-ld";
+import { absoluteUrl, NOINDEX, SITE_NAME } from "@/lib/site";
+import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+/** In vendita = visibile in catalogo e con un prezzo: solo questi vanno in Google. */
+function isIndexable(p: { published: boolean; archived: boolean; deletedAt: Date | null; priceCents: number | null }) {
+  return p.published && !p.archived && !p.deletedAt && p.priceCents != null;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return {};
   const name = cleanProductName(product.name);
+  const description = `${name} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}. Spedizione da FMF Cards.`;
+  const path = `/prodotto/${product.slug}`;
   return {
     title: name,
-    description: `${name} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}. Spedizione da FMF Cards.`,
+    description,
+    alternates: { canonical: path },
+    robots: isIndexable(product) ? undefined : NOINDEX,
+    openGraph: {
+      type: "website",
+      url: path,
+      title: `${name} · ${SITE_NAME}`,
+      description,
+      images: product.imageUrl ? [{ url: product.imageUrl, alt: name }] : undefined,
+    },
   };
 }
 
@@ -57,8 +76,39 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const soldOut = isOutOfStock(product.stockQty);
   const cap = maxOrderableQty(product.stockQty);
 
+  // Dati strutturati Product: prezzo pubblico IVA inclusa del prodotto principale
+  // (mai il prezzo rivenditore) e disponibilità reale.
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: cleanName,
+    sku: product.supplierCode ?? product.slug,
+    category: `${GAME_LABEL[product.game]} · ${product.type}`,
+    brand: { "@type": "Brand", name: GAME_LABEL[product.game] },
+    description: `${cleanName} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}.`,
+    image: product.imageUrl ? [product.imageUrl.startsWith("http") ? product.imageUrl : absoluteUrl(product.imageUrl)] : undefined,
+    url: absoluteUrl(`/prodotto/${product.slug}`),
+    offers:
+      product.priceCents != null
+        ? {
+            "@type": "Offer",
+            url: absoluteUrl(`/prodotto/${product.slug}`),
+            priceCurrency: "EUR",
+            price: (product.priceCents / 100).toFixed(2),
+            itemCondition: "https://schema.org/NewCondition",
+            availability: product.isPreorder
+              ? "https://schema.org/PreOrder"
+              : soldOut && !product.variants.length
+                ? "https://schema.org/OutOfStock"
+                : "https://schema.org/InStock",
+            seller: { "@type": "Organization", name: SITE_NAME },
+          }
+        : undefined,
+  };
+
   return (
     <>
+      {isIndexable(product) ? <JsonLd data={productJsonLd} /> : null}
       <Header />
       <main className="wrap page" style={{ gap: 44, paddingTop: 20 }}>
         <nav className="crumbs pp-crumbs" aria-label="Percorso" style={{ color: "var(--muted)" }}>

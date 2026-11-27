@@ -2,7 +2,8 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ResetPasswordForm } from "@/components/reset-password-form";
 
-export const metadata = { title: "Reimposta password" };
+// Pagina personale o di servizio: fuori da Google.
+export const metadata = { title: "Reimposta password", robots: { index: false, follow: false } };
 
 export default async function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
