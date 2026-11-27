@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CatalogPage, type CatalogSearchParams } from "@/components/catalog-page";
 import { LIST_META } from "@/lib/catalog";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
@@ -12,7 +13,12 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
     title: meta.title,
     description: meta.description || undefined,
     alternates: { canonical: `/${category}` },
-    openGraph: { url: `/${category}`, title: `${meta.title} · FMF Cards`, description: meta.description || undefined },
+    openGraph: {
+      url: `/${category}`,
+      title: `${meta.title} · FMF Cards`,
+      description: meta.description || undefined,
+      images: [DEFAULT_OG_IMAGE],
+    },
   };
 }
 

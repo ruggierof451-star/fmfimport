@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 import { InfoPageLayout } from "@/components/info-page-layout";
 
 export const metadata = {
@@ -5,7 +6,7 @@ export const metadata = {
   description:
     "Come restituire un prodotto acquistato su FMF Cards: diritto di recesso di 14 giorni e procedura di reso.",
   alternates: { canonical: "/resi" },
-  openGraph: { url: "/resi", title: "Resi e recesso · FMF Cards" },
+  openGraph: { url: "/resi", title: "Resi e recesso · FMF Cards", images: [DEFAULT_OG_IMAGE] },
 };
 export default function Page() {
   return <InfoPageLayout slug="resi" />;

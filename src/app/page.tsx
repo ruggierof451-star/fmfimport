@@ -11,12 +11,12 @@ import { cleanProductName } from "@/lib/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
-import { absoluteUrl, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  openGraph: { url: "/" },
+  openGraph: { url: "/", images: [DEFAULT_OG_IMAGE] },
 };
 
 const HOME_SECTIONS: { key: string; label: string }[] = [

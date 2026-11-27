@@ -29,5 +29,17 @@ export const PUBLIC_INFO_PATHS = [
   "/lavora-con-noi",
 ] as const;
 
+/**
+ * Immagine di condivisione predefinita (anteprima su WhatsApp, Facebook, ecc.). In Next i
+ * metadati openGraph di una pagina sostituiscono quelli del layout, quindi ogni pagina
+ * che imposta openGraph deve includere di nuovo l'immagine: per questo è una costante.
+ */
+export const DEFAULT_OG_IMAGE = {
+  url: "/og-fmfcards.png",
+  width: 1200,
+  height: 630,
+  alt: "FMF Cards — Pokémon e One Piece sigillati, prezzi chiari per tutti",
+};
+
 /** Metadati per le pagine private o di servizio: mai in Google. */
 export const NOINDEX = { index: false, follow: false } as const;
