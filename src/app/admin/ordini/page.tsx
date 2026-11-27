@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
 import { formatEuro } from "@/lib/pricing";
 import { BackButton } from "@/components/back-button";
+import { reconcilePendingStripeOrders } from "@/lib/order-payment";
 
 export const metadata = { title: "Admin · Ordini" };
 
@@ -11,6 +12,10 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const where: Prisma.OrderWhereInput = {};
   if (sp.status) where.status = sp.status as Prisma.EnumOrderStatusFilter["equals"];
   if (sp.q) where.OR = [{ orderNumber: { contains: sp.q } }, { guestEmail: { contains: sp.q } }, { shipName: { contains: sp.q } }];
+
+  // Prima di mostrare la lista, allinea gli ordini già incassati su Stripe ma rimasti in
+  // attesa (webhook mancato o in ritardo): l'admin non deve sistemare niente a mano.
+  await reconcilePendingStripeOrders();
 
   const orders = await prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, take: 100 });
 

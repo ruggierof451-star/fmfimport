@@ -360,6 +360,9 @@ model Order {
   status        OrderStatus   @default(PENDING_PAYMENT)
   paymentMethod PaymentMethod
   paymentStatus PaymentStatus @default(PENDING)
+  /// Sessione di pagamento Stripe, per poter verificare l'incasso anche senza webhook
+  /// (es. al ritorno del cliente sulla pagina dell'ordine): vedi lib/order-payment.ts.
+  stripeSessionId String?
 
   // Totali congelati al momento dell'ordine (sempre ricalcolati server-side).
   // Tutti gli importi sono SEMPRE IVA inclusa. invoiceVatCents è la quota IVA già compresa

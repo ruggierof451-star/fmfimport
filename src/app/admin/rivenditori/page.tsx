@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { BackButton } from "@/components/back-button";
 import { AdminResellerRequestActions } from "@/components/admin-reseller-request-actions";
@@ -9,15 +10,31 @@ export default async function AdminResellerRequestsPage() {
   const pending = requests.filter((r) => r.status === "PENDING");
   const decided = requests.filter((r) => r.status !== "PENDING");
 
+  // Stato reale dell'account collegato: approvare dà il ruolo Rivenditore, ma solo se
+  // esiste già un account con quella email (altrimenti il cliente deve registrarsi).
+  const accounts = await prisma.user.findMany({
+    where: { email: { in: requests.map((r) => r.email.toLowerCase().trim()) } },
+    select: { email: true, role: true },
+  });
+  const roleByEmail = new Map(accounts.map((a) => [a.email.toLowerCase(), a.role]));
+  function accountState(email: string): { label: string; tone: "ok" | "warn" } {
+    const role = roleByEmail.get(email.toLowerCase().trim());
+    if (role === "RESELLER") return { label: "Account collegato · Rivenditore", tone: "ok" };
+    if (role === "ADMIN") return { label: "Account admin", tone: "ok" };
+    if (role) return { label: "Account registrato, ruolo non attivo", tone: "warn" };
+    return { label: "Nessun account con questa email", tone: "warn" };
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Richieste rivenditori</h1>
       <p className="muted" style={{ margin: 0, maxWidth: 680 }}>
-        Richieste arrivate dalla pagina pubblica &quot;Lavora con noi&quot;. Approvarle qui NON crea da sola un
-        account né un listino scontato: dopo l&apos;approvazione, assegna manualmente il ruolo Rivenditore
-        all&apos;account del cliente da <a href="/admin/utenti">Utenti</a> e imposta il prezzo rivenditore sui
-        prodotti interessati da <a href="/admin/prodotti">Prodotti</a>.
+        Richieste arrivate dalla pagina pubblica &quot;Lavora con noi&quot;. Approvando, l&apos;account registrato
+        con quella email diventa subito <b>Rivenditore</b> (compare in <Link href="/admin/utenti">Utenti</Link> e vede
+        i prezzi dedicati). Se quella email non ha ancora un account te lo diciamo: il cliente si registra e poi lo
+        colleghi da Utenti. I prezzi riservati si impostano sul singolo prodotto da{" "}
+        <Link href="/admin/prodotti">Prodotti</Link> (prezzo rivenditore e scaglioni per quantità).
       </p>
 
       <div className="admin-card" style={{ padding: 0, overflowX: "auto" }}>
@@ -70,6 +87,7 @@ export default async function AdminResellerRequestsPage() {
               <th>Azienda</th>
               <th>P.IVA</th>
               <th>Esito</th>
+              <th>Account</th>
               <th>Nota</th>
               <th>Data</th>
               <th>Da</th>
@@ -83,6 +101,15 @@ export default async function AdminResellerRequestsPage() {
                 <td>
                   <span className="badge-status">{r.status === "APPROVED" ? "Approvata" : "Rifiutata"}</span>
                 </td>
+                <td>
+                  {r.status === "APPROVED" ? (
+                    <span className={accountState(r.email).tone === "ok" ? "ok" : "warn"} style={{ fontSize: 13 }}>
+                      {accountState(r.email).label}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td>{r.note ?? "—"}</td>
                 <td>{r.reviewedAt?.toLocaleDateString("it-IT") ?? "—"}</td>
                 <td>{r.reviewedBy ?? "—"}</td>
@@ -90,7 +117,7 @@ export default async function AdminResellerRequestsPage() {
             ))}
             {decided.length === 0 ? (
               <tr>
-                <td colSpan={6} className="muted">
+                <td colSpan={7} className="muted">
                   Nessuna decisione ancora presa.
                 </td>
               </tr>

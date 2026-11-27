@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { BackButton } from "@/components/back-button";
 import { AdminNewDiscountForm } from "@/components/admin-new-discount-form";
 import { AdminDiscountToggleButton } from "@/components/admin-discount-toggle-button";
+import { AdminDiscountEditForm } from "@/components/admin-discount-edit-form";
 
 export const metadata = { title: "Admin · Codici sconto" };
 
@@ -46,7 +47,21 @@ export default async function AdminDiscountsPage() {
                   <span className="badge-status">{c.active ? "Attivo" : "Disattivato"}</span>
                 </td>
                 <td>
-                  <AdminDiscountToggleButton id={c.id} active={c.active} code={c.code} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <AdminDiscountToggleButton id={c.id} active={c.active} code={c.code} />
+                    <AdminDiscountEditForm
+                      discount={{
+                        id: c.id,
+                        code: c.code,
+                        percentOff: (c.percentOffBps / 100).toString(),
+                        maxUses: c.maxUses != null ? String(c.maxUses) : "",
+                        maxUsesPerUser: c.maxUsesPerUser != null ? String(c.maxUsesPerUser) : "",
+                        expiresAt: c.expiresAt ? c.expiresAt.toISOString().slice(0, 10) : "",
+                        active: c.active,
+                        usedCount: c.usedCount,
+                      }}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
