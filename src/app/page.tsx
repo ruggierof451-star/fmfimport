@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
@@ -11,6 +10,7 @@ import { cleanProductName } from "@/lib/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
+import { HeroCarousel } from "@/components/hero-carousel";
 import { absoluteUrl, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -122,40 +122,15 @@ export default async function HomePage() {
           </div>
           <div className="art">
             {heroCutouts.length >= 3 ? (
-              <div className="hero-photos">
-                <div className="glow" aria-hidden="true" />
-                <div className="ph ph-back ph1">
-                  <Image
-                    src={heroCutouts[0].cutout.url}
-                    alt={cleanProductName(heroCutouts[0].name)}
-                    width={heroCutouts[0].cutout.width}
-                    height={heroCutouts[0].cutout.height}
-                    style={{ height: "100%", width: "auto" }}
-                    unoptimized
-                  />
-                </div>
-                <div className="ph ph-back ph3">
-                  <Image
-                    src={heroCutouts[2].cutout.url}
-                    alt={cleanProductName(heroCutouts[2].name)}
-                    width={heroCutouts[2].cutout.width}
-                    height={heroCutouts[2].cutout.height}
-                    style={{ height: "100%", width: "auto" }}
-                    unoptimized
-                  />
-                </div>
-                <Link href={`/prodotto/${heroCutouts[1].slug}`} className="ph ph-front ph2">
-                  <Image
-                    src={heroCutouts[1].cutout.url}
-                    alt={cleanProductName(heroCutouts[1].name)}
-                    width={heroCutouts[1].cutout.width}
-                    height={heroCutouts[1].cutout.height}
-                    style={{ height: "100%", width: "auto" }}
-                    unoptimized
-                    priority
-                  />
-                </Link>
-              </div>
+              <HeroCarousel
+                slides={heroCutouts.map((p) => ({
+                  slug: p.slug,
+                  name: cleanProductName(p.name),
+                  url: p.cutout.url,
+                  width: p.cutout.width,
+                  height: p.cutout.height,
+                }))}
+              />
             ) : null}
           </div>
         </div>

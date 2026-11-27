@@ -98,17 +98,31 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 .hero .art{flex:1 1 360px;min-width:0;max-width:480px}
 .hero .art svg{width:100%;height:auto;display:block}
 
-/* Ventaglio di 3 foto prodotto reali ritagliate (sfondo rimosso via flood-fill). */
+/* Vetrina dell'hero a ruota: foto prodotto reali ritagliate (sfondo rimosso via flood-fill)
+   che girano da sole; col mouse sopra si ferma, su touch si gira con lo swipe. */
 .hero-photos{position:relative;width:100%;aspect-ratio:1/1;max-width:420px;margin-inline:auto}
 .hero-photos .glow{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.16) 0%,rgba(201,162,39,.05) 55%,rgba(201,162,39,0) 75%);z-index:0}
-.hero-photos .ph{position:absolute;display:block;bottom:4%;transition:transform .3s ease;text-decoration:none}
-.hero-photos .ph img{display:block;filter:drop-shadow(0 14px 18px rgba(0,0,0,.18))}
-.hero-photos .ph-back{opacity:.9}
-.hero-photos .ph1{height:58%;left:2%;z-index:1;transform:rotate(-9deg)}
-.hero-photos .ph3{height:58%;right:2%;z-index:1;transform:rotate(9deg)}
-.hero-photos .ph2{height:86%;left:50%;transform:translateX(-50%);z-index:2}
-.hero-photos .ph-front:hover{transform:translateX(-50%) translateY(-6px) !important}
-.hero-photos .ph:not(.ph-front):hover{filter:brightness(1.03)}
+.hero-wheel{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.hero-wheel .ph{position:absolute;display:block;bottom:8%;height:80%;left:50%;transform-origin:50% 100%;text-decoration:none;
+  transition:left .7s cubic-bezier(.45,.05,.2,1),transform .7s cubic-bezier(.45,.05,.2,1),opacity .7s ease,filter .7s ease}
+.hero-wheel .ph img{display:block;filter:drop-shadow(0 14px 18px rgba(0,0,0,.18));-webkit-user-drag:none;pointer-events:none}
+.hero-wheel .wheel-center{transform:translateX(-50%);z-index:3;opacity:1}
+.hero-wheel .wheel-left{left:22%;transform:translateX(-50%) scale(.66) rotate(-9deg);z-index:2;opacity:.9;cursor:pointer}
+.hero-wheel .wheel-right{left:78%;transform:translateX(-50%) scale(.66) rotate(9deg);z-index:1;opacity:.9;cursor:pointer}
+.hero-wheel .wheel-hidden{transform:translateX(-50%) scale(.4);z-index:0;opacity:0;pointer-events:none}
+.hero-wheel .wheel-center:hover{transform:translateX(-50%) translateY(-6px)}
+.hero-wheel .wheel-left:hover,.hero-wheel .wheel-right:hover{opacity:1;filter:brightness(1.04)}
+.wheel-arrow{position:absolute;top:50%;z-index:4;width:38px;height:38px;margin-top:-19px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.92);box-shadow:0 4px 14px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s ease,background .2s ease;padding:0}
+.wheel-arrow svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wheel-arrow:hover{background:#fff}
+.wheel-prev{left:-4px}
+.wheel-next{right:-4px}
+.hero-wheel:hover .wheel-arrow,.wheel-arrow:focus-visible{opacity:1}
+@media (hover:none){.wheel-arrow{display:none}}
+.wheel-dots{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;justify-content:center;gap:8px}
+.wheel-dots button{width:8px;height:8px;padding:0;border:0;border-radius:4px;background:rgba(0,0,0,.22);cursor:pointer;transition:width .3s ease,background .3s ease}
+.wheel-dots button.on{width:22px;background:var(--gold)}
+@media (prefers-reduced-motion:reduce){.hero-wheel .ph{transition:none}}
 @media (max-width:760px){.hero-photos{max-width:300px}}
 .facts{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:14px;color:var(--muted)}
 .facts span{display:flex;align-items:center;gap:8px}
