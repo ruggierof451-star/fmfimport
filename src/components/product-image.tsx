@@ -1,9 +1,17 @@
 import Image from "next/image";
 import { ProductArt } from "@/components/product-art";
-import { ensureCutoutImage } from "@/lib/image-cutout";
+import { cutoutUrlIfReady } from "@/lib/image-cutout";
+import { isOptimizableImage } from "@/lib/image-host";
 import type { ArtInput } from "@/lib/product-art";
 
-export async function ProductImage({
+/**
+ * Foto di un prodotto. Se esiste il ritaglio senza sfondo lo usa, altrimenti la foto
+ * originale; se non c'è nessuna foto mostra l'illustrazione generata.
+ *
+ * Le immagini vengono sempre ridimensionate da Next per lo schermo di chi guarda
+ * (vedi isOptimizableImage): su telefono si scarica una miniatura, non la foto intera.
+ */
+export function ProductImage({
   product,
   alt,
   sizes,
@@ -14,34 +22,20 @@ export async function ProductImage({
   sizes: string;
   priority?: boolean;
 }) {
-  if (product.imageUrl) {
-    const cutout = await ensureCutoutImage(product.imageUrl, product.slug);
-    if (cutout) {
-      return (
-        <Image
-          src={cutout.url}
-          alt={alt}
-          fill
-          sizes={sizes}
-          style={{ objectFit: "contain", padding: "8%" }}
-          priority={priority}
-          unoptimized
-        />
-      );
-    }
-    return (
-      <Image
-        src={product.imageUrl}
-        alt={alt}
-        fill
-        sizes={sizes}
-        style={{ objectFit: "contain" }}
-        priority={priority}
-        // Foto caricate su Vercel Blob o incollate da un altro sito: servite così come
-        // sono, senza dover autorizzare ogni dominio in next.config.
-        unoptimized={/^https?:\/\//.test(product.imageUrl)}
-      />
-    );
-  }
-  return <ProductArt product={product} />;
+  if (!product.imageUrl) return <ProductArt product={product} />;
+
+  const cutoutUrl = cutoutUrlIfReady(product.slug);
+  const src = cutoutUrl ?? product.imageUrl;
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={sizes}
+      style={{ objectFit: "contain", ...(cutoutUrl ? { padding: "8%" } : {}) }}
+      priority={priority}
+      unoptimized={!isOptimizableImage(src)}
+    />
+  );
 }

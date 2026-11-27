@@ -117,6 +117,15 @@ export async function cutoutImageBuffer(input: Buffer): Promise<Buffer> {
  * foto caricate dall'admin via Blob vengono invece già ritagliate al momento
  * dell'upload, vedi cutoutImageBuffer sopra e /api/admin/upload-image).
  */
+/**
+ * Indirizzo del ritaglio già pronto, senza aprire il file. Per le immagini mostrate con
+ * `fill` (griglia, scheda prodotto, carrello) le dimensioni reali non servono: evitarne
+ * la lettura toglie un accesso al disco per ogni prodotto a ogni caricamento di pagina.
+ */
+export function cutoutUrlIfReady(slug: string): string | null {
+  return fs.existsSync(path.join(OUT_DIR, `${slug}.webp`)) ? `/products-cutout/${slug}.webp` : null;
+}
+
 export async function ensureCutoutImage(imageUrl: string, slug: string): Promise<CutoutImage | null> {
   const destPath = path.join(OUT_DIR, `${slug}.webp`);
   const destPublicPath = `/products-cutout/${slug}.webp`;

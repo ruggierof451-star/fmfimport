@@ -130,8 +130,8 @@ export default async function HomePage() {
                     alt={cleanProductName(heroCutouts[0].name)}
                     width={heroCutouts[0].cutout.width}
                     height={heroCutouts[0].cutout.height}
+                    sizes="(max-width: 760px) 50vw, 300px"
                     style={{ height: "100%", width: "auto" }}
-                    unoptimized
                   />
                 </div>
                 <div className="ph ph-back ph3">
@@ -140,8 +140,8 @@ export default async function HomePage() {
                     alt={cleanProductName(heroCutouts[2].name)}
                     width={heroCutouts[2].cutout.width}
                     height={heroCutouts[2].cutout.height}
+                    sizes="(max-width: 760px) 50vw, 300px"
                     style={{ height: "100%", width: "auto" }}
-                    unoptimized
                   />
                 </div>
                 <Link href={`/prodotto/${heroCutouts[1].slug}`} className="ph ph-front ph2">
@@ -150,8 +150,8 @@ export default async function HomePage() {
                     alt={cleanProductName(heroCutouts[1].name)}
                     width={heroCutouts[1].cutout.width}
                     height={heroCutouts[1].cutout.height}
+                    sizes="(max-width: 760px) 70vw, 380px"
                     style={{ height: "100%", width: "auto" }}
-                    unoptimized
                     priority
                   />
                 </Link>
