@@ -1,3 +1,4 @@
+import { SectionFlag } from "@/components/flag";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -64,12 +65,16 @@ export async function CatalogPage({ listKey, searchParams }: { listKey: string; 
             <span aria-hidden="true">/</span>
             <span>{title}</span>
           </nav>
-          <h1>{title}</h1>
+          <h1>
+            {listKey === "cerca" ? null : <SectionFlag sectionKey={listKey} size={22} />}
+            {title}
+          </h1>
           {meta.description ? <p>{meta.description}</p> : null}
           {meta.segment ? (
             <div className="seg" role="tablist">
               {meta.segment.map((s) => (
                 <Link key={s.key} href={`/${s.key}`} role="tab" aria-selected={s.key === listKey} className={s.key === listKey ? "on" : ""}>
+                  <SectionFlag sectionKey={s.key} size={12} />
                   {s.label}
                 </Link>
               ))}

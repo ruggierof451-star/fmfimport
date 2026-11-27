@@ -1,3 +1,4 @@
+import { SectionFlag } from "@/components/flag";
 import { Fragment } from "react";
 import Link from "next/link";
 import { Header } from "@/components/header";
@@ -175,7 +176,10 @@ export default async function HomePage() {
             <Fragment key={s.key}>
             <section className="sec" aria-labelledby={`s-${s.key}`}>
               <div className="sechead">
-                <h2 id={`s-${s.key}`}>{s.label}</h2>
+                <h2 id={`s-${s.key}`}>
+                  <SectionFlag sectionKey={s.key} size={20} />
+                  {s.label}
+                </h2>
                 <Link href={`/${s.key}`}>Vedi tutti</Link>
               </div>
               <div className="grid row5">

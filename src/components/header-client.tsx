@@ -1,4 +1,5 @@
 "use client";
+import { SectionFlag } from "@/components/flag";
 
 import { Logo } from "@/components/logo";
 import Link from "next/link";
@@ -167,6 +168,7 @@ export function HeaderClient({
           <div className="wrap">
             {NAV.map((n) => (
               <Link key={n.key} href={routeFor(n.key)} className={activeKey === n.key ? "on" : ""}>
+                <SectionFlag sectionKey={n.key} size={12} />
                 {n.label}
               </Link>
             ))}
@@ -189,6 +191,7 @@ export function HeaderClient({
                   <h3>{group.title}</h3>
                   {group.items.map((item) => (
                     <Link key={item.key} href={routeFor(item.key)} onClick={() => setMenuOpen(false)}>
+                      <SectionFlag sectionKey={item.key} size={13} />
                       {item.label}
                     </Link>
                   ))}

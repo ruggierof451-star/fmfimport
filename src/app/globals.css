@@ -527,3 +527,6 @@ table.admin th{font-size:12px;color:var(--muted);font-weight:600;text-transform:
   .label-sheet{border:none;box-shadow:none;max-width:none}
 }
 .badge-status{display:inline-flex;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--soft)}
+
+/* Bandierine accanto alle sezioni per lingua */
+.flag{display:inline-block;vertical-align:middle;margin-right:7px;border-radius:2px;flex:none;position:relative;top:-1px}
