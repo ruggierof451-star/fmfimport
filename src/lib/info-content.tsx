@@ -127,8 +127,10 @@ export function buildInfoPages(opts: {
           </p>
           <h3>Fatturazione e IVA</h3>
           <p>
-            Il cliente che richiede la fattura con partita IVA al checkout non paga alcun supplemento: la fattura
-            riporta semplicemente l&apos;IVA al {invoiceVatRate}% già compresa nel totale dell&apos;ordine.
+            La fattura è riservata ai rivenditori registrati e approvati tramite la pagina{" "}
+            <a href="/lavora-con-noi">Lavora con noi</a>: per loro non comporta alcun supplemento, riporta
+            semplicemente l&apos;IVA al {invoiceVatRate}% già compresa nel totale dell&apos;ordine. Per tutti gli
+            altri clienti il documento d&apos;acquisto è la conferma d&apos;ordine ricevuta via email.
           </p>
           <h3>Disponibilità</h3>
           <p>Le scorte sono aggiornate di continuo. Se un prodotto si esaurisce dopo l&apos;ordine ti avvisiamo e rimborsiamo l&apos;importo.</p>
@@ -217,8 +219,9 @@ export function buildInfoPages(opts: {
           </p>
           <h3>3. Ordina come preferisci</h3>
           <p>
-            Puoi comprare come ospite o con un account. Se hai partita IVA, inserisci i dati al checkout e ricevi la
-            fattura elettronica.
+            Puoi comprare come ospite o con un account. I rivenditori approvati (vedi{" "}
+            <a href="/lavora-con-noi">Lavora con noi</a>) inseriscono i dati al checkout e ricevono la fattura
+            elettronica.
           </p>
           <h3>4. Spedizione</h3>
           <p>Gratuita sopra {freeShip}. Imballaggio rinforzato e tracking via email.</p>

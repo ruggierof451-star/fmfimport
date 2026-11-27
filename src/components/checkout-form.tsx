@@ -23,7 +23,15 @@ export interface CheckoutPrefill {
   sdiCode?: string;
 }
 
-export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps: number; prefill?: CheckoutPrefill }) {
+export function CheckoutForm({
+  invoiceVatRateBps,
+  prefill,
+  isReseller,
+}: {
+  invoiceVatRateBps: number;
+  prefill?: CheckoutPrefill;
+  isReseller?: boolean;
+}) {
   const { items, quote, clearCart, couponCode } = useCart();
 
   const [email, setEmail] = useState(prefill?.email ?? "");
@@ -186,28 +194,32 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                 </select>
               </label>
             </div>
-            <label className="check">
-              <input type="checkbox" checked={wantsInvoice} onChange={(e) => setWantsInvoice(e.target.checked)} />
-              Voglio la fattura (azienda o partita IVA)
-            </label>
-            {wantsInvoice ? (
-              <div className="alert info" style={{ marginTop: -4 }}>
-                I prezzi del sito sono già IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}%): la
-                fattura non aggiunge alcun supplemento, riporta solo l&apos;IVA già compresa nel totale.
-              </div>
-            ) : null}
-            {wantsInvoice ? (
-              <div className="form">
-                <Field label="Ragione sociale" full error={errors.rs} htmlFor="rs">
-                  <input id="rs" className={`in ${errors.rs ? "bad" : ""}`} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-                </Field>
-                <Field label="Partita IVA" error={errors.piva} htmlFor="piva">
-                  <input id="piva" className={`in ${errors.piva ? "bad" : ""}`} value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
-                </Field>
-                <Field label="Codice SDI o PEC" htmlFor="sdi">
-                  <input id="sdi" className="in" value={sdiCode} onChange={(e) => setSdiCode(e.target.value)} />
-                </Field>
-              </div>
+            {isReseller ? (
+              <>
+                <label className="check">
+                  <input type="checkbox" checked={wantsInvoice} onChange={(e) => setWantsInvoice(e.target.checked)} />
+                  Voglio la fattura (azienda o partita IVA)
+                </label>
+                {wantsInvoice ? (
+                  <div className="alert info" style={{ marginTop: -4 }}>
+                    I prezzi del sito sono già IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}%): la
+                    fattura non aggiunge alcun supplemento, riporta solo l&apos;IVA già compresa nel totale.
+                  </div>
+                ) : null}
+                {wantsInvoice ? (
+                  <div className="form">
+                    <Field label="Ragione sociale" full error={errors.rs} htmlFor="rs">
+                      <input id="rs" className={`in ${errors.rs ? "bad" : ""}`} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                    </Field>
+                    <Field label="Partita IVA" error={errors.piva} htmlFor="piva">
+                      <input id="piva" className={`in ${errors.piva ? "bad" : ""}`} value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+                    </Field>
+                    <Field label="Codice SDI o PEC" htmlFor="sdi">
+                      <input id="sdi" className="in" value={sdiCode} onChange={(e) => setSdiCode(e.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </section>
 

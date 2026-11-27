@@ -70,17 +70,20 @@ export async function POST(req: Request) {
   }
   const body = parsed.data;
 
-  if (body.invoice?.requested && (!body.invoice.companyName?.trim() || !body.invoice.vatNumber?.trim())) {
+  const settings = await getPricingSettings();
+  const shippingRules = toShippingRules(settings);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
+
+  // La fattura è riservata ai rivenditori approvati (account con ruolo RESELLER, nati da
+  // una richiesta "Lavora con noi" accettata manualmente): per chiunque altro una richiesta
+  // di fattura nel corpo della richiesta viene ignorata, non fidandosi mai del client.
+  if (isReseller && body.invoice?.requested && (!body.invoice.companyName?.trim() || !body.invoice.vatNumber?.trim())) {
     return NextResponse.json(
       { error: "Per la fattura servono ragione sociale e partita IVA." },
       { status: 400 }
     );
   }
-
-  const settings = await getPricingSettings();
-  const shippingRules = toShippingRules(settings);
-  const session = await getSession();
-  const isReseller = session?.role === "RESELLER";
 
   const products = await prisma.product.findMany({ where: { id: { in: body.items.map((i) => i.productId) } } });
   const byId = new Map(products.map((p) => [p.id, p]));
@@ -126,7 +129,7 @@ export async function POST(req: Request) {
 
   // I prezzi del sito sono SEMPRE IVA inclusa: la fattura non aggiunge alcun supplemento,
   // riporta solo l'IVA già compresa nel totale (vedi extractVatCents).
-  const invoiceRequested = body.invoice?.requested ?? false;
+  const invoiceRequested = isReseller && (body.invoice?.requested ?? false);
   const invoiceVatCents = extractVatCents(totals.totalCents, settings.invoiceVatRateBps);
   const grandTotalCents = totals.totalCents;
 
@@ -153,9 +156,9 @@ export async function POST(req: Request) {
         shipCountry: body.shipping.country,
         shipPhone: body.contact.phone,
         invoiceRequested,
-        companyName: body.invoice?.companyName,
-        vatNumber: body.invoice?.vatNumber,
-        sdiCode: body.invoice?.sdiCode,
+        companyName: invoiceRequested ? body.invoice?.companyName : undefined,
+        vatNumber: invoiceRequested ? body.invoice?.vatNumber : undefined,
+        sdiCode: invoiceRequested ? body.invoice?.sdiCode : undefined,
         customerNote: body.customerNote,
         items: {
           create: validLines.map(({ product, quantity, packaging }, i) => ({
