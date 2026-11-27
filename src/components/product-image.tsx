@@ -2,6 +2,7 @@ import Image from "next/image";
 import { ProductArt } from "@/components/product-art";
 import { cutoutUrlIfReady } from "@/lib/image-cutout";
 import { isOptimizableImage } from "@/lib/image-host";
+import { displayImageUrl } from "@/lib/blob-image";
 import type { ArtInput } from "@/lib/product-art";
 
 /**
@@ -25,7 +26,8 @@ export function ProductImage({
   if (!product.imageUrl) return <ProductArt product={product} />;
 
   const cutoutUrl = cutoutUrlIfReady(product.slug);
-  const src = cutoutUrl ?? product.imageUrl;
+  // foto dell'archivio privato servite da /img/… (vedi src/lib/blob-image.ts)
+  const src = cutoutUrl ?? displayImageUrl(product.imageUrl);
 
   return (
     <Image

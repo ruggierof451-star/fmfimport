@@ -6,6 +6,7 @@ import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { cleanProductName } from "@/lib/product-art";
 import { findVariant, lineIsOutOfStock, lineMaxQty, lineUnitPriceCents } from "@/lib/variants";
 import { cutoutUrlIfReady } from "@/lib/image-cutout";
+import { displayImageUrl } from "@/lib/blob-image";
 import { getSession } from "@/lib/auth";
 import { validateDiscountCode } from "@/lib/discounts";
 
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
       name: cleanProductName(product.name),
       type: product.type,
       language: product.language,
-      imageUrl: product.imageUrl ? cutoutUrlIfReady(product.slug) ?? product.imageUrl : null,
+      imageUrl: product.imageUrl ? cutoutUrlIfReady(product.slug) ?? displayImageUrl(product.imageUrl) : null,
       quantity,
       packaging,
       unitPriceCents: totals.lines[i].unitPriceCents,

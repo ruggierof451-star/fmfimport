@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
@@ -9,8 +8,10 @@ import { formatEuro } from "@/lib/pricing";
 import { LIST_META } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
+import { displayImageUrl } from "@/lib/blob-image";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
+import { HeroCarousel } from "@/components/hero-carousel";
 import { absoluteUrl, DEFAULT_OG_IMAGE, organizationJsonLd, SITE_NAME } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -43,30 +44,38 @@ export default async function HomePage() {
     }))
   );
 
-  // Tre foto reali per la vetrina dell'hero (una per gioco/edizione diversa quando possibile).
+  // Vetrina dell'hero: 3 foto reali, una per gioco/edizione diversa quando possibile, poi si
+  // completa con le altre. Le foto caricate (Vercel Blob, già scontornate con Photoroom o al
+  // caricamento) si usano così come sono; quelle nella cartella del sito vengono ritagliate.
   const HERO_PHOTO_COUNT = 3;
   const heroCandidates = await prisma.product.findMany({
-    where: { published: true, imageUrl: { not: null }, isNew: true },
-    take: 24,
-    orderBy: { updatedAt: "desc" },
+    where: { published: true, imageUrl: { not: null } },
+    take: 40,
+    orderBy: [{ isNew: "desc" }, { updatedAt: "desc" }],
   });
-  const heroPhotos: typeof heroCandidates = [];
+  const heroResolved = (
+    await Promise.all(
+      heroCandidates.map(async (p) => {
+        const url = p.imageUrl as string;
+        if (/^https?:\/\//.test(url)) return { ...p, cutout: { url: displayImageUrl(url), width: 800, height: 800 } };
+        const cutout = await ensureCutoutImage(url, p.slug);
+        return cutout ? { ...p, cutout } : null;
+      })
+    )
+  ).filter((p) => p !== null);
+  const heroCutouts: typeof heroResolved = [];
   const seenCombos = new Set<string>();
-  for (const p of heroCandidates) {
+  for (const p of heroResolved) {
     const combo = `${p.game}-${p.language}`;
     if (seenCombos.has(combo)) continue;
     seenCombos.add(combo);
-    heroPhotos.push(p);
-    if (heroPhotos.length === HERO_PHOTO_COUNT) break;
+    heroCutouts.push(p);
+    if (heroCutouts.length === HERO_PHOTO_COUNT) break;
   }
-  const heroCutouts = (
-    await Promise.all(
-      heroPhotos.map(async (p) => {
-        const cutout = await ensureCutoutImage(p.imageUrl as string, p.slug);
-        return { ...p, cutout };
-      })
-    )
-  ).filter((p): p is typeof heroPhotos[number] & { cutout: NonNullable<typeof p.cutout> } => p.cutout !== null);
+  for (const p of heroResolved) {
+    if (heroCutouts.length === HERO_PHOTO_COUNT) break;
+    if (!heroCutouts.includes(p)) heroCutouts.push(p);
+  }
 
   return (
     <div className="home-bg">
@@ -95,7 +104,7 @@ export default async function HomePage() {
             <span className="discount-banner">
               <b>-5% sul primo ordine</b> con il codice <b className="mono">FMFCARDS</b>
             </span>
-            <h1 id="h1">Prodotti sigillati Pokémon e One Piece, prezzi chiari per tutti.</h1>
+            <h1 id="h1">Ogni collezione ha una storia. La tua inizia qui.</h1>
             <p>
               Booster box, display e collection in edizione italiana e di importazione (giapponese, cinese,
               coreana). Prezzi chiari e uguali per tutti, visibili senza registrazione.
@@ -116,40 +125,15 @@ export default async function HomePage() {
           </div>
           <div className="art">
             {heroCutouts.length >= 3 ? (
-              <div className="hero-photos">
-                <div className="glow" aria-hidden="true" />
-                <div className="ph ph-back ph1">
-                  <Image
-                    src={heroCutouts[0].cutout.url}
-                    alt={cleanProductName(heroCutouts[0].name)}
-                    width={heroCutouts[0].cutout.width}
-                    height={heroCutouts[0].cutout.height}
-                    sizes="(max-width: 760px) 50vw, 300px"
-                    style={{ height: "100%", width: "auto" }}
-                  />
-                </div>
-                <div className="ph ph-back ph3">
-                  <Image
-                    src={heroCutouts[2].cutout.url}
-                    alt={cleanProductName(heroCutouts[2].name)}
-                    width={heroCutouts[2].cutout.width}
-                    height={heroCutouts[2].cutout.height}
-                    sizes="(max-width: 760px) 50vw, 300px"
-                    style={{ height: "100%", width: "auto" }}
-                  />
-                </div>
-                <Link href={`/prodotto/${heroCutouts[1].slug}`} className="ph ph-front ph2">
-                  <Image
-                    src={heroCutouts[1].cutout.url}
-                    alt={cleanProductName(heroCutouts[1].name)}
-                    width={heroCutouts[1].cutout.width}
-                    height={heroCutouts[1].cutout.height}
-                    sizes="(max-width: 760px) 70vw, 380px"
-                    style={{ height: "100%", width: "auto" }}
-                    priority
-                  />
-                </Link>
-              </div>
+              <HeroCarousel
+                slides={heroCutouts.map((p) => ({
+                  slug: p.slug,
+                  name: cleanProductName(p.name),
+                  url: p.cutout.url,
+                  width: p.cutout.width,
+                  height: p.cutout.height,
+                }))}
+              />
             ) : null}
           </div>
         </div>
