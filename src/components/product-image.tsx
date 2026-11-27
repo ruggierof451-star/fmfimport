@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ProductArt } from "@/components/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
+import { displayImageUrl } from "@/lib/blob-image";
 import type { ArtInput } from "@/lib/product-art";
 
 export async function ProductImage({
@@ -29,9 +30,10 @@ export async function ProductImage({
         />
       );
     }
+    const src = displayImageUrl(product.imageUrl);
     return (
       <Image
-        src={product.imageUrl}
+        src={src}
         alt={alt}
         fill
         sizes={sizes}
@@ -39,7 +41,7 @@ export async function ProductImage({
         priority={priority}
         // Foto caricate su Vercel Blob o incollate da un altro sito: servite così come
         // sono, senza dover autorizzare ogni dominio in next.config.
-        unoptimized={/^https?:\/\//.test(product.imageUrl)}
+        unoptimized={/^https?:\/\//.test(src) || src.startsWith("/img/")}
       />
     );
   }

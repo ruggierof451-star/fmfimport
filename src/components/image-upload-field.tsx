@@ -1,5 +1,6 @@
 "use client";
 
+import { displayImageUrl } from "@/lib/blob-image";
 import { useRef, useState } from "react";
 
 // Le foto da telefono possono pesare 5-10 MB: prima dell'invio le riduciamo a max
@@ -85,7 +86,7 @@ export function ImageUploadField({
         </button>
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={value} alt="" style={{ height: 40, width: 40, objectFit: "contain", borderRadius: 6, background: "#FBFBFB" }} />
+          <img src={displayImageUrl(value)} alt="" style={{ height: 40, width: 40, objectFit: "contain", borderRadius: 6, background: "#FBFBFB" }} />
         ) : null}
       </div>
       {error ? (

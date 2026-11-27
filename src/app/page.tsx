@@ -8,6 +8,7 @@ import { formatEuro } from "@/lib/pricing";
 import { LIST_META } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
+import { displayImageUrl } from "@/lib/blob-image";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
 import { HeroCarousel } from "@/components/hero-carousel";
@@ -56,7 +57,7 @@ export default async function HomePage() {
     await Promise.all(
       heroCandidates.map(async (p) => {
         const url = p.imageUrl as string;
-        if (/^https?:\/\//.test(url)) return { ...p, cutout: { url, width: 800, height: 800 } };
+        if (/^https?:\/\//.test(url)) return { ...p, cutout: { url: displayImageUrl(url), width: 800, height: 800 } };
         const cutout = await ensureCutoutImage(url, p.slug);
         return cutout ? { ...p, cutout } : null;
       })

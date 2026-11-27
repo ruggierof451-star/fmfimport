@@ -62,7 +62,14 @@ export async function POST(req: Request) {
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
-      const blob = await put(`products/${filename}`, buffer, { access: "public", contentType });
+      // L'archivio del progetto può essere privato o pubblico: si prova prima privato
+      // (le foto poi si vedono tramite /img/…, vedi src/lib/blob-image.ts).
+      let blob;
+      try {
+        blob = await put(`products/${filename}`, buffer, { access: "private", contentType });
+      } catch {
+        blob = await put(`products/${filename}`, buffer, { access: "public", contentType });
+      }
       return NextResponse.json({ ok: true, imageUrl: blob.url });
     } catch (err) {
       console.error("Upload su Vercel Blob fallito", err);

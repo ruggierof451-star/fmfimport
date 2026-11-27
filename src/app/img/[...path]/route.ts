@@ -1,0 +1,31 @@
+import { get } from "@vercel/blob";
+
+/**
+ * Foto prodotto dall'archivio Vercel Blob privato (vedi src/lib/blob-image.ts).
+ * La risposta viene tenuta in cache dalla CDN di Vercel, quindi l'archivio viene letto
+ * raramente. Serve solo immagini.
+ */
+export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  if (!process.env.BLOB_READ_WRITE_TOKEN || !path?.length) return new Response("Non trovata.", { status: 404 });
+  const pathname = path.map((p) => decodeURIComponent(p)).join("/");
+  if (pathname.includes("..")) return new Response("Non trovata.", { status: 404 });
+
+  try {
+    const res = await get(pathname, { access: "private" });
+    if (!res || res.statusCode !== 200 || !res.blob.contentType.startsWith("image/")) {
+      return new Response("Non trovata.", { status: 404 });
+    }
+    return new Response(res.stream, {
+      headers: {
+        "Content-Type": res.blob.contentType,
+        "Content-Length": String(res.blob.size),
+        "Cache-Control": "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch (err) {
+    console.error("[img] lettura dall'archivio non riuscita:", pathname, err);
+    return new Response("Non trovata.", { status: 404 });
+  }
+}
