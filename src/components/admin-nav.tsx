@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/etichette", label: "Etichette" },
   { href: "/admin/messaggi", label: "Messaggi" },
   { href: "/admin/marketing", label: "Marketing" },
+  { href: "/admin/email", label: "Email automatiche" },
   { href: "/admin/rivenditori", label: "Rivenditori" },
   { href: "/admin/sconti", label: "Codici sconto" },
   { href: "/admin/impostazioni", label: "Impostazioni" },

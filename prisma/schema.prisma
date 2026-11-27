@@ -487,6 +487,17 @@ model DiscountCode {
   createdBy     String?
 }
 
+// Testo personalizzato di un'email automatica (conferma ordine, reset password, ...).
+// Se per una chiave non c'è riga, si usa il testo predefinito definito nel codice
+// (src/lib/email-templates.ts): eliminare la riga = "ripristina predefinito".
+model EmailTemplate {
+  key       String   @id
+  subject   String
+  bodyHtml  String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
 enum MarketingCampaignStatus {
   DRAFT
   SENDING
