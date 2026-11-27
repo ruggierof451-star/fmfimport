@@ -85,10 +85,10 @@ export default async function HomePage() {
   }
 
   const perks = [
-    { title: "Originali e sigillati", desc: "Da distribuzione autorizzata, mai riconfezionati.", path: "M12 19.5l5 5 10-11" },
-    { title: "Prezzo unico e trasparente", desc: "Stesso prezzo per tutti, visibile senza bisogno di registrarti.", path: "M11 27L27 11M13 13a2.5 2.5 0 1 0 0 0zM25 25a2.5 2.5 0 1 0 0 0z" },
-    { title: "Spedizione gratuita", desc: `Sugli ordini sopra ${formatEuro(settings.freeShippingThresholdCents)}, con tracking.`, path: "M8 13h14v12H8zM22 17h5l3 4v4h-8M13 26a2 2 0 1 0 0 0zM26 26a2 2 0 1 0 0 0z" },
-    { title: "Disponibilità aggiornata", desc: "Scorte e prezzi sincronizzati con il magazzino.", path: "M27 15a9 9 0 0 0-16-3M11 23a9 9 0 0 0 16 3M11 8v4h4M27 30v-4h-4" },
+    { title: "Originali e sigillati", desc: "Da distribuzione autorizzata, mai riconfezionati.", icon: "ball" as const },
+    { title: "Prezzo unico e trasparente", desc: "Stesso prezzo per tutti, visibile senza bisogno di registrarti.", icon: "tag" as const },
+    { title: "Spedizione gratuita", desc: `Sugli ordini sopra ${formatEuro(settings.freeShippingThresholdCents)}, con tracking.`, icon: "box" as const },
+    { title: "Disponibilità aggiornata", desc: "Scorte e prezzi sincronizzati con il magazzino.", icon: "sync" as const },
   ];
   return (
     <div className="home-bg">
@@ -231,19 +231,55 @@ export default async function HomePage() {
   );
 }
 
-function Perk({ title, desc, path, className = "perk" }: { title: string; desc: string; path: string; className?: string }) {
+type PerkIcon = "ball" | "tag" | "box" | "sync";
+
+/** Icone a colori dei punti di forza (contorno nero spesso, stile adesivo). */
+function PerkIconSvg({ icon }: { icon: PerkIcon }) {
+  const k = { stroke: "#111", strokeWidth: 3, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+  return (
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      {icon === "ball" ? (
+        <>
+          <circle cx="32" cy="32" r="27" fill="#fff" {...k} />
+          <path d="M5 32a27 27 0 0 1 54 0z" fill="#E3262E" {...k} />
+          <path d="M14 20a20 20 0 0 1 10-7" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" opacity={0.8} />
+          <line x1="5" y1="32" x2="59" y2="32" {...k} />
+          <circle cx="32" cy="32" r="8" fill="#fff" {...k} />
+          <circle cx="32" cy="32" r="3.5" fill="#fff" {...k} strokeWidth={2.5} />
+        </>
+      ) : icon === "tag" ? (
+        <g transform="rotate(-35 32 32)">
+          <path d="M8 22h34l14 10-14 10H8a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z" fill="#F6CF3C" {...k} />
+          <circle cx="45" cy="32" r="3" fill="#fff" {...k} strokeWidth={2.5} />
+          <line x1="16" y1="38" x2="28" y2="26" {...k} />
+          <circle cx="17" cy="27.5" r="2.5" fill="#111" />
+          <circle cx="27" cy="36.5" r="2.5" fill="#111" />
+        </g>
+      ) : icon === "box" ? (
+        <>
+          <path d="M8 22l24-10 24 10v24L32 56 8 46z" fill="#D9A15C" {...k} />
+          <path d="M8 22l24 10 24-10M32 32v24" fill="none" {...k} />
+          <path d="M8 22l24 10v24L8 46z" fill="#C88B45" {...k} />
+          <path d="M18 18l24 10v8l-6-2v-8L12 20" fill="#B7793A" {...k} strokeWidth={2.5} />
+        </>
+      ) : (
+        <>
+          <path d="M50 26A19 19 0 0 0 16 20l-4-4v14h14l-5-5a12 12 0 0 1 21 3z" fill="#6CC24A" {...k} />
+          <path d="M14 38a19 19 0 0 0 34 6l4 4V34H38l5 5a12 12 0 0 1-21-3z" fill="#6CC24A" {...k} />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function Perk({ title, desc, icon, className = "perk" }: { title: string; desc: string; icon: PerkIcon; className?: string }) {
   return (
     <div className={className}>
-      <svg viewBox="0 0 34 34" aria-hidden="true">
-        <rect x="0.5" y="0.5" width="33" height="33" rx="8" fill="#F4F4F4" />
-        <g fill="none" stroke="#222222" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-          <path d={path} />
-        </g>
-      </svg>
       <span>
         <b>{title}</b>
         <span>{desc}</span>
       </span>
+      <PerkIconSvg icon={icon} />
     </div>
   );
 }
