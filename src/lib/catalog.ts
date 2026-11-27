@@ -249,7 +249,10 @@ export async function listCatalog(key: string, filters: CatalogFilters, isResell
 }
 
 export async function getProductBySlug(slug: string) {
-  return prisma.product.findUnique({ where: { slug } });
+  return prisma.product.findUnique({
+    where: { slug },
+    include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
+  });
 }
 
 export async function getRelatedProducts(product: { id: string; game: Game; language: Language; type: string }) {
@@ -262,17 +265,6 @@ export async function getRelatedProducts(product: { id: string; game: Game; lang
       published: true,
     },
     take: 4,
-  });
-}
-
-export async function getTwinEditions(product: { id: string; game: Game; setName: string }) {
-  return prisma.product.findMany({
-    where: {
-      id: { not: product.id },
-      game: product.game,
-      setName: product.setName,
-      published: true,
-    },
   });
 }
 
