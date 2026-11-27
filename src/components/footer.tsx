@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export function Footer({ transparent }: { transparent?: boolean } = {}) {
   return (
@@ -49,6 +50,9 @@ export function Footer({ transparent }: { transparent?: boolean } = {}) {
           </nav>
           <p style={{ fontSize: 13, margin: "14px 0 0" }}>Pagamenti: carta (Stripe), bonifico bancario</p>
         </div>
+      </div>
+      <div className="wrap">
+        <NewsletterForm />
       </div>
       <div className="legal">
         <div className="wrap">

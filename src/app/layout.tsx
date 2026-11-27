@@ -5,6 +5,8 @@ import { CartDrawer } from "@/components/cart-drawer";
 import { Toast } from "@/components/toast";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Analytics } from "@vercel/analytics/next";
+import { after } from "next/server";
+import { maybeProcessQueue } from "@/lib/marketing-engine";
 import { CANONICAL_ORIGIN, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
@@ -42,6 +44,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Email marketing: dopo aver servito la pagina, se è il momento lavora la coda (al
+  // massimo ogni 15 minuti), così gli invii programmati partono anche senza Vercel Pro.
+  after(maybeProcessQueue);
   return (
     <html lang="it" className={poppins.variable}>
       <body>
