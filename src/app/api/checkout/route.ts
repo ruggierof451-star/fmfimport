@@ -8,6 +8,8 @@ import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
 import { validateDiscountCode } from "@/lib/discounts";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { formatEuro } from "@/lib/pricing";
+import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
 
 const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
 
@@ -46,6 +48,7 @@ const bodySchema = z.object({
       sdiCode: z.string().optional(),
     })
     .optional(),
+  paymentMethod: z.enum(["CARD", "BANK_TRANSFER"]).default("CARD"),
   acceptedTerms: z.literal(true),
   customerNote: z.string().optional(),
   couponCode: z.string().max(40).optional(),
@@ -68,17 +71,20 @@ export async function POST(req: Request) {
   }
   const body = parsed.data;
 
-  if (body.invoice?.requested && (!body.invoice.companyName?.trim() || !body.invoice.vatNumber?.trim())) {
+  const settings = await getPricingSettings();
+  const shippingRules = toShippingRules(settings);
+  const session = await getSession();
+  const isReseller = session?.role === "RESELLER";
+
+  // La fattura è riservata ai rivenditori approvati (account con ruolo RESELLER, nati da
+  // una richiesta "Lavora con noi" accettata manualmente): per chiunque altro una richiesta
+  // di fattura nel corpo della richiesta viene ignorata, non fidandosi mai del client.
+  if (isReseller && body.invoice?.requested && (!body.invoice.companyName?.trim() || !body.invoice.vatNumber?.trim())) {
     return NextResponse.json(
       { error: "Per la fattura servono ragione sociale e partita IVA." },
       { status: 400 }
     );
   }
-
-  const settings = await getPricingSettings();
-  const shippingRules = toShippingRules(settings);
-  const session = await getSession();
-  const isReseller = session?.role === "RESELLER";
 
   const products = await prisma.product.findMany({
     where: { id: { in: body.items.map((i) => i.productId) } },
@@ -138,7 +144,7 @@ export async function POST(req: Request) {
 
   // I prezzi del sito sono SEMPRE IVA inclusa: la fattura non aggiunge alcun supplemento,
   // riporta solo l'IVA già compresa nel totale (vedi extractVatCents).
-  const invoiceRequested = body.invoice?.requested ?? false;
+  const invoiceRequested = isReseller && (body.invoice?.requested ?? false);
   const invoiceVatCents = extractVatCents(totals.totalCents, settings.invoiceVatRateBps);
   const grandTotalCents = totals.totalCents;
 
@@ -149,7 +155,7 @@ export async function POST(req: Request) {
         userId: session?.userId,
         guestEmail: session ? undefined : body.contact.email,
         status: "PENDING_PAYMENT",
-        paymentMethod: "CARD",
+        paymentMethod: body.paymentMethod,
         paymentStatus: "PENDING",
         subtotalCents: totals.subtotalCents,
         discountCents: totals.discountCents,
@@ -165,9 +171,9 @@ export async function POST(req: Request) {
         shipCountry: body.shipping.country,
         shipPhone: body.contact.phone,
         invoiceRequested,
-        companyName: body.invoice?.companyName,
-        vatNumber: body.invoice?.vatNumber,
-        sdiCode: body.invoice?.sdiCode,
+        companyName: invoiceRequested ? body.invoice?.companyName : undefined,
+        vatNumber: invoiceRequested ? body.invoice?.vatNumber : undefined,
+        sdiCode: invoiceRequested ? body.invoice?.sdiCode : undefined,
         customerNote: body.customerNote,
         items: {
           create: validLines.map(({ product, variant, displayName, quantity, packaging }, i) => ({
@@ -192,13 +198,47 @@ export async function POST(req: Request) {
     return created;
   });
 
-  // Il pagamento vero avviene su Stripe: l'ordine resta PENDING_PAYMENT finché il webhook
-  // non conferma il pagamento (vedi /api/webhooks/stripe). Il contatore utilizzi del
-  // codice sconto si incrementa lì, non qui, perché un checkout abbandonato su Stripe
+  // Bonifico: metodo secondario, nessuna verifica automatica del pagamento. L'ordine resta
+  // PENDING_PAYMENT finché un admin non lo conferma manualmente (vedi updateOrderStatusAction);
+  // qui l'email di conferma parte subito, con le istruzioni per il bonifico incluse.
+  if (body.paymentMethod === "BANK_TRANSFER") {
+    sendOrderConfirmationEmail({
+      to: customerEmail,
+      orderNumber: order.orderNumber,
+      totalFormatted: formatEuro(order.totalCents),
+      paymentMethod: "BANK_TRANSFER",
+      items: validLines.map(({ displayName, quantity }, i) => ({
+        name: displayName,
+        quantity,
+        lineTotalFormatted: formatEuro(totals.lines[i].lineTotalCents),
+      })),
+    }).catch((err) => console.error("[checkout] invio email conferma fallito:", err));
+
+    sendAdminNewOrderNotification({
+      orderNumber: order.orderNumber,
+      orderId: order.id,
+      totalFormatted: formatEuro(order.totalCents),
+      customerEmail,
+      paymentMethod: order.paymentMethod,
+      itemsSummary: validLines.map(({ displayName, quantity }) => `${quantity}× ${displayName}`).join(", "),
+    }).catch((err) => console.error("[checkout] invio notifica admin fallito:", err));
+
+    return NextResponse.json({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      totalCents: order.totalCents,
+      invoiceVatCents: order.invoiceVatCents,
+      redirectUrl: `/ordine/${order.id}`,
+    });
+  }
+
+  // Carta: il pagamento vero avviene su Stripe, l'ordine resta PENDING_PAYMENT finché il
+  // webhook non conferma il pagamento (vedi /api/webhooks/stripe). Il contatore utilizzi
+  // del codice sconto si incrementa lì, non qui, perché un checkout abbandonato su Stripe
   // non deve "consumare" l'utilizzo. Niente email di conferma qui per lo stesso motivo.
   if (!isStripeConfigured()) {
     return NextResponse.json(
-      { error: "Il pagamento online non è ancora configurato. Contatta l'assistenza per completare l'ordine." },
+      { error: "Il pagamento con carta non è ancora configurato. Scegli il bonifico oppure contatta l'assistenza." },
       { status: 503 }
     );
   }

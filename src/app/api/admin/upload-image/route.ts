@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { requireAdmin } from "@/lib/auth";
+import { cutoutImageBuffer } from "@/lib/image-cutout";
 import fs from "fs";
 import path from "path";
 
@@ -21,6 +22,11 @@ const MAX_SIZE_BYTES = 4 * 1024 * 1024;
  * BLOB_READ_WRITE_TOKEN, che Vercel aggiunge da sola collegando uno store Blob al
  * progetto (Vercel → progetto → Storage → Create → Blob). In sviluppo locale, senza
  * quella variabile, la foto viene salvata in public/products come prima.
+ *
+ * Prima di salvarla, lo sfondo studio (bianco/grigio chiaro) viene ritagliato in
+ * memoria (vedi cutoutImageBuffer): così il prodotto appare "a sfondo trasparente"
+ * su tutto il sito senza bisogno di una cache su disco separata, che su Vercel non
+ * si potrebbe comunque creare a runtime.
  */
 export async function POST(req: Request) {
   const admin = await requireAdmin();
@@ -40,11 +46,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "File troppo grande (massimo 4 MB)." }, { status: 400 });
   }
 
-  const filename = `upload-${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`;
+  const originalBuffer = Buffer.from(await file.arrayBuffer());
+  let buffer: Buffer = originalBuffer;
+  let finalExt = ext;
+  let contentType = file.type;
+  try {
+    buffer = Buffer.from(await cutoutImageBuffer(originalBuffer));
+    finalExt = "webp";
+    contentType = "image/webp";
+  } catch (err) {
+    console.error("Ritaglio sfondo fallito, uso la foto originale:", err);
+  }
+
+  const filename = `upload-${Date.now()}-${Math.round(Math.random() * 1e6)}.${finalExt}`;
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
-      const blob = await put(`products/${filename}`, file, { access: "public", contentType: file.type });
+      const blob = await put(`products/${filename}`, buffer, { access: "public", contentType });
       return NextResponse.json({ ok: true, imageUrl: blob.url });
     } catch (err) {
       console.error("Upload su Vercel Blob fallito", err);
@@ -63,7 +81,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
     const dir = path.join(process.cwd(), "public", "products");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     await fs.promises.writeFile(path.join(dir, filename), buffer);

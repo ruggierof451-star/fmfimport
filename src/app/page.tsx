@@ -86,7 +86,7 @@ export default async function HomePage() {
             <div className="facts">
               <span>Spedizione gratuita sopra {formatEuro(settings.freeShippingThresholdCents)}</span>
               <span>Acquisto anche senza account</span>
-              <span>Fattura per P.IVA</span>
+              <span>Pagamento sicuro con carta o bonifico</span>
             </div>
           </div>
           <div className="art">

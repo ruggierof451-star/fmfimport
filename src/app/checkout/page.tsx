@@ -18,6 +18,7 @@ export default async function CheckoutPage() {
       <Header />
       <CheckoutForm
         invoiceVatRateBps={settings.invoiceVatRateBps}
+        isReseller={user?.role === "RESELLER"}
         prefill={
           user
             ? {

@@ -39,6 +39,8 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
           <div className={`alert ${order.paymentStatus === "PAID" ? "ok" : "info"}`}>
             {order.paymentStatus === "PAID"
               ? "Pagamento confermato. Ti abbiamo inviato una email di conferma e l'ordine passa in preparazione."
+              : order.paymentMethod === "BANK_TRANSFER"
+              ? "Ti abbiamo inviato una email con i dati per il bonifico. La spedizione parte alla ricezione del pagamento."
               : "Stiamo confermando il pagamento con Stripe: ricevi l'email di conferma appena risulta andato a buon fine (di solito pochi secondi)."}
           </div>
           <div className="timeline" style={{ width: "100%" }}>

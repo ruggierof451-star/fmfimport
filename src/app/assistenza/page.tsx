@@ -12,7 +12,7 @@ export default async function AssistenzaPage() {
   const settings = await getPricingSettings();
   const faqs: [string, string][] = [
     ["I prodotti sono originali?", "Sì. Vendiamo solo prodotti ufficiali e sigillati, acquistati da distribuzione autorizzata."],
-    ["Devo registrarmi o avere la partita IVA?", "No. I prezzi sono visibili a tutti e puoi comprare come ospite. La fattura è disponibile se inserisci i dati aziendali al checkout."],
+    ["Devo registrarmi o avere la partita IVA?", "No. I prezzi sono visibili a tutti e puoi comprare come ospite. La fattura è riservata ai rivenditori registrati e approvati tramite \"Lavora con noi\"."],
     [
       "I prezzi sono uguali per tutti?",
       "Sì, il prezzo in scheda è unico e uguale per ogni cliente. Solo i rivenditori approvati con partita IVA possono avere un listino dedicato: vedi la pagina Lavora con noi.",

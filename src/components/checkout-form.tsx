@@ -23,7 +23,15 @@ export interface CheckoutPrefill {
   sdiCode?: string;
 }
 
-export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps: number; prefill?: CheckoutPrefill }) {
+export function CheckoutForm({
+  invoiceVatRateBps,
+  prefill,
+  isReseller,
+}: {
+  invoiceVatRateBps: number;
+  prefill?: CheckoutPrefill;
+  isReseller?: boolean;
+}) {
   const { items, quote, clearCart, couponCode } = useCart();
 
   const [email, setEmail] = useState(prefill?.email ?? "");
@@ -38,6 +46,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
   const [companyName, setCompanyName] = useState(prefill?.companyName ?? "");
   const [vatNumber, setVatNumber] = useState(prefill?.vatNumber ?? "");
   const [sdiCode, setSdiCode] = useState(prefill?.sdiCode ?? "");
+  const [payment, setPayment] = useState<"CARD" | "BANK_TRANSFER">("CARD");
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -92,6 +101,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
           contact: { email, phone },
           shipping: { firstName, lastName, street, postalCode, city, province, country: "IT" },
           invoice: wantsInvoice ? { requested: true, companyName, vatNumber, sdiCode } : { requested: false },
+          paymentMethod: payment,
           acceptedTerms: true,
           couponCode: couponCode || undefined,
         }),
@@ -103,7 +113,11 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
         return;
       }
       clearCart();
-      window.location.href = data.checkoutUrl;
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        window.location.href = data.redirectUrl ?? `/ordine/${data.orderId}`;
+      }
     } catch {
       setServerError("Impossibile completare l'ordine. Controlla la connessione e riprova.");
       setSubmitting(false);
@@ -180,28 +194,32 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                 </select>
               </label>
             </div>
-            <label className="check">
-              <input type="checkbox" checked={wantsInvoice} onChange={(e) => setWantsInvoice(e.target.checked)} />
-              Voglio la fattura (azienda o partita IVA)
-            </label>
-            {wantsInvoice ? (
-              <div className="alert info" style={{ marginTop: -4 }}>
-                I prezzi del sito sono già IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}%): la
-                fattura non aggiunge alcun supplemento, riporta solo l&apos;IVA già compresa nel totale.
-              </div>
-            ) : null}
-            {wantsInvoice ? (
-              <div className="form">
-                <Field label="Ragione sociale" full error={errors.rs} htmlFor="rs">
-                  <input id="rs" className={`in ${errors.rs ? "bad" : ""}`} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-                </Field>
-                <Field label="Partita IVA" error={errors.piva} htmlFor="piva">
-                  <input id="piva" className={`in ${errors.piva ? "bad" : ""}`} value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
-                </Field>
-                <Field label="Codice SDI o PEC" htmlFor="sdi">
-                  <input id="sdi" className="in" value={sdiCode} onChange={(e) => setSdiCode(e.target.value)} />
-                </Field>
-              </div>
+            {isReseller ? (
+              <>
+                <label className="check">
+                  <input type="checkbox" checked={wantsInvoice} onChange={(e) => setWantsInvoice(e.target.checked)} />
+                  Voglio la fattura (azienda o partita IVA)
+                </label>
+                {wantsInvoice ? (
+                  <div className="alert info" style={{ marginTop: -4 }}>
+                    I prezzi del sito sono già IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}%): la
+                    fattura non aggiunge alcun supplemento, riporta solo l&apos;IVA già compresa nel totale.
+                  </div>
+                ) : null}
+                {wantsInvoice ? (
+                  <div className="form">
+                    <Field label="Ragione sociale" full error={errors.rs} htmlFor="rs">
+                      <input id="rs" className={`in ${errors.rs ? "bad" : ""}`} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                    </Field>
+                    <Field label="Partita IVA" error={errors.piva} htmlFor="piva">
+                      <input id="piva" className={`in ${errors.piva ? "bad" : ""}`} value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+                    </Field>
+                    <Field label="Codice SDI o PEC" htmlFor="sdi">
+                      <input id="sdi" className="in" value={sdiCode} onChange={(e) => setSdiCode(e.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </section>
 
@@ -211,13 +229,24 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
               <h2>Pagamento</h2>
             </div>
             <label className="opt">
-              <input type="radio" name="pay" checked readOnly />
+              <input type="radio" name="pay" checked={payment === "CARD"} onChange={() => setPayment("CARD")} />
               <span>
                 <b>Carta di credito/debito</b>
                 <br />
                 <span className="muted" style={{ fontSize: 14 }}>
                   Pagamento sicuro tramite Stripe. Al passo successivo vieni portato su una pagina Stripe per
                   inserire i dati della carta; la spedizione parte appena il pagamento è confermato.
+                </span>
+              </span>
+            </label>
+            <label className="opt">
+              <input type="radio" name="pay" checked={payment === "BANK_TRANSFER"} onChange={() => setPayment("BANK_TRANSFER")} />
+              <span>
+                <b>Bonifico bancario</b>
+                <br />
+                <span className="muted" style={{ fontSize: 14 }}>
+                  Ricevi l&apos;IBAN via email dopo la conferma dell&apos;ordine. La spedizione parte alla ricezione
+                  del bonifico.
                 </span>
               </span>
             </label>
@@ -271,7 +300,13 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                   Prezzi IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}% = {formatEuro(includedVatPreviewCents)}).
                 </span>
                 <button type="submit" className="btn btn-gold" disabled={submitting}>
-                  {submitting ? "Reindirizzamento a Stripe…" : `Vai al pagamento · ${formatEuro(totals.totalCents)}`}
+                  {submitting
+                    ? payment === "CARD"
+                      ? "Reindirizzamento a Stripe…"
+                      : "Invio in corso…"
+                    : payment === "CARD"
+                    ? `Vai al pagamento · ${formatEuro(totals.totalCents)}`
+                    : `Conferma ordine · ${formatEuro(totals.totalCents)}`}
                 </button>
               </>
             ) : null}
