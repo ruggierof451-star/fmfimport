@@ -65,7 +65,18 @@ nav.cats .wrap{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none}
 nav.cats a{display:block;white-space:nowrap;text-decoration:none;font-size:15px;font-weight:400;padding:13px 0 11px;color:var(--ink);border-bottom:2px solid transparent}
 nav.cats a:hover{text-decoration:none;border-bottom-color:var(--line)}
 nav.cats a.on{font-weight:600;border-bottom-color:#000}
-@media (max-width:640px){.hicon .lbl{display:none}.hrow{gap:10px;padding-block:12px}.logo-img{width:118px}.footer-logo{width:150px}}
+/* Telefono: l'intestazione (logo + ricerca + categorie) occupava da sola oltre un terzo
+   dello schermo prima di qualunque contenuto. Qui si stringe senza togliere nulla. */
+@media (max-width:640px){
+  .hicon .lbl{display:none}
+  .hrow{gap:10px;padding-block:10px}
+  .logo-img{width:118px}
+  .footer-logo{width:150px}
+  .searchrow{padding-block:0 10px}
+  .search form{height:44px}
+  .search input{height:42px}
+  nav.cats a{padding:10px 0 9px}
+}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:10px;border:0;font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}
