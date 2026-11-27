@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/components/logo";
 import { NewsletterForm } from "@/components/newsletter-form";
 
 export function Footer({ transparent }: { transparent?: boolean } = {}) {
@@ -8,7 +8,7 @@ export function Footer({ transparent }: { transparent?: boolean } = {}) {
       <div className="wrap cols">
         <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
           <Link href="/" aria-label="FMF Cards" style={{ display: "inline-block" }}>
-            <Image className="footer-logo" src="/fmf-cards-logo-black.png" alt="FMF Cards" width={697} height={330} sizes="(max-width: 640px) 150px, 190px" />
+            <Logo className="footer-logo" />
           </Link>
           <p style={{ margin: 0, fontSize: 14, maxWidth: 290 }}>
             Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione.

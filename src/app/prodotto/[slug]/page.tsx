@@ -20,6 +20,7 @@ import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
 import { absoluteUrl, breadcrumbJsonLd, DEFAULT_OG_IMAGE, NOINDEX, SITE_NAME } from "@/lib/site";
+import { displayImageUrl } from "@/lib/blob-image";
 import type { Metadata } from "next";
 
 /** In vendita = visibile in catalogo e con un prezzo: solo questi vanno in Google. */
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: path,
       title: `${name} · ${SITE_NAME}`,
       description,
-      images: product.imageUrl ? [{ url: product.imageUrl, alt: name }] : [DEFAULT_OG_IMAGE],
+      images: product.imageUrl ? [{ url: displayImageUrl(product.imageUrl), alt: name }] : [DEFAULT_OG_IMAGE],
     },
   };
 }
@@ -86,7 +87,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     category: `${GAME_LABEL[product.game]} · ${product.type}`,
     brand: { "@type": "Brand", name: GAME_LABEL[product.game] },
     description: `${cleanName} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}.`,
-    image: product.imageUrl ? [product.imageUrl.startsWith("http") ? product.imageUrl : absoluteUrl(product.imageUrl)] : undefined,
+    image: product.imageUrl
+      ? [(() => {
+          const u = displayImageUrl(product.imageUrl);
+          return u.startsWith("http") ? u : absoluteUrl(u);
+        })()]
+      : undefined,
     url: absoluteUrl(`/prodotto/${product.slug}`),
     offers:
       product.priceCents != null
