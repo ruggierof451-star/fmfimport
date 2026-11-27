@@ -112,7 +112,7 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
      (restano nel footer e nelle pagine informative). */
   .hero .wrap{padding-block:14px 18px;gap:14px}
   .hero .art{order:-1;flex-basis:100%;max-width:100%}
-  .hero .hero-photos{max-width:230px}
+  .hero .hero-photos{max-width:300px}
   .hero .txt{gap:10px}
   .hero .eyebrow,.hero .txt>p,.hero .facts{display:none}
   .hero h1{font-size:24px;line-height:1.2}
