@@ -22,6 +22,7 @@ import { JsonLd } from "@/components/json-ld";
 import { absoluteUrl, breadcrumbJsonLd, DEFAULT_OG_IMAGE, NOINDEX, SITE_NAME } from "@/lib/site";
 import { displayImageUrl } from "@/lib/blob-image";
 import type { Metadata } from "next";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { gameListKeyFor, languageListKeyFor, productDescription, productImageAlt, productTitle } from "@/lib/seo";
 import { LIST_META } from "@/lib/catalog";
 
@@ -272,7 +273,7 @@ function ProductTabs({ product }: { product: Awaited<ReturnType<typeof getProduc
         <div>
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Descrizione</h3>
           {product.description ? (
-            <div className="prose" dangerouslySetInnerHTML={{ __html: product.description }} />
+            <div className="prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }} />
           ) : (
             <>
               <p style={{ margin: "0 0 10px" }}>

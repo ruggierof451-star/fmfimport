@@ -19,6 +19,28 @@ const nextConfig: NextConfig = {
   // Permette di aprire il sito in dev da telefono tramite l'IP di rete locale
   // (es. per testare senza dover fare ogni volta una build di produzione).
   allowedDevOrigins: ["192.168.1.111"],
+
+  // Intestazioni di sicurezza applicate a ogni risposta. Proteggono da clickjacking
+  // (frame-ancestors / X-Frame-Options), sniffing del tipo di file (nosniff), perdita
+  // dell'indirizzo visitato verso altri siti (Referrer-Policy) e forzano HTTPS sui
+  // browser (HSTS). Non impongono una Content-Security-Policy restrittiva sugli script,
+  // che richiederebbe i nonce di Next e va introdotta con cautela per non rompere il sito.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

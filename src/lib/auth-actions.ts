@@ -151,9 +151,14 @@ export async function requestPasswordResetAction(
   const resetUrl = `${process.env.SITE_URL || "http://localhost:3000"}${resetPath}`;
   const emailResult = await sendPasswordResetEmail(email, resetUrl);
 
-  // Se il servizio email non è configurato o fallisce, mostriamo comunque il link a
-  // schermo come ripiego invece di bloccare l'utente fuori dal proprio account.
-  return { ok: true, resetUrl: emailResult.ok ? undefined : resetPath };
+  // Il link di reset NON viene mai mostrato a schermo in produzione: chiunque può chiedere
+  // il reset di qualsiasi email, quindi esporlo permetterebbe di prendere il controllo di
+  // un account altrui. Il ripiego a schermo resta solo in sviluppo, quando non c'è email.
+  const showFallbackLink = !emailResult.ok && process.env.NODE_ENV !== "production";
+  if (!emailResult.ok && process.env.NODE_ENV === "production") {
+    console.error("[password-reset] invio email fallito: link non mostrato per sicurezza.");
+  }
+  return { ok: true, resetUrl: showFallbackLink ? resetPath : undefined };
 }
 
 const resetPasswordSchema = z
