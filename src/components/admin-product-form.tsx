@@ -17,7 +17,19 @@ const CATEGORY_OPTIONS = [
   { value: "one-piece-cn", label: "One Piece Cinese" },
   { value: "yugioh", label: "Yu-Gi-Oh!" },
   { value: "dragon-ball", label: "Dragon Ball" },
+  { value: "carte-singole-gradate", label: "Carte singole · Gradate" },
+  { value: "carte-singole-raw", label: "Carte singole · Raw" },
 ];
+
+// Carte singole: il gioco si sceglie a mano (Pokémon, One Piece, ...), come la lingua.
+const SINGLE_CARD_CATEGORIES = new Set(["carte-singole-gradate", "carte-singole-raw"]);
+const GAME_OPTIONS = [
+  { value: "POKEMON", label: "Pokémon" },
+  { value: "ONE_PIECE", label: "One Piece" },
+  { value: "YUGIOH", label: "Yu-Gi-Oh!" },
+  { value: "DRAGON_BALL", label: "Dragon Ball" },
+] as const;
+type GameValue = (typeof GAME_OPTIONS)[number]["value"];
 
 const LANGUAGE_OPTIONS = [
   { value: "JP", label: "Giapponese" },
@@ -28,9 +40,9 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const JP_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
-const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball"]);
+const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball", "carte-singole-gradate", "carte-singole-raw"]);
 
-const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
+const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori", "Carta singola"];
 
 export function AdminProductForm({
   product,
@@ -52,6 +64,8 @@ export function AdminProductForm({
   const [description, setDescription] = useState(product.description ?? "");
   const [isNew, setIsNew] = useState(product.isNew);
   const [isPreorder, setIsPreorder] = useState(product.isPreorder);
+  const [heroFeatured, setHeroFeatured] = useState(product.heroFeatured);
+  const [game, setGame] = useState<GameValue>(product.game);
   const [priceEuro, setPriceEuro] = useState(product.priceCents != null ? (product.priceCents / 100).toFixed(2) : "");
   const [resellerPriceEuro, setResellerPriceEuro] = useState(
     product.resellerPriceCents != null ? (product.resellerPriceCents / 100).toFixed(2) : ""
@@ -84,6 +98,8 @@ export function AdminProductForm({
     "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
     yugioh: { game: "YUGIOH", language: "JP" },
     "dragon-ball": { game: "DRAGON_BALL", language: "JP" },
+    "carte-singole-gradate": { game: "POKEMON", language: "IT" },
+    "carte-singole-raw": { game: "POKEMON", language: "IT" },
   };
 
   function toCents(euro: string): number | null {
@@ -94,7 +110,8 @@ export function AdminProductForm({
     e.preventDefault();
     setSaving(true);
     setMessage("");
-    const { game, language: defaultLanguage } = CATEGORY_TO_GAME_LANG[category] ?? CATEGORY_TO_GAME_LANG["pokemon-jp"];
+    const { game: categoryGame, language: defaultLanguage } = CATEGORY_TO_GAME_LANG[category] ?? CATEGORY_TO_GAME_LANG["pokemon-jp"];
+    const finalGame = SINGLE_CARD_CATEGORIES.has(category) ? game : categoryGame;
     const finalLanguage = FREE_LANGUAGE_CATEGORIES.has(category) ? language : defaultLanguage;
     const finalType = type === "__altro__" ? customType.trim() : type;
     if (!finalType) {
@@ -117,16 +134,9 @@ export function AdminProductForm({
     const result = await updateProductAction({
       id: product.id,
       name,
-      category: category as
-        | "pokemon-it"
-        | "pokemon-jp"
-        | "pokemon-cn"
-        | "pokemon-kr"
-        | "one-piece-jp"
-        | "one-piece-cn"
-        | "yugioh"
-        | "dragon-ball",
-      game,
+      category: category as NonNullable<Parameters<typeof updateProductAction>[0]["category"]>,
+      heroFeatured,
+      game: finalGame,
       language: finalLanguage,
       setName: productSetName,
       type: finalType,
@@ -222,6 +232,19 @@ export function AdminProductForm({
         </label>
       ) : null}
 
+      {SINGLE_CARD_CATEGORIES.has(category) ? (
+        <label className="fl">
+          Gioco
+          <select className="in" value={game} onChange={(e) => setGame(e.target.value as GameValue)}>
+            {GAME_OPTIONS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       {FREE_LANGUAGE_CATEGORIES.has(category) ? (
         <label className="fl">
           Lingua / edizione
@@ -245,6 +268,11 @@ export function AdminProductForm({
       <label className="check">
         <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />
         Mostra come novità in homepage
+      </label>
+
+      <label className="check">
+        <input type="checkbox" checked={heroFeatured} onChange={(e) => setHeroFeatured(e.target.checked)} />
+        Mostra nella vetrina a ruota in cima alla home (massimo 3 prodotti)
       </label>
 
       <label className="check">

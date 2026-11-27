@@ -16,7 +16,19 @@ const CATEGORY_OPTIONS = [
   { value: "one-piece-cn", label: "One Piece Cinese" },
   { value: "yugioh", label: "Yu-Gi-Oh!" },
   { value: "dragon-ball", label: "Dragon Ball" },
+  { value: "carte-singole-gradate", label: "Carte singole · Gradate" },
+  { value: "carte-singole-raw", label: "Carte singole · Raw" },
 ];
+
+// Carte singole: il gioco si sceglie a mano (Pokémon, One Piece, ...), come la lingua.
+const SINGLE_CARD_CATEGORIES = new Set(["carte-singole-gradate", "carte-singole-raw"]);
+const GAME_OPTIONS = [
+  { value: "POKEMON", label: "Pokémon" },
+  { value: "ONE_PIECE", label: "One Piece" },
+  { value: "YUGIOH", label: "Yu-Gi-Oh!" },
+  { value: "DRAGON_BALL", label: "Dragon Ball" },
+] as const;
+type GameValue = (typeof GAME_OPTIONS)[number]["value"];
 
 const LANGUAGE_OPTIONS = [
   { value: "JP", label: "Giapponese" },
@@ -27,9 +39,9 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const JP_CATEGORIES = new Set(["pokemon-jp", "one-piece-jp"]);
-const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball"]);
+const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball", "carte-singole-gradate", "carte-singole-raw"]);
 
-const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
+const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori", "Carta singola"];
 
 export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: string[] }) {
   const router = useRouter();
@@ -51,6 +63,8 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [stockQty, setStockQty] = useState("");
   const [published, setPublished] = useState(true);
   const [isNew, setIsNew] = useState(false);
+  const [heroFeatured, setHeroFeatured] = useState(false);
+  const [game, setGame] = useState<GameValue>("POKEMON");
   const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">("JP");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -84,15 +98,9 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
     setMessage("");
     const result = await createProductAction({
       name: name.trim(),
-      category: category as
-        | "pokemon-it"
-        | "pokemon-jp"
-        | "pokemon-cn"
-        | "pokemon-kr"
-        | "one-piece-jp"
-        | "one-piece-cn"
-        | "yugioh"
-        | "dragon-ball",
+      category: category as Parameters<typeof createProductAction>[0]["category"],
+      game: SINGLE_CARD_CATEGORIES.has(category) ? game : undefined,
+      heroFeatured,
       language: FREE_LANGUAGE_CATEGORIES.has(category) ? language : undefined,
       setName: productSetName.trim(),
       type: finalType,
@@ -161,6 +169,19 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
         </label>
       ) : null}
 
+      {SINGLE_CARD_CATEGORIES.has(category) ? (
+        <label className="fl">
+          Gioco
+          <select className="in" value={game} onChange={(e) => setGame(e.target.value as GameValue)}>
+            {GAME_OPTIONS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       {FREE_LANGUAGE_CATEGORIES.has(category) ? (
         <label className="fl">
           Lingua / edizione
@@ -221,6 +242,11 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       <label className="check">
         <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />
         Mostra come novità in homepage
+      </label>
+
+      <label className="check">
+        <input type="checkbox" checked={heroFeatured} onChange={(e) => setHeroFeatured(e.target.checked)} />
+        Mostra nella vetrina a ruota in cima alla home (massimo 3 prodotti)
       </label>
 
       <label className="check">

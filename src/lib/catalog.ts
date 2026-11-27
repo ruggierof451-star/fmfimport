@@ -38,6 +38,7 @@ export const NAV: { key: string; label: string }[] = [
   { key: "one-piece-cn", label: "One Piece CN" },
   { key: "yugioh", label: "Yu-Gi-Oh!" },
   { key: "dragon-ball", label: "Dragon Ball" },
+  { key: "carte-singole", label: "Carte singole" },
 ];
 
 export interface ListMeta {
@@ -58,6 +59,12 @@ const POKEMON_SEGMENT = [
   { key: "pokemon-jp", label: "Giapponese" },
   { key: "pokemon-cn", label: "Cinese" },
   { key: "pokemon-kr", label: "Coreano" },
+];
+
+const CARTE_SINGOLE_SEGMENT = [
+  { key: "carte-singole", label: "Tutte" },
+  { key: "carte-singole-gradate", label: "Gradate" },
+  { key: "carte-singole-raw", label: "Raw" },
 ];
 
 export const LIST_META: Record<string, ListMeta> = {
@@ -112,6 +119,24 @@ export const LIST_META: Record<string, ListMeta> = {
     title: "Dragon Ball",
     description: "Booster box e prodotti sigillati Dragon Ball Super Card Game, edizione giapponese e inglese.",
     where: { category: "dragon-ball" },
+  },
+  "carte-singole": {
+    title: "Carte singole",
+    description: "Carte singole da collezione: gradate (valutate e sigillate in slab) e raw (non gradate).",
+    where: { category: { in: ["carte-singole-gradate", "carte-singole-raw"] } },
+    segment: CARTE_SINGOLE_SEGMENT,
+  },
+  "carte-singole-gradate": {
+    title: "Carte gradate",
+    description: "Carte singole valutate da un ente di grading e sigillate in slab.",
+    where: { category: "carte-singole-gradate" },
+    segment: CARTE_SINGOLE_SEGMENT,
+  },
+  "carte-singole-raw": {
+    title: "Carte raw",
+    description: "Carte singole non gradate, così come escono dalla busta.",
+    where: { category: "carte-singole-raw" },
+    segment: CARTE_SINGOLE_SEGMENT,
   },
   pokemon: {
     title: "Pokémon TCG",
