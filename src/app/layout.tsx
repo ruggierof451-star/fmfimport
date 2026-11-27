@@ -5,7 +5,7 @@ import { CartDrawer } from "@/components/cart-drawer";
 import { Toast } from "@/components/toast";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Analytics } from "@vercel/analytics/next";
-import { CANONICAL_ORIGIN, SITE_NAME } from "@/lib/site";
+import { CANONICAL_ORIGIN, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -36,8 +36,9 @@ export const metadata: Metadata = {
     locale: "it_IT",
     title: "FMF Cards — Pokémon e One Piece sigillati",
     description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE.url] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

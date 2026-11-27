@@ -19,7 +19,7 @@ import { getPricingSettings } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
-import { absoluteUrl, NOINDEX, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, DEFAULT_OG_IMAGE, NOINDEX, SITE_NAME } from "@/lib/site";
 import type { Metadata } from "next";
 
 /** In vendita = visibile in catalogo e con un prezzo: solo questi vanno in Google. */
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: path,
       title: `${name} · ${SITE_NAME}`,
       description,
-      images: product.imageUrl ? [{ url: product.imageUrl, alt: name }] : undefined,
+      images: product.imageUrl ? [{ url: product.imageUrl, alt: name }] : [DEFAULT_OG_IMAGE],
     },
   };
 }
