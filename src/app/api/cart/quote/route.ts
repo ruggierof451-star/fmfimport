@@ -39,7 +39,9 @@ export async function POST(req: Request) {
   const shipping = toShippingRules(settings);
   const session = await getSession();
   const isReseller = session?.role === "RESELLER";
-  const discount = couponCode ? await validateDiscountCode(couponCode) : { ok: false as const };
+  const discount = couponCode
+    ? await validateDiscountCode(couponCode, { userId: session?.userId, email: session?.email })
+    : { ok: false as const };
 
   const products = await prisma.product.findMany({
     where: { id: { in: items.map((i) => i.productId) } },

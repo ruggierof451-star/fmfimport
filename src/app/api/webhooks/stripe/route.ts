@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
+import { recordDiscountCodeUsage } from "@/lib/discounts";
 
 /**
  * Riceve gli eventi di pagamento da Stripe. Qui, e solo qui, un ordine passa da
@@ -53,6 +54,10 @@ export async function POST(req: Request) {
           },
         },
       });
+
+      if (order.couponCode) {
+        recordDiscountCodeUsage(order.couponCode).catch((err) => console.error("[webhook stripe] conteggio utilizzi codice sconto fallito:", err));
+      }
 
       const customerEmail = order.guestEmail ?? (order.userId ? (await prisma.user.findUnique({ where: { id: order.userId } }))?.email : null);
       if (customerEmail) {

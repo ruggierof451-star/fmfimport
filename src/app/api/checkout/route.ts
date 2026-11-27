@@ -6,7 +6,7 @@ import { getPricingSettings, toShippingRules } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
-import { validateDiscountCode, recordDiscountCodeUsage } from "@/lib/discounts";
+import { validateDiscountCode } from "@/lib/discounts";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 
 const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
@@ -105,7 +105,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Alcuni articoli non sono più disponibili come richiesto.", problems }, { status: 409 });
   }
 
-  const discount = body.couponCode ? await validateDiscountCode(body.couponCode) : { ok: false as const };
+  const customerEmail = session?.email ?? body.contact.email;
+  const discount = body.couponCode
+    ? await validateDiscountCode(body.couponCode, { userId: session?.userId, email: customerEmail })
+    : { ok: false as const };
   if (body.couponCode && !discount.ok) {
     return NextResponse.json({ error: discount.error ?? "Codice sconto non valido." }, { status: 400 });
   }
@@ -170,15 +173,10 @@ export async function POST(req: Request) {
     return created;
   });
 
-  if (discount.ok && discount.code) {
-    recordDiscountCodeUsage(discount.code).catch((err) => console.error("[checkout] conteggio utilizzi codice sconto fallito:", err));
-  }
-
   // Il pagamento vero avviene su Stripe: l'ordine resta PENDING_PAYMENT finché il webhook
-  // non conferma il pagamento (vedi /api/webhooks/stripe). Niente email di conferma qui:
-  // partono solo a pagamento confermato, per non promettere un ordine non ancora pagato.
-  const customerEmail = session?.email ?? body.contact.email;
-
+  // non conferma il pagamento (vedi /api/webhooks/stripe). Il contatore utilizzi del
+  // codice sconto si incrementa lì, non qui, perché un checkout abbandonato su Stripe
+  // non deve "consumare" l'utilizzo. Niente email di conferma qui per lo stesso motivo.
   if (!isStripeConfigured()) {
     return NextResponse.json(
       { error: "Il pagamento online non è ancora configurato. Contatta l'assistenza per completare l'ordine." },

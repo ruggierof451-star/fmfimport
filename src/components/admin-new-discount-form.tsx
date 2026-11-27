@@ -9,6 +9,7 @@ export function AdminNewDiscountForm() {
   const [code, setCode] = useState("");
   const [percentOff, setPercentOff] = useState("5");
   const [maxUses, setMaxUses] = useState("");
+  const [maxUsesPerUser, setMaxUsesPerUser] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -21,6 +22,7 @@ export function AdminNewDiscountForm() {
       code: code.trim(),
       percentOff: parseFloat(percentOff.replace(",", ".")),
       maxUses: maxUses.trim() === "" ? null : parseInt(maxUses, 10),
+      maxUsesPerUser: maxUsesPerUser.trim() === "" ? null : parseInt(maxUsesPerUser, 10),
       expiresAt: expiresAt.trim() === "" ? null : expiresAt,
     });
     setSaving(false);
@@ -29,6 +31,7 @@ export function AdminNewDiscountForm() {
       setCode("");
       setPercentOff("5");
       setMaxUses("");
+      setMaxUsesPerUser("");
       setExpiresAt("");
       router.refresh();
     } else {
@@ -48,8 +51,12 @@ export function AdminNewDiscountForm() {
         <input className="in" value={percentOff} onChange={(e) => setPercentOff(e.target.value)} placeholder="es. 5" />
       </label>
       <label className="fl">
-        Utilizzi massimi (vuoto = illimitati)
+        Utilizzi massimi totali (vuoto = illimitati)
         <input className="in" value={maxUses} onChange={(e) => setMaxUses(e.target.value)} placeholder="es. 100" />
+      </label>
+      <label className="fl">
+        Utilizzi massimi per profilo (vuoto = illimitati)
+        <input className="in" value={maxUsesPerUser} onChange={(e) => setMaxUsesPerUser(e.target.value)} placeholder="es. 1" />
       </label>
       <label className="fl">
         Scadenza (vuoto = nessuna)
