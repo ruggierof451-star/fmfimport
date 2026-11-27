@@ -1,47 +1,29 @@
 // Genera lo sfondo della home per i telefoni a partire da quello desktop.
 // Rilanciare con `node scripts/make-hero-bg-mobile.mjs` se l'illustrazione cambia.
 //
-// Perché serve: l'originale è orizzontale (1672x941). Su uno schermo verticale, con
-// background-size:cover, se ne vede solo una fascia centrale larga circa un quarto —
-// Luffy e Pikachu restano fuori — e il telefono scarica comunque l'immagine intera.
-// Qui l'illustrazione viene messa su una tela verticale 1170x2080 (nitida anche sugli schermi ad alta densità), a tutta larghezza e
-// in alto (dove sta il contenuto principale), con il resto nella stessa tinta della
-// carta e una sfumatura che nasconde il bordo inferiore.
+// L'originale è orizzontale (1672x941): su uno schermo verticale, con background-size:cover,
+// andrebbe ingrandito di oltre il doppio (sgranato) oppure coprirebbe solo una fascia in alto.
+// Qui l'illustrazione viene messa a tutta larghezza e ripetuta in verticale, alternandola
+// con la sua copia capovolta, così le giunture combaciano senza stacchi: lo sfondo riempie
+// tutto lo schermo del telefono e resta nitido (nessun ingrandimento).
 import sharp from "sharp";
 
 const SOURCE = "public/art/hero-bg.webp";
 const OUT = "public/art/hero-bg-mobile.webp";
 const W = 1170;
-const H = 2080;
-const PAPER = { r: 244, g: 244, b: 244 }; // tinta di fondo misurata sull'illustrazione
-const FADE = 220; // altezza della sfumatura verso il fondo, in pixel
+const REPEAT = 3;
 
 async function build() {
   const art = await sharp(SOURCE).resize({ width: W }).toBuffer();
-  const artHeight = (await sharp(art).metadata()).height ?? 0;
+  const h = (await sharp(art).metadata()).height ?? 0;
+  const flipped = await sharp(art).flip().toBuffer();
 
-  // Sfumatura: dall'illustrazione (trasparente) alla tinta della carta (opaca).
-  const fade = Buffer.alloc(W * FADE * 4);
-  for (let y = 0; y < FADE; y++) {
-    const alpha = Math.round((y / (FADE - 1)) * 255);
-    for (let x = 0; x < W; x++) {
-      const i = (y * W + x) * 4;
-      fade[i] = PAPER.r;
-      fade[i + 1] = PAPER.g;
-      fade[i + 2] = PAPER.b;
-      fade[i + 3] = alpha;
-    }
-  }
-
-  await sharp({ create: { width: W, height: H, channels: 3, background: PAPER } })
-    .composite([
-      { input: art, top: 0, left: 0 },
-      { input: fade, raw: { width: W, height: FADE, channels: 4 }, top: Math.max(0, artHeight - FADE), left: 0 },
-    ])
-    .webp({ quality: 90 })
+  await sharp({ create: { width: W, height: h * REPEAT, channels: 3, background: "#f4f4f4" } })
+    .composite(Array.from({ length: REPEAT }, (_, i) => ({ input: i % 2 ? flipped : art, top: i * h, left: 0 })))
+    .webp({ quality: 88 })
     .toFile(OUT);
 
-  console.log(`Sfondo per telefono generato: ${OUT} (${W}x${H}, illustrazione alta ${artHeight}px)`);
+  console.log(`Sfondo per telefono generato: ${OUT} (${W}x${h * REPEAT})`);
 }
 
 build();
