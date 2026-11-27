@@ -88,8 +88,6 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
 .home-bg .perks{background:transparent}
-.home-bg .card .img{background:transparent}
-.home-bg .card:hover .img{background:transparent}
 .hero .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:36px;padding-block:clamp(32px,5vw,60px)}
 .hero .txt{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:18px}
 .discount-banner{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink);background:var(--gold-wash);border:1px solid var(--gold);border-radius:999px;padding:7px 16px}
@@ -145,11 +143,11 @@ main.page{padding-block:36px 72px;display:flex;flex-direction:column;gap:60px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:30px 18px}
 @media (min-width:1100px){.grid.row5{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .card{display:flex;flex-direction:column;gap:2px;transition:transform .22s ease}
-.card .img{display:block;position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:10px;overflow:hidden}
+.card .img{display:block;position:relative;aspect-ratio:1/1;background:transparent;border-radius:10px;overflow:hidden}
 .card .img svg{width:100%;height:100%;display:block}
 .card .img img{transition:transform .35s cubic-bezier(.2,.8,.2,1),filter .35s ease}
 .card:hover{transform:translateY(-4px)}
-.card:hover .img{background:var(--soft)}
+.card:hover .img{background:transparent}
 .card:hover .img img{transform:scale(1.07)}
 .card .img img{filter:drop-shadow(0 6px 10px rgba(0,0,0,.1))}
 .card:hover .img img{filter:drop-shadow(0 14px 18px rgba(0,0,0,.16))}
@@ -237,7 +235,7 @@ textarea.in{height:auto;padding:10px 12px;min-height:120px;resize:vertical}
    quando la colonna info va sotto, il riquadro resta centrato e al massimo 300px; sui
    telefoni (≤600px) torna a tutta larghezza (media query più sotto, dopo .pp .main). */
 .pp .gal{flex:0 1 420px;min-width:0;display:flex;flex-direction:column;gap:10px}
-.pp .main{position:relative;aspect-ratio:1/1;background:#FBFBFB;border-radius:12px;overflow:hidden;max-width:100%}
+.pp .main{position:relative;aspect-ratio:1/1;background:transparent;border-radius:12px;overflow:hidden;max-width:100%}
 .pp .main svg{width:100%;height:100%;display:block}
 .pp .main img{filter:drop-shadow(0 10px 16px rgba(0,0,0,.12))}
 @media (max-width:900px){.pp .gal{flex-basis:100%}.pp .info{max-width:none}.pp .main{width:100%;max-width:300px;margin-inline:auto}}
@@ -294,7 +292,7 @@ dl.spec dt{color:var(--muted)} dl.spec dd{margin:0;font-weight:500;min-width:0;o
 .two > .a{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:12px}
 .two > .b{flex:1 1 320px;min-width:0;position:sticky;top:140px}
 .line{display:flex;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:14px 0;align-items:center;flex-wrap:wrap}
-.line .im{position:relative;display:block;flex:none;width:86px;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#FBFBFB}
+.line .im{position:relative;display:block;flex:none;width:86px;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:transparent}
 .line .im svg{width:100%;height:100%;display:block}
 .line .tx{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:4px}
 .line .tx a{color:var(--ink);text-decoration:none;font-weight:500}

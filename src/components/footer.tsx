@@ -47,7 +47,7 @@ export function Footer({ transparent }: { transparent?: boolean } = {}) {
             <Link href="/privacy">Privacy</Link>
             <Link href="/cookie">Cookie</Link>
           </nav>
-          <p style={{ fontSize: 13, margin: "14px 0 0" }}>Pagamenti: carta, PayPal, bonifico</p>
+          <p style={{ fontSize: 13, margin: "14px 0 0" }}>Pagamenti sicuri con carta, tramite Stripe</p>
         </div>
       </div>
       <div className="legal">

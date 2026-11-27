@@ -458,7 +458,8 @@ model DiscountCode {
   code          String    @unique // sempre maiuscolo, confrontato case-insensitive
   percentOffBps Int // 500 = 5,00% di sconto sul subtotale
   active        Boolean   @default(true)
-  maxUses       Int? // null = nessun limite di utilizzi totali
+  maxUses       Int? // null = nessun limite di utilizzi totali (su tutti i clienti insieme)
+  maxUsesPerUser Int? // null = nessun limite per singolo cliente (per account o email ospite)
   usedCount     Int       @default(0)
   expiresAt     DateTime? // null = nessuna scadenza
   createdAt     DateTime  @default(now())

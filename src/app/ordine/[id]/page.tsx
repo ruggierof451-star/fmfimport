@@ -36,9 +36,10 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
             Ordine <b className="mono">{order.orderNumber}</b> · totale <b>{formatEuro(order.totalCents)}</b>. Il
             riepilogo è associato a <b>{order.guestEmail ?? "il tuo account"}</b>.
           </p>
-          <div className="alert info">
-            Ti abbiamo inviato una email di conferma. Ti scriveremo a breve con le coordinate per il bonifico; appena
-            il pagamento risulta ricevuto, l&apos;ordine passa in preparazione.
+          <div className={`alert ${order.paymentStatus === "PAID" ? "ok" : "info"}`}>
+            {order.paymentStatus === "PAID"
+              ? "Pagamento confermato. Ti abbiamo inviato una email di conferma e l'ordine passa in preparazione."
+              : "Stiamo confermando il pagamento con Stripe: ricevi l'email di conferma appena risulta andato a buon fine (di solito pochi secondi)."}
           </div>
           <div className="timeline" style={{ width: "100%" }}>
             {STEPS.map((s, i) => (

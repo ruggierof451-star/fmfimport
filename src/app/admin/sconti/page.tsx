@@ -24,7 +24,8 @@ export default async function AdminDiscountsPage() {
             <tr>
               <th>Codice</th>
               <th>Sconto</th>
-              <th>Utilizzi</th>
+              <th>Utilizzi totali</th>
+              <th>Max per profilo</th>
               <th>Scadenza</th>
               <th>Stato</th>
               <th></th>
@@ -39,6 +40,7 @@ export default async function AdminDiscountsPage() {
                   {c.usedCount}
                   {c.maxUses != null ? ` / ${c.maxUses}` : ""}
                 </td>
+                <td>{c.maxUsesPerUser != null ? c.maxUsesPerUser : "—"}</td>
                 <td>{c.expiresAt ? c.expiresAt.toLocaleDateString("it-IT") : "—"}</td>
                 <td>
                   <span className="badge-status">{c.active ? "Attivo" : "Disattivato"}</span>
@@ -50,7 +52,7 @@ export default async function AdminDiscountsPage() {
             ))}
             {codes.length === 0 ? (
               <tr>
-                <td colSpan={6} className="muted">
+                <td colSpan={7} className="muted">
                   Nessun codice sconto ancora creato.
                 </td>
               </tr>

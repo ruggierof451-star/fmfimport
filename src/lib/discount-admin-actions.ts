@@ -9,6 +9,7 @@ const createSchema = z.object({
   code: z.string().min(2, "Il codice deve avere almeno 2 caratteri.").max(40),
   percentOff: z.number().min(0.01, "Lo sconto deve essere maggiore di 0.").max(100, "Lo sconto non può superare il 100%."),
   maxUses: z.number().int().min(1).nullable(),
+  maxUsesPerUser: z.number().int().min(1).nullable(),
   expiresAt: z.string().nullable(), // data ISO (yyyy-mm-dd) o null
 });
 
@@ -31,6 +32,7 @@ export async function createDiscountCodeAction(
       code,
       percentOffBps: Math.round(data.percentOff * 100),
       maxUses: data.maxUses,
+      maxUsesPerUser: data.maxUsesPerUser,
       expiresAt: data.expiresAt ? new Date(`${data.expiresAt}T23:59:59`) : null,
       createdBy: admin.email,
     },
