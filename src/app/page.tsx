@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -83,6 +84,12 @@ export default async function HomePage() {
     if (!heroCutouts.includes(p)) heroCutouts.push(p);
   }
 
+  const perks = [
+    { title: "Originali e sigillati", desc: "Da distribuzione autorizzata, mai riconfezionati.", path: "M12 19.5l5 5 10-11" },
+    { title: "Prezzo unico e trasparente", desc: "Stesso prezzo per tutti, visibile senza bisogno di registrarti.", path: "M11 27L27 11M13 13a2.5 2.5 0 1 0 0 0zM25 25a2.5 2.5 0 1 0 0 0z" },
+    { title: "Spedizione gratuita", desc: `Sugli ordini sopra ${formatEuro(settings.freeShippingThresholdCents)}, con tracking.`, path: "M8 13h14v12H8zM22 17h5l3 4v4h-8M13 26a2 2 0 1 0 0 0zM26 26a2 2 0 1 0 0 0z" },
+    { title: "Disponibilità aggiornata", desc: "Scorte e prezzi sincronizzati con il magazzino.", path: "M27 15a9 9 0 0 0-16-3M11 23a9 9 0 0 0 16 3M11 8v4h4M27 30v-4h-4" },
+  ];
   return (
     <div className="home-bg">
       <JsonLd
@@ -147,30 +154,18 @@ export default async function HomePage() {
 
       <section className="perks" aria-label="Perché FMF Cards">
         <div className="wrap">
-          <Perk title="Originali e sigillati" desc="Da distribuzione autorizzata, mai riconfezionati." path="M12 19.5l5 5 10-11" />
-          <Perk
-            title="Prezzo unico e trasparente"
-            desc="Stesso prezzo per tutti, visibile senza bisogno di registrarti."
-            path="M11 27L27 11M13 13a2.5 2.5 0 1 0 0 0zM25 25a2.5 2.5 0 1 0 0 0z"
-          />
-          <Perk
-            title="Spedizione gratuita"
-            desc={`Sugli ordini sopra ${formatEuro(settings.freeShippingThresholdCents)}, con tracking.`}
-            path="M8 13h14v12H8zM22 17h5l3 4v4h-8M13 26a2 2 0 1 0 0 0zM26 26a2 2 0 1 0 0 0z"
-          />
-          <Perk
-            title="Disponibilità aggiornata"
-            desc="Scorte e prezzi sincronizzati con il magazzino."
-            path="M27 15a9 9 0 0 0-16-3M11 23a9 9 0 0 0 16 3M11 8v4h4M27 30v-4h-4"
-          />
+          {perks.map((p) => (
+            <Perk key={p.title} {...p} />
+          ))}
         </div>
       </section>
 
       <main className="wrap page">
         {sections
           .filter((s) => s.items.length > 0)
-          .map((s) => (
-            <section className="sec" key={s.key} aria-labelledby={`s-${s.key}`}>
+          .map((s, i, arr) => (
+            <Fragment key={s.key}>
+            <section className="sec" aria-labelledby={`s-${s.key}`}>
               <div className="sechead">
                 <h2 id={`s-${s.key}`}>{s.label}</h2>
                 <Link href={`/${s.key}`}>Vedi tutti</Link>
@@ -181,6 +176,10 @@ export default async function HomePage() {
                 ))}
               </div>
             </section>
+            {(i === arr.length - 1 ? perks.slice(i) : perks.slice(i, i + 1)).map((pk) => (
+              <Perk key={pk.title} className="perk-banner" {...pk} />
+            ))}
+            </Fragment>
           ))}
 
         <section
@@ -220,9 +219,9 @@ export default async function HomePage() {
   );
 }
 
-function Perk({ title, desc, path }: { title: string; desc: string; path: string }) {
+function Perk({ title, desc, path, className = "perk" }: { title: string; desc: string; path: string; className?: string }) {
   return (
-    <div className="perk">
+    <div className={className}>
       <svg viewBox="0 0 34 34" aria-hidden="true">
         <rect x="0.5" y="0.5" width="33" height="33" rx="8" fill="#F4F4F4" />
         <g fill="none" stroke="#222222" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">

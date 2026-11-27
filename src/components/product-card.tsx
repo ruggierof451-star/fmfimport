@@ -18,7 +18,7 @@ export function ProductCard({ product, isReseller = false }: { product: Product;
         <span className="tags">
           {product.isNew && !soldOut ? <span className="tag gold">Nuovo</span> : null}
           {product.isPreorder ? <span className="tag">Preordine</span> : null}
-          {soldOut ? <span className="tag line">Esaurito</span> : null}
+          {soldOut ? <span className="tag soldout">Esaurito</span> : null}
           {product.condition === "B_GRADE" ? <span className="tag line">B-Grade</span> : null}
         </span>
         <span className="lang">{product.language}</span>

@@ -205,6 +205,16 @@ main.page{padding-block:36px 72px;display:flex;flex-direction:column;gap:60px}
 .tag{font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;background:#000;color:#fff}
 .tag.gold{background:#000;color:#fff}
 .tag.line{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.tag.soldout{background:none;border:0;padding:0;color:#C8102E;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 0 6px #fff,0 0 2px #fff}
+.card:has(.tag.soldout) .img img{opacity:.55;filter:grayscale(.6)}
+.perk-banner{display:none}
+@media (max-width:760px){
+  .perk-banner{display:flex;align-items:center;gap:14px;background:#000;color:#fff;border-radius:12px;padding:16px 18px;animation:perk-in linear both;animation-timeline:view();animation-range:entry 0% cover 30%}
+  .perk-banner svg{flex:none;width:36px;height:36px}
+  .perk-banner b{display:block;font-size:15px}
+  .perk-banner span span{display:block;font-size:13px;color:#BDBDBD;margin-top:2px}
+}
+@keyframes perk-in{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 .lang{position:absolute;top:10px;right:10px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;background:#fff;border:1px solid var(--line)}
 .card .body{padding:12px 2px 0;display:flex;flex-direction:column;gap:6px;flex:1;text-align:center;align-items:center}
 .card .meta{font-size:12px;color:var(--muted)}
