@@ -41,5 +41,41 @@ export const DEFAULT_OG_IMAGE = {
   alt: "FMF Cards — Pokémon e One Piece sigillati, prezzi chiari per tutti",
 };
 
+/**
+ * Logo mostrato da Google accanto al sito (risultati di ricerca e scheda dell'attività).
+ * Deve essere pubblicamente raggiungibile e su sfondo pieno: si usa la versione bianca,
+ * non quella trasparente pensata per i fondi scuri.
+ */
+export const GOOGLE_LOGO = { path: "/fmf-cards-logo-cropped.png", width: 720, height: 367 };
+
+/** Scheda dell'attività per Google (schema.org Organization). */
+export function organizationJsonLd(): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${absoluteUrl("/")}#organizzazione`,
+    name: SITE_NAME,
+    legalName: "FMF Cards S.R.L.S.",
+    url: absoluteUrl("/"),
+    email: "fmfcardssrls@gmail.com",
+    logo: {
+      "@type": "ImageObject",
+      url: absoluteUrl(GOOGLE_LOGO.path),
+      width: GOOGLE_LOGO.width,
+      height: GOOGLE_LOGO.height,
+    },
+    image: absoluteUrl(GOOGLE_LOGO.path),
+    vatID: "IT11105221219",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Traversa Garibaldi 24",
+      postalCode: "80040",
+      addressLocality: "Striano",
+      addressRegion: "NA",
+      addressCountry: "IT",
+    },
+  };
+}
+
 /** Metadati per le pagine private o di servizio: mai in Google. */
 export const NOINDEX = { index: false, follow: false } as const;

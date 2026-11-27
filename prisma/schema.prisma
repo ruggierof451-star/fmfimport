@@ -490,6 +490,20 @@ model DiscountCode {
   createdBy     String?
 }
 
+/// Foto prodotto caricata dall'admin, conservata nello stesso database dei prodotti.
+/// Scelta voluta: non dipende da archivi esterni da configurare e non può "sparire"
+/// (il disco delle funzioni su Vercel è temporaneo, gli indirizzi di foto prese da altri
+/// siti smettono di funzionare). Le foto arrivano già ridotte e ritagliate dal browser,
+/// quindi pesano poche decine di KB. Servite da /immagini/<id> con cache lunga.
+model UploadedImage {
+  id        String   @id @default(cuid())
+  mimeType  String
+  data      Bytes
+  byteSize  Int
+  createdAt DateTime @default(now())
+  createdBy String?
+}
+
 // Testo personalizzato di un'email automatica (conferma ordine, reset password, ...).
 // Se per una chiave non c'è riga, si usa il testo predefinito definito nel codice
 // (src/lib/email-templates.ts): eliminare la riga = "ripristina predefinito".

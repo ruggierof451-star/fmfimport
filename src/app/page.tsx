@@ -12,7 +12,7 @@ import { displayImageUrl } from "@/lib/blob-image";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
 import { HeroCarousel } from "@/components/hero-carousel";
-import { absoluteUrl, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, DEFAULT_OG_IMAGE, organizationJsonLd, SITE_NAME } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -81,13 +81,7 @@ export default async function HomePage() {
     <div className="home-bg">
       <JsonLd
         data={[
-          {
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: SITE_NAME,
-            url: absoluteUrl("/"),
-            email: "fmfcardssrls@gmail.com",
-          },
+          organizationJsonLd(),
           {
             "@context": "https://schema.org",
             "@type": "WebSite",
