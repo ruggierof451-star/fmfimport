@@ -126,7 +126,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               style={{ height: "100%", width: "auto" }}
               draggable={false}
               sizes="(max-width: 760px) 260px, 380px"
-              unoptimized={!s.url.startsWith("/img/")}
+              unoptimized={!s.url.startsWith("/")}
               priority={i === 0}
             />
           </Link>

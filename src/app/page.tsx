@@ -44,28 +44,34 @@ export default async function HomePage() {
     }))
   );
 
-  // Vetrina dell'hero: 3 foto reali, una per gioco/edizione diversa quando possibile, poi si
-  // completa con le altre. Le foto caricate (Vercel Blob, già scontornate con Photoroom o al
+  // Vetrina dell'hero: prima i prodotti scelti dall'admin ("Vetrina in home", massimo 3); se
+  // sono meno di 3 si completa da soli con foto reali, una per gioco/edizione diversa quando
+  // possibile, poi con le altre. Le foto caricate (Vercel Blob, già scontornate con Photoroom o al
   // caricamento) si usano così come sono; quelle nella cartella del sito vengono ritagliate.
   const HERO_PHOTO_COUNT = 3;
   const heroCandidates = await prisma.product.findMany({
-    where: { published: true, imageUrl: { not: null } },
+    where: { published: true, archived: false, deletedAt: null, condition: "NEW", imageUrl: { not: null } },
     take: 40,
-    orderBy: [{ isNew: "desc" }, { updatedAt: "desc" }],
+    orderBy: [{ heroFeatured: "desc" }, { isNew: "desc" }, { updatedAt: "desc" }],
   });
   const heroResolved = (
     await Promise.all(
       heroCandidates.map(async (p) => {
         const url = p.imageUrl as string;
-        if (/^https?:\/\//.test(url)) return { ...p, cutout: { url: displayImageUrl(url), width: 800, height: 800 } };
+        // foto caricate (archivio Blob o database /immagini/…): già scontornate, si usano così
+        if (/^https?:\/\//.test(url) || url.startsWith("/immagini/")) {
+          return { ...p, cutout: { url: displayImageUrl(url), width: 800, height: 800 } };
+        }
         const cutout = await ensureCutoutImage(url, p.slug);
         return cutout ? { ...p, cutout } : null;
       })
     )
   ).filter((p) => p !== null);
-  const heroCutouts: typeof heroResolved = [];
-  const seenCombos = new Set<string>();
+  const heroCutouts: typeof heroResolved = heroResolved.filter((p) => p.heroFeatured).slice(0, HERO_PHOTO_COUNT);
+  const seenCombos = new Set<string>(heroCutouts.map((p) => `${p.game}-${p.language}`));
   for (const p of heroResolved) {
+    if (heroCutouts.length === HERO_PHOTO_COUNT) break;
+    if (heroCutouts.includes(p)) continue;
     const combo = `${p.game}-${p.language}`;
     if (seenCombos.has(combo)) continue;
     seenCombos.add(combo);
