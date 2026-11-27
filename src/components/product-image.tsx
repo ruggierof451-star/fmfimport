@@ -41,7 +41,8 @@ export async function ProductImage({
         priority={priority}
         // Foto caricate su Vercel Blob o incollate da un altro sito: servite così come
         // sono, senza dover autorizzare ogni dominio in next.config.
-        unoptimized={/^https?:\/\//.test(src) || src.startsWith("/img/")}
+        // /img/… (archivio privato) passa dall'ottimizzazione di Next: WebP e misura giusta
+        unoptimized={/^https?:\/\//.test(src)}
       />
     );
   }
