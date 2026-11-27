@@ -116,9 +116,6 @@ export default async function HomePage() {
         <div className="wrap">
           <div className="txt">
             <span className="eyebrow">Pokémon · One Piece · Yu-Gi-Oh! · Dragon Ball</span>
-            <span className="discount-banner">
-              <b>-5% sul primo ordine</b> con il codice <b className="mono">WELCOME5</b>
-            </span>
             <h1 id="h1">Ogni collezione ha una storia. La tua inizia qui.</h1>
             <p>
               Booster box, display e collection in edizione italiana e di importazione (giapponese, cinese,
@@ -138,16 +135,16 @@ export default async function HomePage() {
               <span>Pagamento sicuro con carta o bonifico</span>
             </div>
           </div>
-          <div className="promo-mobile">
-            <span className="promo-pct">-5%</span>
-            <span className="promo-txt">
-              sul primo ordine
-              <small>
-                con il codice <b>WELCOME5</b>
-              </small>
-            </span>
-          </div>
           <div className="art">
+            <div className="promo-mobile">
+              <span className="promo-pct">-5%</span>
+              <span className="promo-txt">
+                sul primo ordine
+                <small>
+                  con il codice <b>WELCOME5</b>
+                </small>
+              </span>
+            </div>
             {heroCutouts.length >= 3 ? (
               <HeroCarousel
                 slides={heroCutouts.map((p) => ({
