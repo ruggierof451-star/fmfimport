@@ -120,6 +120,7 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 
   /* Punti di forza: una riga scorrevole invece di 4 blocchi impilati */
   .perks{display:none}
+  .lhead .seg{display:none}
 }
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
