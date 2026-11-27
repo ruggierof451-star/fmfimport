@@ -117,7 +117,7 @@ export default async function HomePage() {
           <div className="txt">
             <span className="eyebrow">Pokémon · One Piece · Yu-Gi-Oh! · Dragon Ball</span>
             <span className="discount-banner">
-              <b>-5% sul primo ordine</b> con il codice <b className="mono">FMFCARDS</b>
+              <b>-5% sul primo ordine</b> con il codice <b className="mono">WELCOME5</b>
             </span>
             <h1 id="h1">Ogni collezione ha una storia. La tua inizia qui.</h1>
             <p>
@@ -143,7 +143,7 @@ export default async function HomePage() {
             <span className="promo-txt">
               sul primo ordine
               <small>
-                con il codice <b>FMFCARDS</b>
+                con il codice <b>WELCOME5</b>
               </small>
             </span>
           </div>

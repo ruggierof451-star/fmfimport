@@ -43,7 +43,7 @@ export function AdminNewDiscountForm() {
     <form onSubmit={handleSubmit} className="admin-card" style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 420 }}>
       {message ? <div className={`alert ${message === "Codice creato." ? "ok" : "err"}`}>{message}</div> : null}
       <label className="fl">
-        Codice (es. FMFCARDS)
+        Codice (es. WELCOME5)
         <input className="in" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="NUOVOCODICE" />
       </label>
       <label className="fl">

@@ -15,7 +15,7 @@ export default async function AdminDiscountsPage() {
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Codici sconto</h1>
       <p className="muted" style={{ margin: 0, maxWidth: 680 }}>
         Sconto in percentuale su tutto il subtotale del carrello, verificato in automatico al
-        checkout. Il codice <b className="mono">FMFCARDS</b> (5%) è già attivo per il lancio del
+        checkout. Il codice <b className="mono">WELCOME5</b> (5%) è già attivo per il lancio del
         sito.
       </p>
 
