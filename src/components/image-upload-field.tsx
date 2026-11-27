@@ -1,13 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { cutoutRgbaInPlace } from "@/lib/cutout-core";
 
 // Le foto da telefono possono pesare 5-10 MB: prima dell'invio vengono ridotte a max
-// 1600px sul lato lungo e, già qui nel browser, viene tolto lo sfondo studio. Così la
-// foto parte leggera e già pronta, e il server non deve elaborare niente.
-const MAX_SIDE = 1600;
+// 1400px sul lato lungo e, già qui nel browser, viene tolto lo sfondo studio. Così la
+// foto parte leggera (poche decine di KB) e già pronta: il server deve solo salvarla.
+const MAX_SIDE = 1400;
 
 async function prepareImage(file: File): Promise<File> {
   try {
@@ -32,7 +31,7 @@ async function prepareImage(file: File): Promise<File> {
       console.error("Ritaglio sfondo non riuscito:", err);
     }
 
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.9));
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.85));
     if (!blob || blob.type !== "image/webp") return file;
     return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", { type: "image/webp" });
   } catch {
@@ -57,27 +56,18 @@ export function ImageUploadField({
     try {
       const prepared = await prepareImage(file);
 
-      // Caricamento diretto all'archivio: il file non passa dal server, quindi niente
-      // limite di ~4,5 MB per richiesta né timeout della funzione.
-      const blob = await upload(`products/${prepared.name}`, prepared, {
-        access: "public",
-        handleUploadUrl: "/api/admin/upload-token",
-        contentType: prepared.type,
-      });
-      onChange(blob.url);
-    } catch (err) {
-      // La libreria di Blob riporta sempre "Failed to retrieve the client token" senza
-      // dire perché: chiediamo al sito il motivo vero e mostriamo quello.
-      let reason = "";
-      try {
-        const res = await fetch("/api/admin/upload-token");
-        const data = (await res.json()) as { ready?: boolean; reason?: string };
-        if (!data.ready && data.reason) reason = data.reason;
-      } catch {
-        /* se anche questa fallisce, resta il messaggio originale */
+      const body = new FormData();
+      body.append("file", prepared);
+      const res = await fetch("/api/admin/upload-image", { method: "POST", body });
+      const data = (await res.json().catch(() => null)) as { imageUrl?: string; error?: string } | null;
+
+      if (!res.ok || !data?.imageUrl) {
+        setError(data?.error ?? `Caricamento non riuscito (errore ${res.status}).`);
+      } else {
+        onChange(data.imageUrl);
       }
-      const message = err instanceof Error ? err.message : "";
-      setError(reason || `Caricamento non riuscito${message ? `: ${message}` : "."}`);
+    } catch {
+      setError("Caricamento non riuscito: controlla la connessione e riprova.");
     }
     setUploading(false);
   }
@@ -111,8 +101,8 @@ export function ImageUploadField({
         ) : null}
       </div>
       <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>
-        La foto viene ridotta e ripulita dallo sfondo bianco qui nel browser, poi caricata nell&apos;archivio del sito:
-        resta lì per sempre. Evita di incollare indirizzi di foto prese da altri siti, smettono di funzionare dopo
+        La foto viene ridotta e ripulita dallo sfondo bianco qui nel browser, poi salvata nel database del sito
+        insieme al prodotto: resta lì per sempre. Evita di incollare indirizzi di foto prese da altri siti, smettono di funzionare dopo
         qualche ora.
       </span>
       <details>

@@ -1,20 +1,15 @@
 /**
  * Quali immagini può ottimizzare Next (ridimensionamento per schermo + WebP/AVIF).
  *
- * Le immagini locali (/products-cutout/..., /products/...) si ottimizzano sempre.
- * Per quelle remote Next pretende che il dominio sia autorizzato in next.config:
- * autorizziamo Vercel Blob, dove finiscono le foto caricate dall'admin. Un indirizzo
- * incollato a mano da un altro sito non è autorizzabile in anticipo, quindi quello
- * resta servito così com'è (nessuna ottimizzazione, ma almeno si vede).
+ * Le foto caricate dall'admin sono servite dal sito stesso (/immagini/<id>, conservate
+ * nel database), quindi sono sempre ottimizzabili, come tutte le immagini locali.
+ * Un indirizzo incollato da un altro sito no: Next ottimizza un dominio esterno solo se
+ * è autorizzato in next.config, e non si possono autorizzare in anticipo domini
+ * arbitrari. Quelle immagini vengono quindi mostrate così come sono.
+ *
+ * Deve restare coerente con `images.remotePatterns` in next.config.ts: dire qui che
+ * un'immagine è ottimizzabile senza averla autorizzata là la farebbe fallire.
  */
-const OPTIMIZABLE_REMOTE_HOSTS = [/\.public\.blob\.vercel-storage\.com$/i];
-
 export function isOptimizableImage(url: string): boolean {
-  if (!/^https?:\/\//i.test(url)) return true; // immagine locale servita dal sito
-  try {
-    const host = new URL(url).hostname;
-    return OPTIMIZABLE_REMOTE_HOSTS.some((re) => re.test(host));
-  } catch {
-    return false;
-  }
+  return !/^https?:\/\//i.test(url);
 }

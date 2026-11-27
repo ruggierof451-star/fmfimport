@@ -5,10 +5,9 @@ import type { NextConfig } from "next";
 // sperimentale di Next non si applica qui.
 const nextConfig: NextConfig = {
   images: {
-    // Le foto prodotto caricate dall'admin stanno su Vercel Blob: autorizzandole qui,
-    // Next le ridimensiona per lo schermo di chi guarda (fondamentale da telefono:
-    // prima veniva scaricata la foto a piena risoluzione per una miniatura da 160px).
-    remotePatterns: [{ protocol: "https", hostname: "**.public.blob.vercel-storage.com" }],
+    // Le foto caricate dall'admin stanno nel database e sono servite dal sito stesso
+    // (/immagini/<id>), quindi Next le ridimensiona per lo schermo di chi guarda:
+    // fondamentale da telefono, dove altrimenti si scaricherebbe la foto intera.
     formats: ["image/avif", "image/webp"],
     // Le foto prodotto non cambiano mai una volta caricate: cache lunga sulle versioni
     // ridimensionate, così dalla seconda visita sono immediate.
