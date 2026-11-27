@@ -233,39 +233,38 @@ export default async function HomePage() {
 
 type PerkIcon = "ball" | "tag" | "box" | "sync";
 
-/** Icone a colori dei punti di forza (contorno nero spesso, stile adesivo). */
+/** Icone al tratto nere con dettagli oro (stile dei banner forniti). */
 function PerkIconSvg({ icon }: { icon: PerkIcon }) {
-  const k = { stroke: "#111", strokeWidth: 3, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+  const k = { fill: "none", stroke: "#111", strokeWidth: 2.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+  const g = { ...k, stroke: "#C9A646" };
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true">
       {icon === "ball" ? (
         <>
-          <circle cx="32" cy="32" r="27" fill="#fff" {...k} />
-          <path d="M5 32a27 27 0 0 1 54 0z" fill="#E3262E" {...k} />
-          <path d="M14 20a20 20 0 0 1 10-7" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" opacity={0.8} />
-          <line x1="5" y1="32" x2="59" y2="32" {...k} />
-          <circle cx="32" cy="32" r="8" fill="#fff" {...k} />
-          <circle cx="32" cy="32" r="3.5" fill="#fff" {...k} strokeWidth={2.5} />
+          <path d="M6 20l20-8 20 8v20l-20 9-20-9z M6 20l20 8 20-8 M26 28v21 M14 16l20 8v7" {...k} />
+          <path d="M47 31l11 4v8c0 7-5 11-11 13-6-2-11-6-11-13v-8z" {...g} fill="#fff" />
+          <path d="M42 43l4 4 7-8" {...g} />
         </>
       ) : icon === "tag" ? (
-        <g transform="rotate(-35 32 32)">
-          <path d="M8 22h34l14 10-14 10H8a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z" fill="#F6CF3C" {...k} />
-          <circle cx="45" cy="32" r="3" fill="#fff" {...k} strokeWidth={2.5} />
-          <line x1="16" y1="38" x2="28" y2="26" {...k} />
-          <circle cx="17" cy="27.5" r="2.5" fill="#111" />
-          <circle cx="27" cy="36.5" r="2.5" fill="#111" />
-        </g>
+        <>
+          <path d="M34 8h18a4 4 0 0 1 4 4v18L30 56a4 4 0 0 1-6 0L8 40a4 4 0 0 1 0-6z" {...k} />
+          <circle cx="47" cy="17" r="3" fill="#111" />
+          <path d="M24 42l12-14" {...g} />
+          <circle cx="25" cy="31" r="3" {...g} />
+          <circle cx="35" cy="40" r="3" {...g} />
+        </>
       ) : icon === "box" ? (
         <>
-          <path d="M8 22l24-10 24 10v24L32 56 8 46z" fill="#D9A15C" {...k} />
-          <path d="M8 22l24 10 24-10M32 32v24" fill="none" {...k} />
-          <path d="M8 22l24 10v24L8 46z" fill="#C88B45" {...k} />
-          <path d="M18 18l24 10v8l-6-2v-8L12 20" fill="#B7793A" {...k} strokeWidth={2.5} />
+          <path d="M2 24h12M5 31h10M8 38h8" {...g} />
+          <path d="M20 18h24v26H20z M44 28h9l7 8v8H44" {...k} />
+          <circle cx="27" cy="47" r="4.5" {...k} fill="#fff" />
+          <circle cx="51" cy="47" r="4.5" {...k} fill="#fff" />
         </>
       ) : (
         <>
-          <path d="M50 26A19 19 0 0 0 16 20l-4-4v14h14l-5-5a12 12 0 0 1 21 3z" fill="#6CC24A" {...k} />
-          <path d="M14 38a19 19 0 0 0 34 6l4 4V34H38l5 5a12 12 0 0 1-21-3z" fill="#6CC24A" {...k} />
+          <path d="M32 40L8 30l24-10 24 10z" {...g} transform="translate(0 12)" />
+          <path d="M32 40L8 30l24-10 24 10z" {...g} transform="translate(0 6)" fill="#fff" />
+          <path d="M32 40L8 30l24-10 24 10z" {...k} fill="#fff" />
         </>
       )}
     </svg>
@@ -277,6 +276,7 @@ function Perk({ title, desc, icon, className = "perk" }: { title: string; desc: 
     <div className={className}>
       <span>
         <b>{title}</b>
+        <i className="perk-rule" aria-hidden="true" />
         <span>{desc}</span>
       </span>
       <PerkIconSvg icon={icon} />

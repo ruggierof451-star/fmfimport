@@ -169,11 +169,13 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 /* Punti di forza: banner orizzontali in stile "promo", scritta in maiuscolo a sinistra
    e icona grande che sporge dal bordo superiore a destra */
 .perks .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding-block:28px}
-.perk,.perk-banner{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:120px;padding:18px 14px 18px 20px;border-radius:22px;background:#fff;color:#111;border:3px solid #111;transition:transform .2s ease,box-shadow .2s ease}
-.perk:hover{transform:translateY(-3px);box-shadow:0 6px 0 #111}
-.perk svg,.perk-banner svg{flex:none;width:58px;height:58px}
-.perk b,.perk-banner b{display:block;font-size:23px;font-weight:800;letter-spacing:-.02em;line-height:1.08}
-.perk span span,.perk-banner span span{display:block;margin-top:10px;font-size:13.5px;font-weight:500;line-height:1.35;color:#222}
+.perk,.perk-banner{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:130px;padding:20px 16px 20px 22px;border-radius:20px;background:linear-gradient(160deg,#fff 0%,#fff 70%,#faf6ea 100%);color:#111;border:1.5px solid #111;box-shadow:0 10px 24px rgba(0,0,0,.08);transition:transform .2s ease,box-shadow .2s ease}
+.perk::after,.perk-banner::after{content:"";position:absolute;right:0;bottom:0;width:34px;height:34px;background:linear-gradient(135deg,transparent 50%,#E9D18A 50%,#B8902F 100%);border-top-left-radius:6px}
+.perk-rule{display:block;width:40px;height:3px;margin-top:12px;border-radius:2px;background:linear-gradient(90deg,#B8902F,#E2C46E)}
+.perk:hover{transform:translateY(-3px);box-shadow:0 16px 30px rgba(0,0,0,.12)}
+.perk svg,.perk-banner svg{flex:none;width:66px;height:66px}
+.perk b,.perk-banner b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.08}
+.perk span span,.perk-banner span span{display:block;margin-top:12px;font-size:13.5px;font-weight:500;line-height:1.4;color:#222}
 @media (max-width:1100px){.perks .wrap{grid-template-columns:1fr 1fr}}
 
 main.page{padding-block:36px 72px;display:flex;flex-direction:column;gap:60px}
