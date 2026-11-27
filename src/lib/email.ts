@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { CANONICAL_ORIGIN } from "@/lib/site";
+import { renderEmailTemplate, escapeHtml } from "@/lib/email-templates";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = process.env.EMAIL_FROM || "FMF Cards <onboarding@resend.dev>";
@@ -83,18 +84,17 @@ async function getAdminEmails(): Promise<string[]> {
   return admins.map((a) => a.email);
 }
 
+/**
+ * Testo e oggetto di ogni email automatica arrivano dai modelli modificabili
+ * dall'admin (vedi email-templates.ts e /admin/email): qui si preparano solo i
+ * valori da inserire nei segnaposto e i blocchi HTML generati dal sito.
+ */
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
-  const html = layout(
-    "Reimposta la password del tuo account FMF Cards.",
-    `<h1 style="font-size:20px;margin:0 0 12px;">Reimposta la tua password</h1>
-     <p style="font-size:14px;line-height:1.6;color:#444;margin:0 0 20px;">
-       Hai richiesto di reimpostare la password del tuo account FMF Cards. Il link è valido per 1 ora.
-       Se non sei stato tu a fare questa richiesta, ignora questa email: la tua password resterà invariata.
-     </p>
-     ${button(resetUrl, "Reimposta password")}
-     <p style="font-size:12px;color:#999;margin-top:24px;">Se il pulsante non funziona, copia questo link nel browser:<br /><span style="word-break:break-all;">${resetUrl}</span></p>`
-  );
-  return send(to, "Reimposta la tua password · FMF Cards", html);
+  const { subject, bodyHtml } = await renderEmailTemplate("password_reset", {
+    text: { link: resetUrl },
+    blocks: { pulsante: button(resetUrl, "Reimposta password") },
+  });
+  return send(to, subject, layout("Reimposta la password del tuo account FMF Cards.", bodyHtml));
 }
 
 export async function sendOrderConfirmationEmail(params: {
@@ -107,9 +107,15 @@ export async function sendOrderConfirmationEmail(params: {
   const rows = params.items
     .map(
       (i) =>
-        `<tr><td style="padding:8px 0;font-size:14px;color:#222;border-bottom:1px solid #F2F2F2;">${i.name} <span style="color:#999;">× ${i.quantity}</span></td><td style="padding:8px 0;font-size:14px;text-align:right;white-space:nowrap;border-bottom:1px solid #F2F2F2;">${i.lineTotalFormatted}</td></tr>`
+        `<tr><td style="padding:8px 0;font-size:14px;color:#222;border-bottom:1px solid #F2F2F2;">${escapeHtml(i.name)} <span style="color:#999;">× ${i.quantity}</span></td><td style="padding:8px 0;font-size:14px;text-align:right;white-space:nowrap;border-bottom:1px solid #F2F2F2;">${i.lineTotalFormatted}</td></tr>`
     )
     .join("");
+
+  const itemsBlock = `<table role="presentation" width="100%" style="border-top:1px solid #EEE;margin:16px 0;">${rows}</table>
+     <table role="presentation" width="100%"><tr>
+       <td style="font-size:15px;font-weight:700;padding-top:10px;">Totale</td>
+       <td style="font-size:15px;font-weight:700;text-align:right;padding-top:10px;">${params.totalFormatted}</td>
+     </tr></table>`;
 
   const bankBlock =
     params.paymentMethod === "BANK_TRANSFER"
@@ -130,19 +136,15 @@ export async function sendOrderConfirmationEmail(params: {
            </div>`
       : "";
 
-  const html = layout(
-    `Ordine ${params.orderNumber} ricevuto — totale ${params.totalFormatted}.`,
-    `<h1 style="font-size:20px;margin:0 0 6px;">Grazie per il tuo ordine!</h1>
-     <p style="font-size:14px;color:#444;margin:0 0 20px;">Ordine <b>${params.orderNumber}</b> ricevuto correttamente. Ti aggiorneremo via email a ogni cambio di stato.</p>
-     <table role="presentation" width="100%" style="border-top:1px solid #EEE;margin:16px 0;">${rows}</table>
-     <table role="presentation" width="100%"><tr>
-       <td style="font-size:15px;font-weight:700;padding-top:10px;">Totale</td>
-       <td style="font-size:15px;font-weight:700;text-align:right;padding-top:10px;">${params.totalFormatted}</td>
-     </tr></table>
-     ${bankBlock}
-     ${button(`${SITE_URL}/ordine/${encodeURIComponent(params.orderNumber)}`, "Vedi il tuo ordine", { gold: true })}`
-  );
-  return send(params.to, `Ordine confermato ${params.orderNumber} · FMF Cards`, html);
+  const { subject, bodyHtml } = await renderEmailTemplate("order_confirmation", {
+    text: { numero_ordine: params.orderNumber, totale: params.totalFormatted },
+    blocks: {
+      tabella_prodotti: itemsBlock,
+      dati_bonifico: bankBlock,
+      pulsante_ordine: button(`${SITE_URL}/ordine/${encodeURIComponent(params.orderNumber)}`, "Vedi il tuo ordine", { gold: true }),
+    },
+  });
+  return send(params.to, subject, layout(`Ordine ${params.orderNumber} ricevuto — totale ${params.totalFormatted}.`, bodyHtml));
 }
 
 export async function sendAdminNewOrderNotification(params: {
@@ -156,18 +158,18 @@ export async function sendAdminNewOrderNotification(params: {
   const admins = await getAdminEmails();
   if (!admins.length) return { ok: false, error: "Nessun admin da notificare." };
 
-  const html = layout(
-    `Nuovo ordine ${params.orderNumber} da ${params.customerEmail}.`,
-    `<h1 style="font-size:20px;margin:0 0 12px;">Nuovo ordine ricevuto</h1>
-     <p style="font-size:14px;color:#444;line-height:1.7;margin:0 0 16px;">
-       Ordine <b>${params.orderNumber}</b> · Totale <b>${params.totalFormatted}</b><br />
-       Cliente: ${params.customerEmail}<br />
-       Pagamento: ${params.paymentMethod === "BANK_TRANSFER" ? "Bonifico bancario" : params.paymentMethod === "PAYPAL" ? "PayPal" : "Carta"}<br />
-       Articoli: ${params.itemsSummary}
-     </p>
-     ${button(`${SITE_URL}/admin/ordini/${params.orderId}`, "Apri l'ordine", { gold: true })}`
-  );
-  return send(admins, `Nuovo ordine ${params.orderNumber} · ${params.totalFormatted}`, html);
+  const { subject, bodyHtml } = await renderEmailTemplate("admin_new_order", {
+    text: {
+      numero_ordine: params.orderNumber,
+      totale: params.totalFormatted,
+      cliente: params.customerEmail,
+      metodo_pagamento:
+        params.paymentMethod === "BANK_TRANSFER" ? "Bonifico bancario" : params.paymentMethod === "PAYPAL" ? "PayPal" : "Carta",
+      articoli: params.itemsSummary,
+    },
+    blocks: { pulsante_ordine: button(`${SITE_URL}/admin/ordini/${params.orderId}`, "Apri l'ordine", { gold: true }) },
+  });
+  return send(admins, subject, layout(`Nuovo ordine ${params.orderNumber} da ${params.customerEmail}.`, bodyHtml));
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -193,54 +195,38 @@ export async function sendOrderStatusEmail(params: {
   const label = STATUS_LABEL[params.status] ?? params.status;
   const tracking =
     params.trackingCarrier && params.trackingNumber
-      ? `<p style="font-size:14px;color:#444;margin:14px 0 0;">Corriere: <b>${params.trackingCarrier}</b> · Tracking: <b>${params.trackingNumber}</b></p>`
+      ? `<p style="font-size:14px;color:#444;margin:14px 0 0;">Corriere: <b>${escapeHtml(params.trackingCarrier)}</b> · Tracking: <b>${escapeHtml(params.trackingNumber)}</b></p>`
       : "";
-  const html = layout(
-    `Ordine ${params.orderNumber}: ${label}.`,
-    `<h1 style="font-size:20px;margin:0 0 6px;">Il tuo ordine è stato aggiornato</h1>
-     <p style="font-size:14px;color:#444;margin:0 0 14px;">Ordine <b>${params.orderNumber}</b></p>
-     ${badge(label, params.status)}
-     ${tracking}
-     <div style="margin-top:20px;">${button(`${SITE_URL}/ordine/${params.orderId}`, "Vedi il tuo ordine", { gold: true })}</div>`
-  );
-  return send(params.to, `Ordine ${params.orderNumber}: ${label} · FMF Cards`, html);
+  const { subject, bodyHtml } = await renderEmailTemplate("order_status", {
+    text: { numero_ordine: params.orderNumber, stato: label },
+    blocks: {
+      badge_stato: badge(label, params.status),
+      tracking,
+      pulsante_ordine: button(`${SITE_URL}/ordine/${params.orderId}`, "Vedi il tuo ordine", { gold: true }),
+    },
+  });
+  return send(params.to, subject, layout(`Ordine ${params.orderNumber}: ${label}.`, bodyHtml));
 }
 
 export async function sendContactReplyNotice(to: string) {
-  const html = layout(
-    "Abbiamo ricevuto il tuo messaggio, ti rispondiamo a breve.",
-    `<h1 style="font-size:20px;margin:0 0 12px;">Abbiamo ricevuto il tuo messaggio</h1>
-     <p style="font-size:14px;line-height:1.6;color:#444;">Ti risponderemo il prima possibile, di solito entro 24 ore lavorative (mar-ven 8-19).</p>`
-  );
-  return send(to, "Messaggio ricevuto · FMF Cards", html);
+  const { subject, bodyHtml } = await renderEmailTemplate("contact_received", {});
+  return send(to, subject, layout("Abbiamo ricevuto il tuo messaggio, ti rispondiamo a breve.", bodyHtml));
 }
 
 export async function sendAdminNewContactMessageNotification(params: { email: string; orderNumber?: string | null; message: string }) {
   const admins = await getAdminEmails();
   if (!admins.length) return { ok: false, error: "Nessun admin da notificare." };
 
-  const html = layout(
-    `Nuovo messaggio da ${params.email}.`,
-    `<h1 style="font-size:20px;margin:0 0 12px;">Nuovo messaggio dal Centro assistenza</h1>
-     <p style="font-size:14px;color:#444;line-height:1.7;margin:0 0 16px;">
-       Da: ${params.email}${params.orderNumber ? `<br />Ordine: <b>${params.orderNumber}</b>` : ""}
-     </p>
-     <div style="padding:14px 16px;background:#F7F7F7;border-radius:10px;font-size:14px;color:#333;white-space:pre-wrap;">${params.message}</div>
-     ${button(`${SITE_URL}/admin/messaggi`, "Apri i messaggi", { gold: true })}`
-  );
-  return send(admins, `Nuovo messaggio da ${params.email}`, html);
+  const { subject, bodyHtml } = await renderEmailTemplate("admin_new_contact", {
+    text: { cliente: params.email, numero_ordine: params.orderNumber ?? "—", messaggio: params.message },
+    blocks: { pulsante: button(`${SITE_URL}/admin/messaggi`, "Apri i messaggi", { gold: true }) },
+  });
+  return send(admins, subject, layout(`Nuovo messaggio da ${params.email}.`, bodyHtml));
 }
 
 export async function sendResellerRequestReceivedEmail(to: string, companyName: string) {
-  const html = layout(
-    `Richiesta rivenditore ricevuta per ${companyName}.`,
-    `<h1 style="font-size:20px;margin:0 0 12px;">Richiesta ricevuta</h1>
-     <p style="font-size:14px;line-height:1.6;color:#444;">
-       Abbiamo ricevuto la richiesta di accesso come rivenditore per <b>${companyName}</b>. La valutiamo manualmente
-       e ti scriviamo di nuovo appena abbiamo una risposta.
-     </p>`
-  );
-  return send(to, "Richiesta rivenditore ricevuta · FMF Cards", html);
+  const { subject, bodyHtml } = await renderEmailTemplate("reseller_request_received", { text: { azienda: companyName } });
+  return send(to, subject, layout(`Richiesta rivenditore ricevuta per ${companyName}.`, bodyHtml));
 }
 
 export async function sendAdminNewResellerRequestNotification(params: {
@@ -252,18 +238,16 @@ export async function sendAdminNewResellerRequestNotification(params: {
   const admins = await getAdminEmails();
   if (!admins.length) return { ok: false, error: "Nessun admin da notificare." };
 
-  const html = layout(
-    `Nuova richiesta rivenditore: ${params.companyName}.`,
-    `<h1 style="font-size:20px;margin:0 0 12px;">Nuova richiesta rivenditore</h1>
-     <p style="font-size:14px;color:#444;line-height:1.7;margin:0 0 16px;">
-       Azienda: <b>${params.companyName}</b><br />
-       P.IVA: ${params.vatNumber}<br />
-       Referente: ${params.contactName}<br />
-       Email: ${params.email}
-     </p>
-     ${button(`${SITE_URL}/admin/rivenditori`, "Valuta la richiesta", { gold: true })}`
-  );
-  return send(admins, `Nuova richiesta rivenditore · ${params.companyName}`, html);
+  const { subject, bodyHtml } = await renderEmailTemplate("admin_new_reseller_request", {
+    text: {
+      azienda: params.companyName,
+      partita_iva: params.vatNumber,
+      referente: params.contactName,
+      email: params.email,
+    },
+    blocks: { pulsante: button(`${SITE_URL}/admin/rivenditori`, "Valuta la richiesta", { gold: true }) },
+  });
+  return send(admins, subject, layout(`Nuova richiesta rivenditore: ${params.companyName}.`, bodyHtml));
 }
 
 export async function sendResellerRequestDecisionEmail(params: {
@@ -272,26 +256,40 @@ export async function sendResellerRequestDecisionEmail(params: {
   approved: boolean;
   note?: string | null;
 }) {
-  const html = layout(
-    params.approved ? `La tua richiesta per ${params.companyName} è stata accettata.` : `Aggiornamento sulla tua richiesta rivenditore.`,
-    params.approved
-      ? `<h1 style="font-size:20px;margin:0 0 12px;">La tua richiesta è stata accettata</h1>
-         <p style="font-size:14px;line-height:1.6;color:#444;margin:0 0 20px;">
-           Ciao, la richiesta di accesso come rivenditore per <b>${params.companyName}</b> è stata approvata. Accedi
-           al tuo account: da ora vedrai (dove previsto) le condizioni dedicate.
-         </p>
-         ${button(`${SITE_URL}/account`, "Vai al tuo account", { gold: true })}`
-      : `<h1 style="font-size:20px;margin:0 0 12px;">Richiesta non approvata</h1>
-         <p style="font-size:14px;line-height:1.6;color:#444;">
-           Ciao, al momento non possiamo accettare la richiesta di accesso come rivenditore per
-           <b>${params.companyName}</b>.${params.note ? ` Motivo: ${params.note}` : ""}
-         </p>`
-  );
+  const { subject, bodyHtml } = params.approved
+    ? await renderEmailTemplate("reseller_approved", {
+        text: { azienda: params.companyName },
+        blocks: { pulsante_account: button(`${SITE_URL}/account`, "Vai al tuo account", { gold: true }) },
+      })
+    : await renderEmailTemplate("reseller_rejected", {
+        text: { azienda: params.companyName, motivo: params.note ? `Motivo: ${params.note}` : "" },
+      });
   return send(
     params.to,
-    params.approved ? "Richiesta rivenditore approvata · FMF Cards" : "Richiesta rivenditore · FMF Cards",
-    html
+    subject,
+    layout(
+      params.approved ? `La tua richiesta per ${params.companyName} è stata accettata.` : `Aggiornamento sulla tua richiesta rivenditore.`,
+      bodyHtml
+    )
   );
+}
+
+/**
+ * Anteprima di un modello di email automatica: usa il testo che l'admin sta scrivendo
+ * (non ancora salvato) con valori d'esempio, e la manda al suo indirizzo.
+ */
+export async function sendTemplatePreview(
+  to: string,
+  subjectTemplate: string,
+  bodyTemplate: string,
+  values: { text: Record<string, string>; blocks: Record<string, string> }
+): Promise<{ ok: boolean; error?: string }> {
+  const fill = (tpl: string, map: Record<string, string>) =>
+    tpl.replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (match, name: string) => (name in map ? map[name] : match));
+  const escapedText = Object.fromEntries(Object.entries(values.text).map(([k, v]) => [k, escapeHtml(v)]));
+  const subject = fill(subjectTemplate, { ...Object.fromEntries(Object.keys(values.blocks).map((k) => [k, ""])), ...values.text }).trim();
+  const bodyHtml = fill(bodyTemplate, { ...escapedText, ...values.blocks });
+  return send(to, `[PROVA] ${subject}`, layout(subject, bodyHtml));
 }
 
 /**

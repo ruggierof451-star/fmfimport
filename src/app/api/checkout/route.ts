@@ -269,6 +269,9 @@ export async function POST(req: Request) {
 
     if (!checkoutSession.url) throw new Error("Stripe non ha restituito un URL di checkout.");
 
+    // Serve a verificare l'incasso anche se il webhook non arriva (vedi order-payment.ts).
+    await prisma.order.update({ where: { id: order.id }, data: { stripeSessionId: checkoutSession.id } });
+
     return NextResponse.json({
       orderId: order.id,
       orderNumber: order.orderNumber,

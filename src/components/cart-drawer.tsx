@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/cart-context";
 import { formatEuro } from "@/lib/pricing";
+import { isOptimizableImage } from "@/lib/image-host";
 import { CouponField } from "@/components/coupon-field";
 import { PACKAGING_LABEL } from "@/lib/catalog";
 
@@ -33,7 +34,7 @@ export function CartDrawer() {
               <div className="line" key={`${line.productId}-${line.variantId ?? ""}-${line.packaging ?? "SEALED"}`}>
                 <Link className="im" href={`/prodotto/${line.slug}`} aria-hidden="true" tabIndex={-1}>
                   {line.imageUrl ? (
-                    <Image src={line.imageUrl} alt="" fill sizes="64px" style={{ objectFit: "contain" }} unoptimized={/^https?:\/\//.test(line.imageUrl)} />
+                    <Image src={line.imageUrl} alt="" fill sizes="64px" style={{ objectFit: "contain" }} unoptimized={!isOptimizableImage(line.imageUrl)} />
                   ) : null}
                 </Link>
                 <div className="tx">

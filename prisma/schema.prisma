@@ -360,6 +360,9 @@ model Order {
   status        OrderStatus   @default(PENDING_PAYMENT)
   paymentMethod PaymentMethod
   paymentStatus PaymentStatus @default(PENDING)
+  /// Sessione di pagamento Stripe, per poter verificare l'incasso anche senza webhook
+  /// (es. al ritorno del cliente sulla pagina dell'ordine): vedi lib/order-payment.ts.
+  stripeSessionId String?
 
   // Totali congelati al momento dell'ordine (sempre ricalcolati server-side).
   // Tutti gli importi sono SEMPRE IVA inclusa. invoiceVatCents è la quota IVA già compresa
@@ -485,6 +488,17 @@ model DiscountCode {
   expiresAt     DateTime? // null = nessuna scadenza
   createdAt     DateTime  @default(now())
   createdBy     String?
+}
+
+// Testo personalizzato di un'email automatica (conferma ordine, reset password, ...).
+// Se per una chiave non c'è riga, si usa il testo predefinito definito nel codice
+// (src/lib/email-templates.ts): eliminare la riga = "ripristina predefinito".
+model EmailTemplate {
+  key       String   @id
+  subject   String
+  bodyHtml  String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
 }
 
 enum MarketingCampaignStatus {

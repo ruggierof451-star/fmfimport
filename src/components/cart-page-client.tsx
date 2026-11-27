@@ -6,6 +6,7 @@ import { useCart } from "@/components/cart-context";
 import { ShipBar } from "@/components/cart-drawer";
 import { CouponField } from "@/components/coupon-field";
 import { formatEuro } from "@/lib/pricing";
+import { isOptimizableImage } from "@/lib/image-host";
 import { PACKAGING_LABEL } from "@/lib/catalog";
 
 export function CartPageClient() {
@@ -42,7 +43,7 @@ export function CartPageClient() {
             <div className="line" key={`${line.productId}-${line.variantId ?? ""}-${line.packaging ?? "SEALED"}`}>
               <Link className="im" href={`/prodotto/${line.slug}`} aria-hidden="true" tabIndex={-1}>
                 {line.imageUrl ? (
-                  <Image src={line.imageUrl} alt="" fill sizes="86px" style={{ objectFit: "contain" }} unoptimized={/^https?:\/\//.test(line.imageUrl)} />
+                  <Image src={line.imageUrl} alt="" fill sizes="86px" style={{ objectFit: "contain" }} unoptimized={!isOptimizableImage(line.imageUrl)} />
                 ) : null}
               </Link>
               <div className="tx">

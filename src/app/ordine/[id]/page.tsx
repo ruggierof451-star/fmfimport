@@ -4,6 +4,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
+import { syncOrderPaymentFromStripe } from "@/lib/order-payment";
 
 // Pagina personale o di servizio: fuori da Google.
 export const metadata = { title: "Ordine confermato", robots: { index: false, follow: false } };
@@ -17,8 +18,15 @@ const STEPS: { status: string; label: string }[] = [
 
 export default async function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+  let order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
   if (!order) notFound();
+
+  // Rete di sicurezza: se il cliente ha pagato ma il webhook non è ancora arrivato (o non
+  // è configurato), chiediamo direttamente a Stripe e confermiamo l'ordine qui, senza che
+  // l'admin debba controllare a mano.
+  if (await syncOrderPaymentFromStripe(order)) {
+    order = (await prisma.order.findUnique({ where: { id }, include: { items: true } })) ?? order;
+  }
 
   const stepIndex = Math.max(
     0,

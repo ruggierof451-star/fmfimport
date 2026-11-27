@@ -57,13 +57,25 @@ export async function submitResellerRequestAction(input: ResellerRequestInput): 
   return { ok: true };
 }
 
+/**
+ * Approva o rifiuta una richiesta. Approvare NON è solo un'etichetta sulla richiesta:
+ * collega l'account con quella email e gli dà il ruolo RESELLER (così compare tra i
+ * rivenditori in Utenti e vede subito prezzi e scaglioni dedicati), copiando i dati
+ * aziendali sul profilo. Se non esiste ancora un account con quella email la richiesta
+ * resta approvata, ma viene detto chiaramente all'admin che il collegamento manca:
+ * il cliente deve prima registrarsi, poi lo si collega da Utenti.
+ * Rifiutare una richiesta già approvata revoca il ruolo, così i due stati non divergono.
+ */
 export async function reviewResellerRequestAction(input: {
   id: string;
   status: "APPROVED" | "REJECTED";
   note?: string;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<{ ok: boolean; error?: string; warning?: string }> {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const previous = await prisma.resellerRequest.findUnique({ where: { id: input.id } });
+  if (!previous) return { ok: false, error: "Richiesta non trovata." };
 
   const updated = await prisma.resellerRequest.update({
     where: { id: input.id },
@@ -75,6 +87,30 @@ export async function reviewResellerRequestAction(input: {
     },
   });
 
+  const email = updated.email.toLowerCase().trim();
+  const account = await prisma.user.findUnique({ where: { email } });
+  let warning: string | undefined;
+
+  if (input.status === "APPROVED") {
+    if (!account) {
+      warning = `Richiesta approvata, ma non esiste ancora un account con l'email ${email}: il cliente deve registrarsi sul sito, poi puoi collegarlo da Utenti → Rivenditori.`;
+    } else if (account.role === "ADMIN") {
+      warning = `Richiesta approvata. L'account ${email} è un admin: il ruolo non è stato cambiato (un admin vede già tutto).`;
+    } else {
+      await prisma.user.update({
+        where: { id: account.id },
+        data: {
+          role: "RESELLER",
+          companyName: account.companyName ?? updated.companyName,
+          vatNumber: account.vatNumber ?? updated.vatNumber,
+          sdiCode: account.sdiCode ?? updated.sdiCode,
+        },
+      });
+    }
+  } else if (previous.status === "APPROVED" && account?.role === "RESELLER") {
+    await prisma.user.update({ where: { id: account.id }, data: { role: "CUSTOMER" } });
+  }
+
   sendResellerRequestDecisionEmail({
     to: updated.email,
     companyName: updated.companyName,
@@ -83,5 +119,6 @@ export async function reviewResellerRequestAction(input: {
   }).catch((err) => console.error("[rivenditori] invio esito fallito:", err));
 
   revalidatePath("/admin/rivenditori");
-  return { ok: true };
+  revalidatePath("/admin/utenti");
+  return { ok: true, warning };
 }
