@@ -19,7 +19,7 @@ import { getPricingSettings } from "@/lib/settings";
 import { isOutOfStock, maxOrderableQty } from "@/lib/stock";
 import { getSession } from "@/lib/auth";
 import { JsonLd } from "@/components/json-ld";
-import { absoluteUrl, DEFAULT_OG_IMAGE, NOINDEX, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, breadcrumbJsonLd, DEFAULT_OG_IMAGE, NOINDEX, SITE_NAME } from "@/lib/site";
 import { displayImageUrl } from "@/lib/blob-image";
 import type { Metadata } from "next";
 
@@ -114,7 +114,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-      {isIndexable(product) ? <JsonLd data={productJsonLd} /> : null}
+      {isIndexable(product) ? (
+        <JsonLd
+          data={[
+            productJsonLd,
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: GAME_LABEL[product.game], path: `/${listKey}` },
+              { name: cleanName, path: `/prodotto/${product.slug}` },
+            ]),
+          ]}
+        />
+      ) : null}
       <Header />
       <main className="wrap page" style={{ gap: 44, paddingTop: 20 }}>
         <nav className="crumbs pp-crumbs" aria-label="Percorso" style={{ color: "var(--muted)" }}>

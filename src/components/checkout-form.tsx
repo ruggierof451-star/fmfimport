@@ -48,6 +48,7 @@ export function CheckoutForm({
   const [sdiCode, setSdiCode] = useState(prefill?.sdiCode ?? "");
   const [payment, setPayment] = useState<"CARD" | "BANK_TRANSFER">("CARD");
   const [terms, setTerms] = useState(false);
+  const [newsletter, setNewsletter] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -103,6 +104,7 @@ export function CheckoutForm({
           invoice: wantsInvoice ? { requested: true, companyName, vatNumber, sdiCode } : { requested: false },
           paymentMethod: payment,
           acceptedTerms: true,
+          newsletter,
           couponCode: couponCode || undefined,
         }),
       });
@@ -256,6 +258,10 @@ export function CheckoutForm({
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} />
             Ho letto e accetto le <Link href="/condizioni">condizioni di vendita</Link> e l&apos;
             <Link href="/privacy">informativa privacy</Link>.
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={newsletter} onChange={(e) => setNewsletter(e.target.checked)} />
+            Voglio ricevere offerte e novità via email (facoltativo, puoi disiscriverti quando vuoi).
           </label>
           {errors.terms ? (
             <span className="err" style={{ fontSize: 13, fontWeight: 600 }}>

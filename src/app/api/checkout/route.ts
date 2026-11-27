@@ -7,6 +7,7 @@ import { findVariant, lineDisplayName, lineIsOutOfStock, lineMaxQty, lineUnitPri
 import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
 import { validateDiscountCode } from "@/lib/discounts";
+import { subscribeNewsletterAction } from "@/lib/newsletter-actions";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
@@ -49,6 +50,7 @@ const bodySchema = z.object({
     })
     .optional(),
   paymentMethod: z.enum(["CARD", "BANK_TRANSFER"]).default("CARD"),
+  newsletter: z.boolean().optional(),
   acceptedTerms: z.literal(true),
   customerNote: z.string().optional(),
   couponCode: z.string().max(40).optional(),
@@ -197,6 +199,18 @@ export async function POST(req: Request) {
     });
     return created;
   });
+
+  // Iscrizione alla newsletter, se il cliente l'ha chiesta al checkout. Vale il doppio
+  // consenso come dal modulo del sito: parte un'email di conferma e nessuna email di
+  // marketing viene inviata finché non clicca il link. Non deve mai bloccare l'ordine.
+  if (body.newsletter) {
+    subscribeNewsletterAction({
+      email: customerEmail,
+      firstName: body.shipping.firstName,
+      interests: [],
+      consent: true,
+    }).catch((err) => console.error("[checkout] iscrizione newsletter fallita:", err));
+  }
 
   // Bonifico: metodo secondario, nessuna verifica automatica del pagamento. L'ordine resta
   // PENDING_PAYMENT finché un admin non lo conferma manualmente (vedi updateOrderStatusAction);
