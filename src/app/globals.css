@@ -119,11 +119,7 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
   .hero .btn{height:40px;padding:0 14px;font-size:14px}
 
   /* Punti di forza: una riga scorrevole invece di 4 blocchi impilati */
-  .perks .wrap{display:flex;overflow-x:auto;gap:18px;padding-block:12px;scrollbar-width:none}
-  .perks .wrap::-webkit-scrollbar{display:none}
-  .perk{flex:0 0 auto;max-width:220px}
-  .perk svg{width:26px;height:26px}
-  .perk span{display:none}
+  .perks{display:none}
 }
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
