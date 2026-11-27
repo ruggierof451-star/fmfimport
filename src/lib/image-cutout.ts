@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { cutoutRgbaInPlace } from "@/lib/cutout-core";
 
 const OUT_DIR = path.join(process.cwd(), "public", "products-cutout");
 
@@ -22,86 +23,10 @@ export interface CutoutImage {
 export async function cutoutImageBuffer(input: Buffer): Promise<Buffer> {
   const sharp = (await import("sharp")).default;
 
-  const img = sharp(input);
-  const { data, info } = await img.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height, channels } = info;
-  const total = width * height;
 
-  const isBg = new Uint8Array(total);
-  const visited = new Uint8Array(total);
-  const queue = new Int32Array(total);
-  let qTail = 0;
-
-  const BRIGHTNESS_MIN = 200;
-  const SATURATION_MAX = 35;
-
-  function bgScore(idx: number): boolean {
-    const r = data[idx];
-    const g = data[idx + 1];
-    const b = data[idx + 2];
-    const min = Math.min(r, g, b);
-    const max = Math.max(r, g, b);
-    return min >= BRIGHTNESS_MIN && max - min < SATURATION_MAX;
-  }
-
-  function trySeed(x: number, y: number) {
-    if (x < 0 || y < 0 || x >= width || y >= height) return;
-    const p = y * width + x;
-    if (visited[p]) return;
-    if (bgScore(p * channels)) {
-      visited[p] = 1;
-      isBg[p] = 1;
-      queue[qTail++] = p;
-    }
-  }
-
-  for (let x = 0; x < width; x++) {
-    trySeed(x, 0);
-    trySeed(x, height - 1);
-  }
-  for (let y = 0; y < height; y++) {
-    trySeed(0, y);
-    trySeed(width - 1, y);
-  }
-
-  let qHead = 0;
-  while (qHead < qTail) {
-    const p = queue[qHead++];
-    const x = p % width;
-    const y = (p / width) | 0;
-    trySeed(x - 1, y);
-    trySeed(x + 1, y);
-    trySeed(x, y - 1);
-    trySeed(x, y + 1);
-  }
-
-  // Blur leggero sul solo canale alpha per bordi morbidi (niente aliasing netto).
-  const alpha = new Float32Array(total);
-  for (let p = 0; p < total; p++) alpha[p] = isBg[p] ? 0 : 255;
-
-  const blurred = new Float32Array(total);
-  const RADIUS = 2;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      let sum = 0;
-      let count = 0;
-      for (let dy = -RADIUS; dy <= RADIUS; dy++) {
-        const ny = y + dy;
-        if (ny < 0 || ny >= height) continue;
-        for (let dx = -RADIUS; dx <= RADIUS; dx++) {
-          const nx = x + dx;
-          if (nx < 0 || nx >= width) continue;
-          sum += alpha[ny * width + nx];
-          count++;
-        }
-      }
-      blurred[y * width + x] = sum / count;
-    }
-  }
-
-  for (let p = 0; p < total; p++) {
-    data[p * channels + 3] = Math.min(data[p * channels + 3], Math.round(blurred[p]));
-  }
+  cutoutRgbaInPlace(data, width, height);
 
   return sharp(data, { raw: { width, height, channels } })
     .webp({ quality: 85, alphaQuality: 90 })
@@ -115,7 +40,7 @@ export async function cutoutImageBuffer(input: Buffer): Promise<Buffer> {
  * pre-generate in locale e committate: su Vercel il filesystem a runtime è di sola
  * lettura, quindi qui si legge solo la cache già presente, non se ne crea di nuova (le
  * foto caricate dall'admin via Blob vengono invece già ritagliate al momento
- * dell'upload, vedi cutoutImageBuffer sopra e /api/admin/upload-image).
+ * dell'upload nel browser, vedi cutout-core.ts e ImageUploadField).
  */
 /**
  * Indirizzo del ritaglio già pronto, senza aprire il file. Per le immagini mostrate con
