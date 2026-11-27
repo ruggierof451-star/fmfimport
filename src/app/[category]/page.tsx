@@ -6,7 +6,14 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   const { category } = await params;
   const meta = LIST_META[category];
   if (!meta) return {};
-  return { title: meta.title, description: meta.description || undefined };
+  // Canonical sempre sulla categoria "pulita": filtri, ordinamento e pagine della stessa
+  // lista non creano duplicati in Google.
+  return {
+    title: meta.title,
+    description: meta.description || undefined,
+    alternates: { canonical: `/${category}` },
+    openGraph: { url: `/${category}`, title: `${meta.title} · FMF Cards`, description: meta.description || undefined },
+  };
 }
 
 export default async function CategoryRoute({

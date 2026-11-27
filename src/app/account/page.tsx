@@ -11,7 +11,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 
-export const metadata = { title: "Account" };
+// Pagina personale o di servizio: fuori da Google.
+export const metadata = { title: "Account", robots: { index: false, follow: false } };
 
 const STEPS = ["Ricevuto", "In preparazione", "Spedito", "Consegnato"];
 const ORDER_FLOW = ["PENDING_PAYMENT", "PAYMENT_CONFIRMED", "AVAILABILITY_CHECK", "TO_PROCURE", "PREPARING", "SHIPPED", "DELIVERED"];

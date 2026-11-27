@@ -5,6 +5,7 @@ import { CartDrawer } from "@/components/cart-drawer";
 import { Toast } from "@/components/toast";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Analytics } from "@vercel/analytics/next";
+import { CANONICAL_ORIGIN, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -13,13 +14,30 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+const DEFAULT_DESCRIPTION =
+  "Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione. Prezzi visibili senza registrazione.";
+
+// metadataBase: ogni URL relativo nei metadati (canonical, Open Graph, immagini) diventa
+// assoluto sul dominio ufficiale, mai sul dominio tecnico di Vercel. Il canonical NON è
+// impostato qui (varrebbe per tutte le pagine): ogni pagina pubblica dichiara il suo,
+// quelle private sono noindex.
 export const metadata: Metadata = {
+  metadataBase: new URL(CANONICAL_ORIGIN),
   title: {
     default: "FMF Cards — Pokémon e One Piece sigillati, prezzi unici per tutti",
     template: "%s · FMF Cards",
   },
-  description:
-    "Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione. Prezzi visibili senza registrazione.",
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "it_IT",
+    title: "FMF Cards — Pokémon e One Piece sigillati",
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

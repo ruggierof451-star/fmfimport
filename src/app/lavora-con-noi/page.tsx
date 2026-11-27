@@ -2,7 +2,13 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ResellerRequestForm } from "@/components/reseller-request-form";
 
-export const metadata = { title: "Lavora con noi" };
+export const metadata = {
+  title: "Lavora con noi",
+  description:
+    "Sei un negozio o un rivenditore? Richiedi l'accesso ai prezzi dedicati FMF Cards.",
+  alternates: { canonical: "/lavora-con-noi" },
+  openGraph: { url: "/lavora-con-noi", title: "Lavora con noi · FMF Cards" },
+};
 
 export default function LavoraConNoiPage() {
   return (
