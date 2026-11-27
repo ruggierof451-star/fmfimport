@@ -283,16 +283,21 @@ export async function getProductBySlug(slug: string) {
   });
 }
 
-export async function getRelatedProducts(product: { id: string; game: Game; language: Language; type: string }) {
-  return prisma.product.findMany({
-    where: {
-      id: { not: product.id },
-      game: product.game,
-      language: product.language,
-      type: product.type,
-      published: true,
-    },
-    take: 4,
+/**
+ * Prodotti correlati (link interni dalla scheda prodotto): prima quelli della stessa
+ * espansione (altri formati o lingue dello stesso set), poi stesso gioco, lingua e tipo.
+ */
+export async function getRelatedProducts(product: { id: string; game: Game; language: Language; type: string; setName?: string }) {
+  const base = { id: { not: product.id }, game: product.game, published: true, archived: false, deletedAt: null };
+  const sameSet = product.setName
+    ? await prisma.product.findMany({ where: { ...base, setName: product.setName }, take: 4, orderBy: { createdAt: "desc" } })
+    : [];
+  if (sameSet.length >= 4) return sameSet;
+  const rest = await prisma.product.findMany({
+    where: { ...base, language: product.language, type: product.type, id: { notIn: [product.id, ...sameSet.map((p) => p.id)] } },
+    take: 4 - sameSet.length,
+    orderBy: { createdAt: "desc" },
   });
+  return [...sameSet, ...rest];
 }
 

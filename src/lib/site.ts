@@ -71,12 +71,16 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): Recor
 export function organizationJsonLd(): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "OnlineStore"],
     "@id": `${absoluteUrl("/")}#organizzazione`,
     name: SITE_NAME,
+    description:
+      "Negozio online di carte collezionabili e prodotti TCG sigillati: Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball, in edizione italiana e di importazione.",
     legalName: "FMF Cards S.R.L.S.",
     url: absoluteUrl("/"),
     email: "fmfcardssrls@gmail.com",
+    telephone: "+39 333 300 9760",
+    areaServed: "IT",
     logo: {
       "@type": "ImageObject",
       url: absoluteUrl(GOOGLE_LOGO.path),

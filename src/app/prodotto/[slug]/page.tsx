@@ -22,6 +22,8 @@ import { JsonLd } from "@/components/json-ld";
 import { absoluteUrl, breadcrumbJsonLd, DEFAULT_OG_IMAGE, NOINDEX, SITE_NAME } from "@/lib/site";
 import { displayImageUrl } from "@/lib/blob-image";
 import type { Metadata } from "next";
+import { gameListKeyFor, languageListKeyFor, productDescription, productImageAlt, productTitle } from "@/lib/seo";
+import { LIST_META } from "@/lib/catalog";
 
 /** In vendita = visibile in catalogo e con un prezzo: solo questi vanno in Google. */
 function isIndexable(p: { published: boolean; archived: boolean; deletedAt: Date | null; priceCents: number | null }) {
@@ -33,10 +35,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProductBySlug(slug);
   if (!product) return {};
   const name = cleanProductName(product.name);
-  const description = `${name} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}. Spedizione da FMF Cards.`;
+  const description = productDescription(product, {
+    priceCents: product.priceCents,
+    soldOut: isOutOfStock(product.stockQty) && !product.variants.length,
+    isPreorder: product.isPreorder,
+  });
   const path = `/prodotto/${product.slug}`;
+  const image = product.imageUrl ? displayImageUrl(product.imageUrl) : null;
   return {
-    title: name,
+    title: productTitle(product),
     description,
     alternates: { canonical: path },
     robots: isIndexable(product) ? undefined : NOINDEX,
@@ -45,8 +52,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: path,
       title: `${name} · ${SITE_NAME}`,
       description,
-      images: product.imageUrl ? [{ url: displayImageUrl(product.imageUrl), alt: name }] : [DEFAULT_OG_IMAGE],
+      images: image ? [{ url: image, alt: productImageAlt(product) }] : [DEFAULT_OG_IMAGE],
     },
+    twitter: { card: "summary_large_image", title: `${name} · ${SITE_NAME}`, description, images: image ? [image] : [DEFAULT_OG_IMAGE.url] },
   };
 }
 
@@ -73,7 +81,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       ? [{ value: "DAMAGED" as const, label: PACKAGING_LABEL.DAMAGED, priceCents: unitPriceCentsFor(product, isReseller, "DAMAGED") }]
       : []),
   ];
-  const listKey = product.game === "ONE_PIECE" ? "onepiece" : "pokemon";
+  const listKey = gameListKeyFor(product.game);
+  const langKey = languageListKeyFor(product.game, product.language);
   const soldOut = isOutOfStock(product.stockQty);
   const cap = maxOrderableQty(product.stockQty);
 
@@ -84,9 +93,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     "@type": "Product",
     name: cleanName,
     sku: product.supplierCode ?? product.slug,
-    category: `${GAME_LABEL[product.game]} · ${product.type}`,
+    category: `${GAME_LABEL[product.game]} > ${product.type}`,
     brand: { "@type": "Brand", name: GAME_LABEL[product.game] },
-    description: `${cleanName} — ${GAME_LABEL[product.game]} ${product.type} in edizione ${LANG_LABEL[product.language].toLowerCase()}.`,
+    description: productDescription(product, { priceCents: null, soldOut: false, isPreorder: false }),
+    inLanguage: product.language.toLowerCase(),
     image: product.imageUrl
       ? [(() => {
           const u = displayImageUrl(product.imageUrl);
@@ -102,6 +112,28 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             priceCurrency: "EUR",
             price: (product.priceCents / 100).toFixed(2),
             itemCondition: "https://schema.org/NewCondition",
+            shippingDetails: {
+              "@type": "OfferShippingDetails",
+              shippingDestination: { "@type": "DefinedRegion", addressCountry: "IT" },
+              deliveryTime: {
+                "@type": "ShippingDeliveryTime",
+                handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+                transitTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 3, unitCode: "DAY" },
+              },
+              shippingRate: {
+                "@type": "MonetaryAmount",
+                currency: "EUR",
+                value: ((product.priceCents >= settings.freeShippingThresholdCents ? 0 : settings.standardShippingFeeCents) / 100).toFixed(2),
+              },
+            },
+            hasMerchantReturnPolicy: {
+              "@type": "MerchantReturnPolicy",
+              applicableCountry: "IT",
+              returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+              merchantReturnDays: 14,
+              returnMethod: "https://schema.org/ReturnByMail",
+              returnFees: "https://schema.org/ReturnShippingFees",
+            },
             availability: product.isPreorder
               ? "https://schema.org/PreOrder"
               : soldOut && !product.variants.length
@@ -121,6 +153,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             breadcrumbJsonLd([
               { name: "Home", path: "/" },
               { name: GAME_LABEL[product.game], path: `/${listKey}` },
+              ...(langKey && langKey !== listKey ? [{ name: LIST_META[langKey].title, path: `/${langKey}` }] : []),
               { name: cleanName, path: `/prodotto/${product.slug}` },
             ]),
           ]}
@@ -137,12 +170,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {GAME_LABEL[product.game]}
           </Link>
           <span aria-hidden="true">/</span>
+          {langKey && langKey !== listKey ? (
+            <>
+              <Link href={`/${langKey}`} style={{ color: "var(--gold-ink)" }}>
+                {LIST_META[langKey].title}
+              </Link>
+              <span aria-hidden="true">/</span>
+            </>
+          ) : null}
           <span>{cleanName}</span>
         </nav>
         <section className="pp" style={{ marginTop: -24 }}>
           <div className="gal">
             <div className="main">
-              <ProductImage product={product} alt={cleanName} sizes="(max-width: 760px) 92vw, 460px" priority main />
+              <ProductImage product={product} alt={productImageAlt(product)} sizes="(max-width: 760px) 92vw, 460px" priority main />
               <span className="lang" style={{ fontSize: 13 }}>
                 {product.language}
               </span>

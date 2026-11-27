@@ -3,6 +3,7 @@ import type { Product } from "@/generated/prisma";
 import { ProductImage } from "@/components/product-image";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { cleanProductName } from "@/lib/product-art";
+import { productImageAlt } from "@/lib/seo";
 import { unitPriceCentsFor, formatEuro } from "@/lib/pricing";
 import { isOutOfStock } from "@/lib/stock";
 import { LANG_LABEL, GAME_LABEL } from "@/lib/catalog";
@@ -14,7 +15,7 @@ export function ProductCard({ product, isReseller = false }: { product: Product;
   return (
     <article className="card">
       <Link className="img" href={`/prodotto/${product.slug}`} tabIndex={-1} aria-hidden="true">
-        <ProductImage product={product} alt={cleanProductName(product.name)} sizes="(max-width: 640px) 45vw, 220px" />
+        <ProductImage product={product} alt={productImageAlt(product)} sizes="(max-width: 640px) 45vw, 220px" />
         <span className="tags">
           {product.isNew && !soldOut ? <span className="tag gold">Nuovo</span> : null}
           {product.isPreorder ? <span className="tag">Preordine</span> : null}
