@@ -105,7 +105,8 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
 @media (max-width:760px){
   /* niente velo bianco né sfocatura: su telefono l'illustrazione risultava slavata */
   .home-bg{--home-bg-blur:0px}
-  .home-bg::before{background-image:url(/art/hero-bg-telefono.webp);background-position:center top;filter:none;inset:0}
+  /* lo sfondo scorre con la pagina: si vede tutta l'illustrazione scendendo, poi ricomincia */
+  .home-bg::before{position:absolute;background-image:url(/art/hero-bg-telefono.webp);background-position:center top;background-size:100% auto;background-repeat:repeat-y;filter:none;inset:0}
 
   /* Prima schermata: i prodotti devono vedersi subito, non solo testo. Il carosello
      prodotti va in cima, il testo si accorcia e i dettagli secondari spariscono
