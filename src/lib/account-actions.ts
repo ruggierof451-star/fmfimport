@@ -110,3 +110,18 @@ export async function updateBillingInfoAction(
   revalidatePath("/account");
   return { ok: true };
 }
+
+export async function setMarketingOptInAction(input: { optIn: boolean }): Promise<{ ok: boolean; error?: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Devi essere connesso." };
+
+  await prisma.user.update({ where: { id: user.id }, data: { marketingOptIn: input.optIn } });
+  revalidatePath("/account");
+  return { ok: true };
+}
+
+/** Disiscrizione pubblica (link nelle email di marketing): nessun login richiesto. */
+export async function unsubscribeFromMarketingAction(input: { userId: string }): Promise<{ ok: boolean; error?: string }> {
+  await prisma.user.updateMany({ where: { id: input.userId }, data: { marketingOptIn: false } });
+  return { ok: true };
+}

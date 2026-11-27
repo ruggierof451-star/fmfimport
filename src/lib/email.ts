@@ -8,7 +8,11 @@ const GOLD = "#C9A646";
 const BANK_IBAN = process.env.BANK_IBAN;
 const BANK_ACCOUNT_HOLDER = process.env.BANK_ACCOUNT_HOLDER || "FMF Cards S.R.L.S.";
 
-function layout(preheader: string, bodyHtml: string): string {
+function layout(preheader: string, bodyHtml: string, opts: { unsubscribeUrl?: string } = {}): string {
+  const footerNote = opts.unsubscribeUrl
+    ? `Hai ricevuto questa email perché hai accettato di ricevere offerte e novità da <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.it</a>.
+       <a href="${opts.unsubscribeUrl}" style="color:#8A8A8A;text-decoration:underline;">Annulla l&apos;iscrizione</a>.`
+    : `Hai ricevuto questa email perché hai un account o un ordine su <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.it</a>.`;
   return `<!DOCTYPE html>
 <html lang="it">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>FMF Cards</title></head>
@@ -24,7 +28,7 @@ function layout(preheader: string, bodyHtml: string): string {
         <tr><td style="padding:20px 32px;background:#FAFAFA;border-top:1px solid #EAEAEA;">
           <p style="margin:0;font-size:12px;color:#8A8A8A;line-height:1.6;">
             FMF Cards S.R.L.S. · P.IVA 11105221219 · Traversa Garibaldi 24, 80040 Striano (NA)<br />
-            Hai ricevuto questa email perché hai un account o un ordine su <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.it</a>.
+            ${footerNote}
           </p>
         </td></tr>
       </table>
@@ -287,4 +291,48 @@ export async function sendResellerRequestDecisionEmail(params: {
     params.approved ? "Richiesta rivenditore approvata · FMF Cards" : "Richiesta rivenditore · FMF Cards",
     html
   );
+}
+
+/**
+ * Invia una campagna di marketing a una lista di iscritti. Ogni email viene inviata
+ * singolarmente (mai più destinatari nello stesso campo "to", per non esporre gli
+ * indirizzi tra loro) tramite l'API batch di Resend, a gruppi di massimo 100 per
+ * rispettare il limite del servizio. Ogni email ha il proprio link di disiscrizione.
+ */
+export async function sendMarketingCampaign(
+  recipients: { userId: string; email: string }[],
+  subject: string,
+  bodyHtml: string
+): Promise<{ sent: number; failed: number }> {
+  if (!resend) {
+    console.log(`[email] RESEND_API_KEY non configurata — campagna marketing NON inviata (${recipients.length} destinatari).`);
+    return { sent: 0, failed: recipients.length };
+  }
+
+  let sent = 0;
+  let failed = 0;
+  const BATCH_SIZE = 100;
+
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const chunk = recipients.slice(i, i + BATCH_SIZE);
+    const payload = chunk.map((r) => ({
+      from: FROM,
+      to: r.email,
+      subject,
+      html: layout(subject, bodyHtml, { unsubscribeUrl: `${SITE_URL}/disiscrizione/${r.userId}` }),
+    }));
+    try {
+      const result = await resend.batch.send(payload);
+      if (result.error) {
+        failed += chunk.length;
+      } else {
+        sent += chunk.length;
+      }
+    } catch (err) {
+      console.error("[email] invio batch campagna marketing fallito:", err);
+      failed += chunk.length;
+    }
+  }
+
+  return { sent, failed };
 }

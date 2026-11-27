@@ -6,6 +6,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { ChangePasswordForm } from "@/components/change-password-form";
 import { AddressList } from "@/components/address-list";
 import { BillingInfoForm } from "@/components/billing-info-form";
+import { MarketingOptInToggle } from "@/components/marketing-optin-toggle";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
@@ -122,6 +123,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   vatNumber={user.vatNumber ?? ""}
                   sdiCode={user.sdiCode ?? ""}
                 />
+                <MarketingOptInToggle optIn={user.marketingOptIn} />
               </>
             )}
           </div>

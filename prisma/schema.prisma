@@ -300,6 +300,10 @@ model User {
   vatNumber   String?
   sdiCode     String?
 
+  // Consenso esplicito alle email di marketing (offerte, novità): di default false,
+  // si attiva solo con un'azione dell'utente (checkbox in registrazione o nell'account).
+  marketingOptIn Boolean @default(false)
+
   addresses   Address[]
   orders      Order[]
   resetTokens PasswordResetToken[]
@@ -438,4 +442,29 @@ model DiscountCode {
   expiresAt     DateTime? // null = nessuna scadenza
   createdAt     DateTime  @default(now())
   createdBy     String?
+}
+
+enum MarketingCampaignStatus {
+  DRAFT
+  SENDING
+  SENT
+  FAILED
+}
+
+// Email di marketing (offerte, novità): create e inviate dall'admin dalla sezione
+// Marketing. Inviate solo agli utenti con marketingOptIn true, una email per volta
+// via API batch (mai con più destinatari nello stesso campo "to"). Una volta inviata
+// una campagna resta solo consultabile: per rimandare lo stesso contenuto se ne crea
+// una nuova (nessuna modifica dopo l'invio, per avere uno storico affidabile).
+model MarketingCampaign {
+  id             String                  @id @default(cuid())
+  subject        String
+  bodyHtml       String
+  status         MarketingCampaignStatus @default(DRAFT)
+  recipientCount Int?
+  failedCount    Int?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  sentAt         DateTime?
+  createdBy      String?
 }

@@ -21,9 +21,12 @@ const registerSchema = z.object({
   name: z.string().min(1, "Inserisci il tuo nome."),
   email: z.string().email("Inserisci un'email valida."),
   password: z.string().min(8, "La password deve avere almeno 8 caratteri."),
+  marketingOptIn: z.boolean().optional(),
 });
 
-export async function registerAction(input: { name: string; email: string; password: string }): Promise<AuthResult> {
+export async function registerAction(
+  input: { name: string; email: string; password: string; marketingOptIn?: boolean }
+): Promise<AuthResult> {
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
@@ -41,6 +44,7 @@ export async function registerAction(input: { name: string; email: string; passw
       name: parsed.data.name.trim(),
       passwordHash: await hashPassword(parsed.data.password),
       role: "CUSTOMER",
+      marketingOptIn: parsed.data.marketingOptIn ?? false,
     },
   });
 

@@ -58,7 +58,8 @@ export function BillingInfoForm({
         <input className="in" value={sdi} onChange={(e) => setSdi(e.target.value)} />
       </label>
       <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-        Questi dati vengono proposti automaticamente al checkout quando richiedi la fattura.
+        La fattura è riservata ai rivenditori approvati: questi dati servono solo se il tuo account ha
+        quello status.
       </p>
       <button className="btn btn-dark btn-sm" type="submit" disabled={saving} style={{ alignSelf: "flex-start" }}>
         {saving ? "Salvataggio…" : "Salva"}

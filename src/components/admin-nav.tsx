@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/ordini", label: "Ordini" },
   { href: "/admin/etichette", label: "Etichette" },
   { href: "/admin/messaggi", label: "Messaggi" },
+  { href: "/admin/marketing", label: "Marketing" },
   { href: "/admin/rivenditori", label: "Rivenditori" },
   { href: "/admin/sconti", label: "Codici sconto" },
   { href: "/admin/impostazioni", label: "Impostazioni" },

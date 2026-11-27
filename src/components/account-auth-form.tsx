@@ -10,6 +10,7 @@ export function AccountAuthForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resetUrl, setResetUrl] = useState("");
@@ -33,7 +34,8 @@ export function AccountAuthForm() {
       return;
     }
 
-    const result = mode === "register" ? await registerAction({ name, email, password }) : await loginAction({ email, password });
+    const result =
+      mode === "register" ? await registerAction({ name, email, password, marketingOptIn }) : await loginAction({ email, password });
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error ?? "Si è verificato un errore.");
@@ -122,6 +124,12 @@ export function AccountAuthForm() {
                 </label>
               ) : null}
             </div>
+            {mode === "register" ? (
+              <label className="check">
+                <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
+                Voglio ricevere offerte e novità via email
+              </label>
+            ) : null}
             {mode === "login" ? (
               <button
                 type="button"
