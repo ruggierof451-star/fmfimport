@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -98,8 +99,7 @@ export function HeaderClient({
             <span></span>
           </button>
           <Link href="/" className="logo" aria-label="FMF Cards, homepage">
-            <b>FMF</b>
-            <span>CARDS</span>
+            <Logo priority />
           </Link>
           <div className="hicons">
             <Link className="hicon" href={isLoggedIn ? "/account" : "/account"}>

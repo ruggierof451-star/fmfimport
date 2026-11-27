@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { AdminNav } from "@/components/admin-nav";
 import { LogoutButton } from "@/components/logout-button";
+import { Logo } from "@/components/logo";
 
 // Pannello admin: mai indicizzato (oltre al Disallow in robots.txt).
 export const metadata = { robots: { index: false, follow: false } };
@@ -14,8 +15,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="admin-shell">
       <aside className="admin-side">
-        <Link href="/" className="admin-brand">
-          FMF <span style={{ color: "var(--gold)" }}>Admin</span>
+        <Link href="/" className="admin-brand" aria-label="FMF Cards, torna al sito">
+          <Logo />
+          <span>Admin</span>
         </Link>
         <Link href="/" className="admin-back">
           ← Torna al sito
