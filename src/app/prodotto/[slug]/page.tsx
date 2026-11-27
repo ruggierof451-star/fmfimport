@@ -142,7 +142,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <section className="pp" style={{ marginTop: -24 }}>
           <div className="gal">
             <div className="main">
-              <ProductImage product={product} alt={cleanName} sizes="(max-width: 760px) 92vw, 460px" priority />
+              <ProductImage product={product} alt={cleanName} sizes="(max-width: 760px) 92vw, 460px" priority main />
               <span className="lang" style={{ fontSize: 13 }}>
                 {product.language}
               </span>

@@ -103,7 +103,27 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
    cover su uno schermo verticale, mostrerebbe solo una fascia centrale (Luffy e Pikachu
    fuori campo) e farebbe scaricare un file 7 volte più pesante. */
 @media (max-width:760px){
-  .home-bg::before{background-image:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,.22)),url(/art/hero-bg-mobile.webp)}
+  /* niente velo bianco né sfocatura: su telefono l'illustrazione risultava slavata */
+  .home-bg{--home-bg-blur:0px}
+  .home-bg::before{background-image:url(/art/hero-bg-mobile.webp);filter:none;inset:0}
+
+  /* Prima schermata: i prodotti devono vedersi subito, non solo testo. Il carosello
+     prodotti va in cima, il testo si accorcia e i dettagli secondari spariscono
+     (restano nel footer e nelle pagine informative). */
+  .hero .wrap{padding-block:14px 18px;gap:14px}
+  .hero .art{order:-1;flex-basis:100%;max-width:100%}
+  .hero .hero-photos{max-width:230px}
+  .hero .txt{gap:10px}
+  .hero .eyebrow,.hero .txt>p,.hero .facts{display:none}
+  .hero h1{font-size:24px;line-height:1.2}
+  .hero .btn{height:40px;padding:0 14px;font-size:14px}
+
+  /* Punti di forza: una riga scorrevole invece di 4 blocchi impilati */
+  .perks .wrap{display:flex;overflow-x:auto;gap:18px;padding-block:12px;scrollbar-width:none}
+  .perks .wrap::-webkit-scrollbar{display:none}
+  .perk{flex:0 0 auto;max-width:220px}
+  .perk svg{width:26px;height:26px}
+  .perk span{display:none}
 }
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}

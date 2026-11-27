@@ -38,7 +38,7 @@ async function build() {
       { input: art, top: 0, left: 0 },
       { input: fade, raw: { width: W, height: FADE, channels: 4 }, top: Math.max(0, artHeight - FADE), left: 0 },
     ])
-    .webp({ quality: 72 })
+    .webp({ quality: 90 })
     .toFile(OUT);
 
   console.log(`Sfondo per telefono generato: ${OUT} (${W}x${H}, illustrazione alta ${artHeight}px)`);

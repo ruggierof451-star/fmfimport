@@ -96,6 +96,24 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   return send(to, subject, layout("Reimposta la password del tuo account FMF Cards.", bodyHtml));
 }
 
+export async function sendWelcomeEmail(to: string, name: string) {
+  const url = `${SITE_URL}/account`;
+  const { subject, bodyHtml } = await renderEmailTemplate("account_welcome", {
+    text: { nome: name || "ciao" },
+    blocks: { pulsante_account: button(url, "Vai al tuo account") },
+  });
+  return send(to, subject, layout("Il tuo account FMF Cards è pronto.", bodyHtml));
+}
+
+export async function sendPaymentFailedEmail(params: { to: string; orderNumber: string; totalFormatted: string }) {
+  const url = `${SITE_URL}/carrello`;
+  const { subject, bodyHtml } = await renderEmailTemplate("payment_failed", {
+    text: { numero_ordine: params.orderNumber, totale: params.totalFormatted },
+    blocks: { pulsante_riprova: button(url, "Riprova l'acquisto") },
+  });
+  return send(params.to, subject, layout("Il pagamento del tuo ordine non è stato completato.", bodyHtml));
+}
+
 export async function sendOrderConfirmationEmail(params: {
   to: string;
   orderNumber: string;

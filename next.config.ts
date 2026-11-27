@@ -8,7 +8,10 @@ const nextConfig: NextConfig = {
     // Le foto caricate dall'admin stanno nel database e sono servite dal sito stesso
     // (/immagini/<id>), quindi Next le ridimensiona per lo schermo di chi guarda:
     // fondamentale da telefono, dove altrimenti si scaricherebbe la foto intera.
-    formats: ["image/avif", "image/webp"],
+    // Solo WebP: AVIF pesa un po' meno ma è molto più lento da generare, e la prima
+    // apertura di una foto (non ancora in cache) su telefono si vedeva arrivare dopo
+    // qualche secondo. WebP è supportato da tutti i browser attuali.
+    formats: ["image/webp"],
     // Le foto prodotto non cambiano mai una volta caricate: cache lunga sulle versioni
     // ridimensionate, così dalla seconda visita sono immediate.
     minimumCacheTTL: 60 * 60 * 24 * 30,

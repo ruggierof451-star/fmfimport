@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
-import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
+import { sendOrderConfirmationEmail, sendAdminNewOrderNotification, sendPaymentFailedEmail } from "@/lib/email";
 import { recordDiscountCodeUsage } from "@/lib/discounts";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 
@@ -59,6 +59,37 @@ export async function markOrderPaid(orderId: string, source: string): Promise<{ 
   }
 
   return { confirmed: true };
+}
+
+/**
+ * Pagamento con carta non riuscito o pagina di pagamento scaduta: l'ordine, se è ancora
+ * in attesa, viene annullato e il cliente riceve l'email "payment_failed". Idempotente
+ * come markOrderPaid: un ordine già pagato non viene mai toccato.
+ */
+export async function markOrderPaymentFailed(orderId: string, source: string): Promise<{ failed: boolean }> {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order || order.paymentStatus !== "PENDING") return { failed: false };
+
+  const claimed = await prisma.order.updateMany({
+    where: { id: order.id, paymentStatus: "PENDING" },
+    data: { paymentStatus: "FAILED", status: "CANCELLED" },
+  });
+  if (claimed.count === 0) return { failed: false };
+
+  await prisma.orderStatusHistory.create({
+    data: { orderId: order.id, status: "CANCELLED", note: `Pagamento non riuscito (${source}).`, changedBy: source },
+  });
+
+  const customerEmail =
+    order.guestEmail ?? (order.userId ? (await prisma.user.findUnique({ where: { id: order.userId } }))?.email ?? null : null);
+  if (customerEmail) {
+    await sendPaymentFailedEmail({
+      to: customerEmail,
+      orderNumber: order.orderNumber,
+      totalFormatted: formatEuro(order.totalCents),
+    }).catch((err) => console.error("[pagamento] email pagamento fallito non inviata:", err));
+  }
+  return { failed: true };
 }
 
 /**

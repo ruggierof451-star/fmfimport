@@ -17,11 +17,19 @@ export function ProductImage({
   alt,
   sizes,
   priority,
+  main,
 }: {
   product: ArtInput & { imageUrl: string | null; slug: string };
   alt: string;
   sizes: string;
   priority?: boolean;
+  /**
+   * Foto principale della scheda prodotto. Le foto caricate dall'admin sono già
+   * ridotte e compresse al caricamento, della misura giusta per questa posizione:
+   * servirle così come sono evita il passaggio dall'ottimizzatore di Next, che alla
+   * prima apertura (non ancora in cache) ritardava la foto di quasi un secondo.
+   */
+  main?: boolean;
 }) {
   if (!product.imageUrl) return <ProductArt product={product} />;
 
@@ -37,7 +45,7 @@ export function ProductImage({
       sizes={sizes}
       style={{ objectFit: "contain", ...(cutoutUrl ? { padding: "8%" } : {}) }}
       priority={priority}
-      unoptimized={!isOptimizableImage(src)}
+      unoptimized={!isOptimizableImage(src) || (main === true && src.startsWith("/immagini/"))}
     />
   );
 }

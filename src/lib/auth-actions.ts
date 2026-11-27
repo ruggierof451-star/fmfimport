@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email";
 import { after } from "next/server";
 import { enqueueAutomation, maybeProcessQueue } from "@/lib/marketing-engine";
 
@@ -51,7 +51,11 @@ export async function registerAction(
   });
 
   await createSession({ userId: user.id, role: user.role, email: user.email });
-  // email automatica di benvenuto (se attiva) a chi si registra con il consenso marketing
+  // email di benvenuto all'account (modello "account_welcome", modificabile da Admin → Email)
+  after(() =>
+    sendWelcomeEmail(user.email, user.name?.split(" ")[0] ?? "").catch((err) => console.error("[registrazione] email benvenuto fallita:", err))
+  );
+  // email automatica di marketing di benvenuto (se attiva) a chi si registra con il consenso marketing
   if (user.marketingOptIn) {
     after(async () => {
       await enqueueAutomation({ key: "welcome", email: user.email, firstName: user.name?.split(" ")[0] ?? null });

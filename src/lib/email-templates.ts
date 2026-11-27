@@ -77,6 +77,44 @@ export const EMAIL_TEMPLATES: EmailTemplateDef[] = [
 <div style="margin-top:20px;">{{pulsante_ordine}}</div>`,
   },
   {
+    key: "payment_failed",
+    label: "Pagamento non riuscito",
+    trigger:
+      "Al cliente, quando un pagamento con carta non va a buon fine o la pagina di pagamento scade senza che sia stato completato.",
+    recipient: "Cliente",
+    placeholders: [
+      { name: "numero_ordine", description: "Numero dell'ordine", kind: "text", sample: "FMF-20261127-1234" },
+      { name: "totale", description: "Totale dell'ordine", kind: "text", sample: "105,90 €" },
+      { name: "pulsante_riprova", description: "Pulsante per tornare al carrello e riprovare", kind: "block", sample: SAMPLE_BUTTON },
+    ],
+    defaultSubject: "Pagamento non completato · ordine {{numero_ordine}}",
+    defaultBody: `<h1 ${H1}>Il pagamento non è andato a buon fine</h1>
+<p ${P}>
+  Non abbiamo ricevuto il pagamento per l'ordine <b>{{numero_ordine}}</b> ({{totale}}), quindi l'ordine non è stato
+  confermato e non ti è stato addebitato nulla. Può succedere se la carta è stata rifiutata o se la pagina di
+  pagamento è stata chiusa prima di concludere.
+</p>
+<p ${P}>Puoi riprovare quando vuoi: i prodotti sono ancora nel catalogo, finché disponibili.</p>
+{{pulsante_riprova}}`,
+  },
+  {
+    key: "account_welcome",
+    label: "Benvenuto (account creato)",
+    trigger: "Al cliente, subito dopo la registrazione di un nuovo account.",
+    recipient: "Cliente",
+    placeholders: [
+      { name: "nome", description: "Nome del cliente", kind: "text", sample: "Mario" },
+      { name: "pulsante_account", description: "Pulsante \"Vai al tuo account\"", kind: "block", sample: SAMPLE_BUTTON },
+    ],
+    defaultSubject: "Benvenuto su FMF Cards, {{nome}}",
+    defaultBody: `<h1 ${H1}>Ciao {{nome}}, il tuo account è pronto</h1>
+<p ${P}>
+  Da ora trovi nel tuo account lo stato di tutti i tuoi ordini con il tracking, gli indirizzi salvati e lo storico
+  degli acquisti. I prezzi sono già visibili a tutti: l'account ti serve per tenere tutto in un posto solo.
+</p>
+{{pulsante_account}}`,
+  },
+  {
     key: "password_reset",
     label: "Reimposta password",
     trigger: "Al cliente, quando chiede di recuperare la password dalla pagina Account.",

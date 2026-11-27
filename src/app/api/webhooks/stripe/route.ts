@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import { markOrderPaid } from "@/lib/order-payment";
+import { markOrderPaid, markOrderPaymentFailed } from "@/lib/order-payment";
 
 /**
  * Riceve gli eventi di pagamento da Stripe. La conferma vera e propria dell'ordine sta
@@ -33,6 +33,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
     await markOrderPaid(orderId, "stripe");
+  }
+
+  if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object as { metadata?: { orderId?: string } | null };
+    const orderId = session.metadata?.orderId;
+    if (orderId) await markOrderPaymentFailed(orderId, "stripe");
   }
 
   return NextResponse.json({ received: true });
