@@ -268,14 +268,3 @@ export async function getRelatedProducts(product: { id: string; game: Game; lang
   });
 }
 
-export async function getTwinEditions(product: { id: string; game: Game; setName: string }) {
-  return prisma.product.findMany({
-    where: {
-      id: { not: product.id },
-      game: product.game,
-      setName: product.setName,
-      published: true,
-    },
-  });
-}
-
