@@ -66,12 +66,18 @@ export function ImageUploadField({
       });
       onChange(blob.url);
     } catch (err) {
+      // La libreria di Blob riporta sempre "Failed to retrieve the client token" senza
+      // dire perché: chiediamo al sito il motivo vero e mostriamo quello.
+      let reason = "";
+      try {
+        const res = await fetch("/api/admin/upload-token");
+        const data = (await res.json()) as { ready?: boolean; reason?: string };
+        if (!data.ready && data.reason) reason = data.reason;
+      } catch {
+        /* se anche questa fallisce, resta il messaggio originale */
+      }
       const message = err instanceof Error ? err.message : "";
-      setError(
-        /blob|token|non autorizzato|archivio/i.test(message)
-          ? message || "Caricamento non riuscito."
-          : `Caricamento non riuscito${message ? `: ${message}` : "."}`
-      );
+      setError(reason || `Caricamento non riuscito${message ? `: ${message}` : "."}`);
     }
     setUploading(false);
   }

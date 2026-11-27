@@ -23,7 +23,7 @@ function layout(preheader: string, bodyHtml: string, opts: { unsubscribeUrl?: st
     <tr><td align="center">
       <table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #EAEAEA;">
         <tr><td style="background:#000;padding:22px 32px;">
-          <span style="font-size:20px;font-weight:700;color:#fff;letter-spacing:.5px;">FMF <span style="color:${GOLD};">CARDS</span></span>
+          <img src="${SITE_URL}/fmf-cards-logo-dark.png" width="180" alt="FMF CARDS" style="display:block;border:0;width:180px;height:auto;color:#fff;font-size:18px;font-weight:700;" />
         </td></tr>
         <tr><td style="padding:32px;">${bodyHtml}</td></tr>
         <tr><td style="padding:20px 32px;background:#FAFAFA;border-top:1px solid #EAEAEA;">

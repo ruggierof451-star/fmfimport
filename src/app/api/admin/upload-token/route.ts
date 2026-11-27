@@ -14,6 +14,26 @@ import { requireAdmin } from "@/lib/auth";
  *
  * Il permesso viene rilasciato solo a un admin autenticato e vale solo per immagini.
  */
+/**
+ * Diagnosi per il pannello admin: la libreria di Blob, quando il permesso non viene
+ * rilasciato, riporta sempre lo stesso messaggio generico ("Failed to retrieve the
+ * client token") nascondendo il motivo vero. Qui lo diciamo chiaramente.
+ */
+export async function GET(): Promise<NextResponse> {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ ready: false, reason: "Sessione admin scaduta: esci e rientra nel pannello." }, { status: 401 });
+  }
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json({
+      ready: false,
+      reason:
+        "Archivio foto non collegato: su Vercel apri il progetto → Storage, collega lo store Blob al progetto, poi rifai il deploy (le variabili si leggono solo al momento della build).",
+    });
+  }
+  return NextResponse.json({ ready: true });
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Non autorizzato." }, { status: 401 });
