@@ -4,15 +4,15 @@
 // Perché serve: l'originale è orizzontale (1672x941). Su uno schermo verticale, con
 // background-size:cover, se ne vede solo una fascia centrale larga circa un quarto —
 // Luffy e Pikachu restano fuori — e il telefono scarica comunque l'immagine intera.
-// Qui l'illustrazione viene messa su una tela verticale 900x1600, a tutta larghezza e
+// Qui l'illustrazione viene messa su una tela verticale 1170x2080 (nitida anche sugli schermi ad alta densità), a tutta larghezza e
 // in alto (dove sta il contenuto principale), con il resto nella stessa tinta della
 // carta e una sfumatura che nasconde il bordo inferiore.
 import sharp from "sharp";
 
 const SOURCE = "public/art/hero-bg.webp";
 const OUT = "public/art/hero-bg-mobile.webp";
-const W = 900;
-const H = 1600;
+const W = 1170;
+const H = 2080;
 const PAPER = { r: 244, g: 244, b: 244 }; // tinta di fondo misurata sull'illustrazione
 const FADE = 220; // altezza della sfumatura verso il fondo, in pixel
 
