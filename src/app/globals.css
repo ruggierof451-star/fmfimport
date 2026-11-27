@@ -34,8 +34,11 @@ header.site{background:#fff;color:var(--ink);border-bottom:1px solid var(--line)
 .hrow{display:flex;align-items:center;gap:16px;padding-block:14px;flex-wrap:wrap}
 .logo{flex:none;display:inline-flex;align-items:baseline;gap:10px;padding:0;background:none;text-decoration:none;line-height:1}
 .logo:hover{text-decoration:none}
-.logo b{font-family:var(--f-display);font-weight:800;font-size:32px;letter-spacing:.07em;color:#111}
-.logo span{font-size:13px;letter-spacing:.34em;color:var(--gold);font-weight:700}
+/* Il logo è un'immagine larga: su telefono va rimpicciolito, altrimenti da solo rende
+   l'intestazione alta quasi 90px su uno schermo da 844. */
+.logo-img{width:170px;height:auto;display:block}
+.footer-logo{width:190px;height:auto;display:block}
+@media (max-width:640px){.logo-img{width:118px}.footer-logo{width:150px}}
 .burger{flex:none;width:44px;height:44px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 10px;border-radius:8px}
 .burger:hover{background:var(--soft)}
 .burger span{display:block;height:2px;background:var(--ink);border-radius:2px}
@@ -62,7 +65,7 @@ nav.cats .wrap{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none}
 nav.cats a{display:block;white-space:nowrap;text-decoration:none;font-size:15px;font-weight:400;padding:13px 0 11px;color:var(--ink);border-bottom:2px solid transparent}
 nav.cats a:hover{text-decoration:none;border-bottom-color:var(--line)}
 nav.cats a.on{font-weight:600;border-bottom-color:#000}
-@media (max-width:640px){.hicon .lbl{display:none}.hrow{gap:10px;padding-block:12px}.logo b{font-size:23px}.logo span{font-size:10px}}
+@media (max-width:640px){.hicon .lbl{display:none}.hrow{gap:10px;padding-block:12px}}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:10px;border:0;font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}
@@ -85,6 +88,12 @@ nav.cats a.on{font-weight:600;border-bottom-color:#000}
    Per regolare l'intensità basta cambiare --home-bg-blur. */
 .home-bg{--home-bg-blur:1px;position:relative;isolation:isolate;background:#fff}
 .home-bg::before{content:"";position:fixed;inset:calc(var(--home-bg-blur) * -3);z-index:-1;pointer-events:none;background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,.22)),url(/art/hero-bg.webp) center top/cover no-repeat;filter:blur(var(--home-bg-blur))}
+/* Telefoni: versione verticale dell'illustrazione. Quella orizzontale, ritagliata da
+   cover su uno schermo verticale, mostrerebbe solo una fascia centrale (Luffy e Pikachu
+   fuori campo) e farebbe scaricare un file 7 volte più pesante. */
+@media (max-width:760px){
+  .home-bg::before{background-image:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,.22)),url(/art/hero-bg-mobile.webp)}
+}
 .home-bg .site-transparent{background:transparent}
 .hero{overflow:hidden;border-bottom:1px solid var(--line)}
 .home-bg .perks{background:transparent}

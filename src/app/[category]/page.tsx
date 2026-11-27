@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { CatalogPage, type CatalogSearchParams } from "@/components/catalog-page";
 import { LIST_META } from "@/lib/catalog";
-import { DEFAULT_OG_IMAGE } from "@/lib/site";
+import { breadcrumbJsonLd, DEFAULT_OG_IMAGE } from "@/lib/site";
+import { JsonLd } from "@/components/json-ld";
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
@@ -32,5 +33,15 @@ export default async function CategoryRoute({
   const { category } = await params;
   if (!LIST_META[category]) notFound();
   const sp = await searchParams;
-  return <CatalogPage listKey={category} searchParams={sp} />;
+  return (
+    <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: LIST_META[category].title, path: `/${category}` },
+        ])}
+      />
+      <CatalogPage listKey={category} searchParams={sp} />
+    </>
+  );
 }

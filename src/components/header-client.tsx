@@ -98,20 +98,9 @@ export function HeaderClient({
             <span></span>
             <span></span>
           </button>
-         <Link href="/" className="logo" aria-label="FMF Cards, homepage">
-  <Image
-    src="/fmf-cards-logo-cropped.png"
-    alt="FMF Cards"
-    width={765}
-    height={398}
-    priority
-    style={{
-      width: "170px",
-      height: "auto",
-      display: "block",
-    }}
-  />
-</Link>
+          <Link href="/" className="logo" aria-label="FMF Cards, homepage">
+            <Image className="logo-img" src="/fmf-cards-logo-black.png" alt="FMF Cards" width={697} height={330} sizes="(max-width: 640px) 118px, 170px" priority />
+          </Link>
           <div className="hicons">
             <Link className="hicon" href={isLoggedIn ? "/account" : "/account"}>
               <UserIcon />

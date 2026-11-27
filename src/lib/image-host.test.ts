@@ -9,7 +9,7 @@ describe("isOptimizableImage", () => {
 
   it("ottimizza le altre immagini locali del sito", () => {
     expect(isOptimizableImage("/products-cutout/booster-box.webp")).toBe(true);
-    expect(isOptimizableImage("/fmf-cards-logo-cropped.png")).toBe(true);
+    expect(isOptimizableImage("/fmf-cards-logo-black.png")).toBe(true);
   });
 
   it("non ottimizza un indirizzo incollato da un altro sito (dominio non autorizzabile in anticipo)", () => {

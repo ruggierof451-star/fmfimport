@@ -43,10 +43,29 @@ export const DEFAULT_OG_IMAGE = {
 
 /**
  * Logo mostrato da Google accanto al sito (risultati di ricerca e scheda dell'attività).
- * Deve essere pubblicamente raggiungibile e su sfondo pieno: si usa la versione bianca,
- * non quella trasparente pensata per i fondi scuri.
+ * Deve essere pubblicamente raggiungibile e su sfondo pieno, non trasparente: per questo
+ * esiste una variante apposta (scritta nera su bianco).
  */
-export const GOOGLE_LOGO = { path: "/fmf-cards-logo-cropped.png", width: 720, height: 367 };
+export const GOOGLE_LOGO = { path: "/fmf-cards-logo-google.png", width: 697, height: 330 };
+
+/**
+ * Percorso di navigazione (schema.org BreadcrumbList): dice a Google come è organizzato
+ * il sito e gli permette di mostrare il percorso al posto dell'indirizzo nei risultati.
+ * È anche uno dei segnali che usa per decidere se mostrare i collegamenti alle sezioni
+ * sotto al risultato principale (quelli non si possono richiedere: li sceglie Google).
+ */
+export function breadcrumbJsonLd(items: { name: string; path: string }[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: absoluteUrl(item.path),
+    })),
+  };
+}
 
 /** Scheda dell'attività per Google (schema.org Organization). */
 export function organizationJsonLd(): Record<string, unknown> {
