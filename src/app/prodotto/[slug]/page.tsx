@@ -269,7 +269,8 @@ function ProductTabs({ product }: { product: Awaited<ReturnType<typeof getProduc
           <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
             <li>Spedizione tracciata; il numero di tracking arriva via email e nell&apos;area ordini.</li>
             <li>
-              Reso entro 7 giorni dalla consegna solo per prodotti danneggiati o mancanti. <Link href="/resi">Leggi le condizioni</Link>.
+              Diritto di recesso entro 14 giorni per gli acquisti da privato; prodotti danneggiati o mancanti da segnalare entro 7 giorni.{" "}
+              <Link href="/resi">Leggi le condizioni</Link>.
             </li>
           </ul>
         </div>

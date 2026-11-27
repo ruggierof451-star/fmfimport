@@ -18,7 +18,7 @@ export function CartPageClient() {
         <h1 style={{ fontSize: "clamp(26px,3vw,34px)", fontWeight: 500 }}>Carrello</h1>
         <div className="empty">
           <b>Il carrello è vuoto</b>
-          <p>Scegli tra i prodotti Pokémon e One Piece del catalogo.</p>
+          <p>Scegli tra i prodotti Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball del catalogo.</p>
           <Link className="btn btn-dark btn-sm" href="/">
             Vai al catalogo
           </Link>

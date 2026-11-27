@@ -11,8 +11,8 @@ export function Footer({ transparent }: { transparent?: boolean } = {}) {
             <Logo className="footer-logo" />
           </Link>
           <p style={{ margin: 0, fontSize: 14, maxWidth: 290 }}>
-            Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione.
-            Per collezionisti e negozianti.
+            Booster box, display e prodotti sigillati Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball, in edizione
+            italiana e di importazione. Per collezionisti e negozianti.
           </p>
         </div>
         <div>

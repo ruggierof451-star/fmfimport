@@ -29,7 +29,7 @@ export default async function AssistenzaPage() {
       `È gratuita per ordini da ${formatEuro(settings.freeShippingThresholdCents)} in su. Sotto questa soglia il costo è indicato nel carrello prima del pagamento.`,
     ],
     ["Che differenza c'è tra giapponese, cinese e coreano?", "Sono tutte carte ufficiali. Cambiano la lingua, la composizione delle buste e spesso il prezzo. In ogni scheda trovi la lingua indicata chiaramente."],
-    ["Posso restituire un prodotto?", "Sì, entro 7 giorni dalla consegna se il prodotto risulta danneggiato o mancante. Contattaci dal Centro assistenza con il numero d'ordine. Trovi i dettagli nella pagina Resi e recesso."],
+    ["Posso restituire un prodotto?", "Sì. Se acquisti come privato hai 14 giorni dalla consegna per il diritto di recesso, senza dover dare motivazioni. Se invece il prodotto arriva danneggiato o manca dalla confezione, segnalacelo entro 7 giorni e provvediamo noi, senza spese a tuo carico. Trovi i dettagli nella pagina Resi e recesso."],
   ];
 
   return (

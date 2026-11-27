@@ -17,7 +17,7 @@ const poppins = Poppins({
 });
 
 const DEFAULT_DESCRIPTION =
-  "Booster box, display e prodotti sigillati Pokémon e One Piece, in edizione italiana e di importazione. Prezzi visibili senza registrazione.";
+  "Booster box, display e prodotti sigillati Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball, in edizione italiana e di importazione. Prezzi visibili senza registrazione.";
 
 // metadataBase: ogni URL relativo nei metadati (canonical, Open Graph, immagini) diventa
 // assoluto sul dominio ufficiale, mai sul dominio tecnico di Vercel. Il canonical NON è
