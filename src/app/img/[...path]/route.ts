@@ -7,14 +7,18 @@ import { get } from "@vercel/blob";
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
-  if (!process.env.BLOB_READ_WRITE_TOKEN || !path?.length) return new Response("Non trovata.", { status: 404 });
+  if (!path?.length) return new Response("Non trovata.", { status: 404 });
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return new Response("Archivio immagini non collegato.", { status: 503, headers: { "X-Img-Reason": "no-token" } });
+  }
   const pathname = path.map((p) => decodeURIComponent(p)).join("/");
   if (pathname.includes("..")) return new Response("Non trovata.", { status: 404 });
 
   try {
     const res = await get(pathname, { access: "private" });
     if (!res || res.statusCode !== 200 || !res.blob.contentType.startsWith("image/")) {
-      return new Response("Non trovata.", { status: 404 });
+      const reason = !res ? "not-found" : res.statusCode !== 200 ? `status-${res.statusCode}` : "not-image";
+      return new Response("Non trovata.", { status: 404, headers: { "X-Img-Reason": reason } });
     }
     return new Response(res.stream, {
       headers: {
@@ -26,6 +30,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ path: s
     });
   } catch (err) {
     console.error("[img] lettura dall'archivio non riuscita:", pathname, err);
-    return new Response("Non trovata.", { status: 404 });
+    const reason = err instanceof Error ? err.name : "error";
+    return new Response("Non trovata.", { status: 404, headers: { "X-Img-Reason": reason } });
   }
 }
