@@ -38,6 +38,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
   const [companyName, setCompanyName] = useState(prefill?.companyName ?? "");
   const [vatNumber, setVatNumber] = useState(prefill?.vatNumber ?? "");
   const [sdiCode, setSdiCode] = useState(prefill?.sdiCode ?? "");
+  const [payment, setPayment] = useState<"CARD" | "BANK_TRANSFER">("CARD");
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -92,6 +93,7 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
           contact: { email, phone },
           shipping: { firstName, lastName, street, postalCode, city, province, country: "IT" },
           invoice: wantsInvoice ? { requested: true, companyName, vatNumber, sdiCode } : { requested: false },
+          paymentMethod: payment,
           acceptedTerms: true,
           couponCode: couponCode || undefined,
         }),
@@ -103,7 +105,11 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
         return;
       }
       clearCart();
-      window.location.href = data.checkoutUrl;
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        window.location.href = data.redirectUrl ?? `/ordine/${data.orderId}`;
+      }
     } catch {
       setServerError("Impossibile completare l'ordine. Controlla la connessione e riprova.");
       setSubmitting(false);
@@ -211,13 +217,24 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
               <h2>Pagamento</h2>
             </div>
             <label className="opt">
-              <input type="radio" name="pay" checked readOnly />
+              <input type="radio" name="pay" checked={payment === "CARD"} onChange={() => setPayment("CARD")} />
               <span>
                 <b>Carta di credito/debito</b>
                 <br />
                 <span className="muted" style={{ fontSize: 14 }}>
                   Pagamento sicuro tramite Stripe. Al passo successivo vieni portato su una pagina Stripe per
                   inserire i dati della carta; la spedizione parte appena il pagamento è confermato.
+                </span>
+              </span>
+            </label>
+            <label className="opt">
+              <input type="radio" name="pay" checked={payment === "BANK_TRANSFER"} onChange={() => setPayment("BANK_TRANSFER")} />
+              <span>
+                <b>Bonifico bancario</b>
+                <br />
+                <span className="muted" style={{ fontSize: 14 }}>
+                  Ricevi l&apos;IBAN via email dopo la conferma dell&apos;ordine. La spedizione parte alla ricezione
+                  del bonifico.
                 </span>
               </span>
             </label>
@@ -271,7 +288,13 @@ export function CheckoutForm({ invoiceVatRateBps, prefill }: { invoiceVatRateBps
                   Prezzi IVA inclusa ({(invoiceVatRateBps / 100).toLocaleString("it-IT")}% = {formatEuro(includedVatPreviewCents)}).
                 </span>
                 <button type="submit" className="btn btn-gold" disabled={submitting}>
-                  {submitting ? "Reindirizzamento a Stripe…" : `Vai al pagamento · ${formatEuro(totals.totalCents)}`}
+                  {submitting
+                    ? payment === "CARD"
+                      ? "Reindirizzamento a Stripe…"
+                      : "Invio in corso…"
+                    : payment === "CARD"
+                    ? `Vai al pagamento · ${formatEuro(totals.totalCents)}`
+                    : `Conferma ordine · ${formatEuro(totals.totalCents)}`}
                 </button>
               </>
             ) : null}

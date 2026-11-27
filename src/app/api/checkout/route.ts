@@ -8,6 +8,8 @@ import { cleanProductName } from "@/lib/product-art";
 import { getSession } from "@/lib/auth";
 import { validateDiscountCode } from "@/lib/discounts";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { formatEuro } from "@/lib/pricing";
+import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
 
 const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
 
@@ -45,6 +47,7 @@ const bodySchema = z.object({
       sdiCode: z.string().optional(),
     })
     .optional(),
+  paymentMethod: z.enum(["CARD", "BANK_TRANSFER"]).default("CARD"),
   acceptedTerms: z.literal(true),
   customerNote: z.string().optional(),
   couponCode: z.string().max(40).optional(),
@@ -134,7 +137,7 @@ export async function POST(req: Request) {
         userId: session?.userId,
         guestEmail: session ? undefined : body.contact.email,
         status: "PENDING_PAYMENT",
-        paymentMethod: "CARD",
+        paymentMethod: body.paymentMethod,
         paymentStatus: "PENDING",
         subtotalCents: totals.subtotalCents,
         discountCents: totals.discountCents,
@@ -173,13 +176,47 @@ export async function POST(req: Request) {
     return created;
   });
 
-  // Il pagamento vero avviene su Stripe: l'ordine resta PENDING_PAYMENT finché il webhook
-  // non conferma il pagamento (vedi /api/webhooks/stripe). Il contatore utilizzi del
-  // codice sconto si incrementa lì, non qui, perché un checkout abbandonato su Stripe
+  // Bonifico: metodo secondario, nessuna verifica automatica del pagamento. L'ordine resta
+  // PENDING_PAYMENT finché un admin non lo conferma manualmente (vedi updateOrderStatusAction);
+  // qui l'email di conferma parte subito, con le istruzioni per il bonifico incluse.
+  if (body.paymentMethod === "BANK_TRANSFER") {
+    sendOrderConfirmationEmail({
+      to: customerEmail,
+      orderNumber: order.orderNumber,
+      totalFormatted: formatEuro(order.totalCents),
+      paymentMethod: "BANK_TRANSFER",
+      items: validLines.map(({ product, quantity }, i) => ({
+        name: cleanProductName(product.name),
+        quantity,
+        lineTotalFormatted: formatEuro(totals.lines[i].lineTotalCents),
+      })),
+    }).catch((err) => console.error("[checkout] invio email conferma fallito:", err));
+
+    sendAdminNewOrderNotification({
+      orderNumber: order.orderNumber,
+      orderId: order.id,
+      totalFormatted: formatEuro(order.totalCents),
+      customerEmail,
+      paymentMethod: order.paymentMethod,
+      itemsSummary: validLines.map(({ product, quantity }) => `${quantity}× ${cleanProductName(product.name)}`).join(", "),
+    }).catch((err) => console.error("[checkout] invio notifica admin fallito:", err));
+
+    return NextResponse.json({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      totalCents: order.totalCents,
+      invoiceVatCents: order.invoiceVatCents,
+      redirectUrl: `/ordine/${order.id}`,
+    });
+  }
+
+  // Carta: il pagamento vero avviene su Stripe, l'ordine resta PENDING_PAYMENT finché il
+  // webhook non conferma il pagamento (vedi /api/webhooks/stripe). Il contatore utilizzi
+  // del codice sconto si incrementa lì, non qui, perché un checkout abbandonato su Stripe
   // non deve "consumare" l'utilizzo. Niente email di conferma qui per lo stesso motivo.
   if (!isStripeConfigured()) {
     return NextResponse.json(
-      { error: "Il pagamento online non è ancora configurato. Contatta l'assistenza per completare l'ordine." },
+      { error: "Il pagamento con carta non è ancora configurato. Scegli il bonifico oppure contatta l'assistenza." },
       { status: 503 }
     );
   }

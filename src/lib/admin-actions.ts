@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
 import { sendOrderStatusEmail } from "@/lib/email";
+import { recordDiscountCodeUsage } from "@/lib/discounts";
 
 const productUpdateSchema = z.object({
   id: z.string(),
@@ -354,6 +355,8 @@ export async function updateOrderStatusAction(input: {
   if (!admin) return { ok: false, error: "Non autorizzato." };
   if (!ORDER_STATUSES.includes(input.status)) return { ok: false, error: "Stato non valido." };
 
+  const before = await prisma.order.findUnique({ where: { id: input.orderId }, select: { paymentStatus: true, couponCode: true } });
+
   const [updated] = await prisma.$transaction([
     prisma.order.update({
       where: { id: input.orderId },
@@ -369,6 +372,10 @@ export async function updateOrderStatusAction(input: {
       data: { orderId: input.orderId, status: input.status, note: input.note, changedBy: admin.email },
     }),
   ]);
+
+  if (before && before.paymentStatus !== "PAID" && updated.paymentStatus === "PAID" && before.couponCode) {
+    recordDiscountCodeUsage(before.couponCode).catch((err) => console.error("[admin] conteggio utilizzi codice sconto fallito:", err));
+  }
 
   const customerEmail = updated.user?.email ?? updated.guestEmail;
   if (customerEmail) {
