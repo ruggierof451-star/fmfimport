@@ -43,30 +43,38 @@ export default async function HomePage() {
     }))
   );
 
-  // Tre foto reali per la vetrina dell'hero (una per gioco/edizione diversa quando possibile).
+  // Vetrina dell'hero: 3 foto reali, una per gioco/edizione diversa quando possibile, poi si
+  // completa con le altre. Le foto caricate (Vercel Blob, già scontornate con Photoroom o al
+  // caricamento) si usano così come sono; quelle nella cartella del sito vengono ritagliate.
   const HERO_PHOTO_COUNT = 3;
   const heroCandidates = await prisma.product.findMany({
-    where: { published: true, imageUrl: { not: null }, isNew: true },
-    take: 24,
-    orderBy: { updatedAt: "desc" },
+    where: { published: true, imageUrl: { not: null } },
+    take: 40,
+    orderBy: [{ isNew: "desc" }, { updatedAt: "desc" }],
   });
-  const heroPhotos: typeof heroCandidates = [];
+  const heroResolved = (
+    await Promise.all(
+      heroCandidates.map(async (p) => {
+        const url = p.imageUrl as string;
+        if (/^https?:\/\//.test(url)) return { ...p, cutout: { url, width: 800, height: 800 } };
+        const cutout = await ensureCutoutImage(url, p.slug);
+        return cutout ? { ...p, cutout } : null;
+      })
+    )
+  ).filter((p) => p !== null);
+  const heroCutouts: typeof heroResolved = [];
   const seenCombos = new Set<string>();
-  for (const p of heroCandidates) {
+  for (const p of heroResolved) {
     const combo = `${p.game}-${p.language}`;
     if (seenCombos.has(combo)) continue;
     seenCombos.add(combo);
-    heroPhotos.push(p);
-    if (heroPhotos.length === HERO_PHOTO_COUNT) break;
+    heroCutouts.push(p);
+    if (heroCutouts.length === HERO_PHOTO_COUNT) break;
   }
-  const heroCutouts = (
-    await Promise.all(
-      heroPhotos.map(async (p) => {
-        const cutout = await ensureCutoutImage(p.imageUrl as string, p.slug);
-        return { ...p, cutout };
-      })
-    )
-  ).filter((p): p is typeof heroPhotos[number] & { cutout: NonNullable<typeof p.cutout> } => p.cutout !== null);
+  for (const p of heroResolved) {
+    if (heroCutouts.length === HERO_PHOTO_COUNT) break;
+    if (!heroCutouts.includes(p)) heroCutouts.push(p);
+  }
 
   return (
     <div className="home-bg">
