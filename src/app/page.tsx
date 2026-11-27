@@ -110,7 +110,7 @@ export default async function HomePage() {
             <span className="discount-banner">
               <b>-5% sul primo ordine</b> con il codice <b className="mono">FMFCARDS</b>
             </span>
-            <h1 id="h1">Prodotti sigillati Pokémon e One Piece, prezzi chiari per tutti.</h1>
+            <h1 id="h1">Ogni collezione ha una storia. La tua inizia qui.</h1>
             <p>
               Booster box, display e collection in edizione italiana e di importazione (giapponese, cinese,
               coreana). Prezzi chiari e uguali per tutti, visibili senza registrazione.
