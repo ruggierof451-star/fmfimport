@@ -251,7 +251,10 @@ export async function listCatalog(key: string, filters: CatalogFilters, isResell
 export async function getProductBySlug(slug: string) {
   return prisma.product.findUnique({
     where: { slug },
-    include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
+    include: {
+      variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] },
+      resellerTiers: { orderBy: { minQty: "asc" } },
+    },
   });
 }
 

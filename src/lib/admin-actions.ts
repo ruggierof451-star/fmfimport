@@ -16,6 +16,25 @@ const variantInputSchema = z.object({
 });
 const variantsSchema = z.array(variantInputSchema).max(20, "Massimo 20 varianti per prodotto.");
 
+// Scaglioni rivenditore: da minQty pezzi in su, prezzo unitario priceCents (uguale per tutti i rivenditori).
+const resellerTiersSchema = z
+  .array(
+    z.object({
+      minQty: z.number().int().min(1, "La quantità minima di uno scaglione deve essere almeno 1."),
+      priceCents: z.number().int().min(0, "Il prezzo di uno scaglione non può essere negativo."),
+    })
+  )
+  .max(10, "Massimo 10 scaglioni per prodotto.")
+  .refine((tiers) => new Set(tiers.map((t) => t.minQty)).size === tiers.length, "Due scaglioni hanno la stessa quantità minima.");
+
+function tiersSummary(tiers: { minQty: number; priceCents: number }[]): string | null {
+  if (!tiers.length) return null;
+  return [...tiers]
+    .sort((a, b) => a.minQty - b.minQty)
+    .map((t) => `da ${t.minQty} pz ${(t.priceCents / 100).toFixed(2).replace(".", ",")} €`)
+    .join(", ");
+}
+
 function variantsSummary(variants: { name: string; priceCents: number }[]): string | null {
   if (!variants.length) return null;
   return variants.map((v) => `${v.name} (${(v.priceCents / 100).toFixed(2).replace(".", ",")} €)`).join(", ");
@@ -43,6 +62,7 @@ const productUpdateSchema = z.object({
   noWrapPriceCents: z.number().int().min(0).nullable().optional(),
   damagedPriceCents: z.number().int().min(0).nullable().optional(),
   variants: variantsSchema.optional(),
+  resellerTiers: resellerTiersSchema.optional(),
 });
 
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
@@ -93,6 +113,7 @@ const productCreateSchema = z.object({
   noWrapPriceCents: z.number().int().min(0).nullable().optional(),
   damagedPriceCents: z.number().int().min(0).nullable().optional(),
   variants: variantsSchema.optional(),
+  resellerTiers: resellerTiersSchema.optional(),
 });
 
 const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE" | "YUGIOH" | "DRAGON_BALL"; language: "IT" | "JP" | "CN" | "KR" | "EN" }> = {
@@ -146,6 +167,9 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
       matchStatus: "MANUAL",
       variants: data.variants?.length
         ? { create: data.variants.map((v, i) => ({ name: v.name, priceCents: v.priceCents, position: i })) }
+        : undefined,
+      resellerTiers: data.resellerTiers?.length
+        ? { create: data.resellerTiers.map((t) => ({ minQty: t.minQty, priceCents: t.priceCents })) }
         : undefined,
     },
   });
@@ -282,9 +306,22 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
 
   const existing = await prisma.product.findUnique({
     where: { id: data.id },
-    include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
+    include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] }, resellerTiers: true },
   });
   if (!existing) return { ok: false, error: "Prodotto non trovato." };
+
+  // Scaglioni rivenditore: la lista inviata sostituisce quella esistente (nessun ordine li referenzia).
+  const tierOps = [];
+  if (data.resellerTiers !== undefined) {
+    tierOps.push(prisma.resellerPriceTier.deleteMany({ where: { productId: data.id } }));
+    if (data.resellerTiers.length) {
+      tierOps.push(
+        prisma.resellerPriceTier.createMany({
+          data: data.resellerTiers.map((t) => ({ productId: data.id, minQty: t.minQty, priceCents: t.priceCents })),
+        })
+      );
+    }
+  }
 
   // Varianti: la lista inviata dal form è quella definitiva. Quelle non più presenti si
   // eliminano (gli ordini passati conservano nome e prezzo nello storico), quelle con id
@@ -318,6 +355,11 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
     const after = variantsSummary(data.variants);
     if (before !== after) changeRows.push({ field: "Varianti", oldValue: before, newValue: after });
   }
+  if (data.resellerTiers !== undefined) {
+    const before = tiersSummary(existing.resellerTiers);
+    const after = tiersSummary(data.resellerTiers);
+    if (before !== after) changeRows.push({ field: "Scaglioni rivenditore", oldValue: before, newValue: after });
+  }
 
   await prisma.$transaction([
     prisma.product.update({
@@ -344,6 +386,7 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
       },
     }),
     ...variantOps,
+    ...tierOps,
     ...changeRows.map((c) =>
       prisma.productChangeLog.create({
         data: { productId: data.id, field: c.field, oldValue: c.oldValue, newValue: c.newValue, changedBy: admin.email },

@@ -38,7 +38,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const settings = await getPricingSettings();
   const session = await getSession();
   const isReseller = session?.role === "RESELLER";
-  const isResellerPrice = isReseller && product.resellerPriceCents != null;
+  const resellerTiers = isReseller ? product.resellerTiers.map((t) => ({ minQty: t.minQty, priceCents: t.priceCents })) : [];
+  const isResellerPrice = isReseller && (product.resellerPriceCents != null || resellerTiers.length > 0);
   const cleanName = cleanProductName(product.name);
   const related = await getRelatedProducts(product);
 
@@ -113,6 +114,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 maxQty={cap}
                 isPreorder={product.isPreorder}
                 isResellerPrice={isResellerPrice}
+                resellerTiers={resellerTiers}
               />
             </div>
             <div className="assure">

@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
   const products = await prisma.product.findMany({
     where: { id: { in: items.map((i) => i.productId) } },
-    include: { variants: true },
+    include: { variants: true, resellerTiers: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
   const totals = computeCartTotals(
     lines.map(({ product, variant, quantity, packaging }) => ({
-      unitPriceCents: lineUnitPriceCents(product, variant, isReseller, packaging),
+      unitPriceCents: lineUnitPriceCents(product, variant, isReseller, packaging, quantity),
       quantity,
     })),
     shipping,
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       quantity,
       packaging,
       unitPriceCents: totals.lines[i].unitPriceCents,
-      isResellerPrice: !variant && isReseller && product.resellerPriceCents != null,
+      isResellerPrice: !variant && isReseller && (product.resellerPriceCents != null || product.resellerTiers.length > 0),
       lineTotalCents: totals.lines[i].lineTotalCents,
     }))
   );

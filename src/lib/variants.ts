@@ -30,10 +30,11 @@ export function lineUnitPriceCents(
   product: PriceableProduct,
   variant: VariantLike | null,
   isReseller: boolean,
-  packaging: PackagingChoice
+  packaging: PackagingChoice,
+  quantity = 1
 ): number {
   if (variant) return variant.priceCents;
-  return unitPriceCentsFor(product, isReseller, packaging);
+  return unitPriceCentsFor(product, isReseller, packaging, quantity);
 }
 
 /** Disponibilità di una riga: le varianti non hanno magazzino proprio. */

@@ -11,7 +11,7 @@ export default async function AdminProductEditPage({ params }: { params: Promise
   const [product, changeLogs, types] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
-      include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
+      include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] }, resellerTiers: { orderBy: { minQty: "asc" } } },
     }),
     prisma.productChangeLog.findMany({ where: { productId: id }, orderBy: { changedAt: "desc" }, take: 20 }),
     prisma.product.findMany({ select: { type: true }, distinct: ["type"], orderBy: { type: "asc" } }),

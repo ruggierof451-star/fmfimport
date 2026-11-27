@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { updateProductAction, deleteProductAction, archiveProductAction, unarchiveProductAction } from "@/lib/admin-actions";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { AdminVariantsEditor, variantDraftsFrom, variantsPayload } from "@/components/admin-variants-editor";
-import type { Product, ProductVariant } from "@/generated/prisma";
+import { AdminResellerTiersEditor, tierDraftsFrom, tiersPayload } from "@/components/admin-reseller-tiers-editor";
+import type { Product, ProductVariant, ResellerPriceTier } from "@/generated/prisma";
 
 const CATEGORY_OPTIONS = [
   { value: "pokemon-it", label: "Pokémon Italiano" },
@@ -35,7 +36,7 @@ export function AdminProductForm({
   product,
   existingTypes = [],
 }: {
-  product: Product & { variants: ProductVariant[] };
+  product: Product & { variants: ProductVariant[]; resellerTiers: ResellerPriceTier[] };
   existingTypes?: string[];
 }) {
   const router = useRouter();
@@ -65,6 +66,7 @@ export function AdminProductForm({
   const [stockQty, setStockQty] = useState(product.stockQty != null ? String(product.stockQty) : "");
   const [published, setPublished] = useState(product.published);
   const [variants, setVariants] = useState(() => variantDraftsFrom(product.variants));
+  const [tiers, setTiers] = useState(() => tierDraftsFrom(product.resellerTiers));
   const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">(product.language);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -106,6 +108,12 @@ export function AdminProductForm({
       setSaving(false);
       return;
     }
+    const tiersResult = tiersPayload(tiers);
+    if (!tiersResult.ok) {
+      setMessage(tiersResult.error);
+      setSaving(false);
+      return;
+    }
     const result = await updateProductAction({
       id: product.id,
       name,
@@ -134,6 +142,7 @@ export function AdminProductForm({
       noWrapPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(noWrapPriceEuro) : null,
       damagedPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(damagedPriceEuro) : null,
       variants: variantsResult.variants,
+      resellerTiers: tiersResult.tiers,
     });
     setSaving(false);
     if (result.ok) {
@@ -254,6 +263,8 @@ export function AdminProductForm({
         Prezzo rivenditore (€, IVA inclusa) — opzionale, visibile solo ai rivenditori approvati
         <input className="in" value={resellerPriceEuro} onChange={(e) => setResellerPriceEuro(e.target.value)} placeholder="es. 72.00" />
       </label>
+
+      <AdminResellerTiersEditor value={tiers} onChange={setTiers} />
 
       {JP_CATEGORIES.has(category) && type === "Booster box" ? (
         <>

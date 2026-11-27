@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createProductAction } from "@/lib/admin-actions";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { AdminVariantsEditor, variantsPayload, type VariantDraft } from "@/components/admin-variants-editor";
+import { AdminResellerTiersEditor, tiersPayload, type TierDraft } from "@/components/admin-reseller-tiers-editor";
 
 const CATEGORY_OPTIONS = [
   { value: "pokemon-it", label: "Pokémon Italiano" },
@@ -43,6 +44,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [priceEuro, setPriceEuro] = useState("");
   const [resellerPriceEuro, setResellerPriceEuro] = useState("");
   const [variants, setVariants] = useState<VariantDraft[]>([]);
+  const [tiers, setTiers] = useState<TierDraft[]>([]);
   const [noWrapPriceEuro, setNoWrapPriceEuro] = useState("");
   const [damagedPriceEuro, setDamagedPriceEuro] = useState("");
   const [costEuro, setCostEuro] = useState("");
@@ -73,6 +75,11 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       setMessage(variantsResult.error);
       return;
     }
+    const tiersResult = tiersPayload(tiers);
+    if (!tiersResult.ok) {
+      setMessage(tiersResult.error);
+      return;
+    }
     setSaving(true);
     setMessage("");
     const result = await createProductAction({
@@ -100,6 +107,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       noWrapPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(noWrapPriceEuro) : null,
       damagedPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(damagedPriceEuro) : null,
       variants: variantsResult.variants,
+      resellerTiers: tiersResult.tiers,
     });
     setSaving(false);
     if (result.ok && result.id) {
@@ -182,6 +190,8 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
         Prezzo rivenditore (€, IVA inclusa) — opzionale
         <input className="in" value={resellerPriceEuro} onChange={(e) => setResellerPriceEuro(e.target.value)} placeholder="es. 72.00" />
       </label>
+
+      <AdminResellerTiersEditor value={tiers} onChange={setTiers} />
 
       {JP_CATEGORIES.has(category) && type === "Booster box" ? (
         <>

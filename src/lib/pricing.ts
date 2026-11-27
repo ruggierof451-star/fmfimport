@@ -20,26 +20,48 @@
 
 export type PackagingChoice = "SEALED" | "NO_WRAP" | "DAMAGED";
 
+export interface ResellerTier {
+  minQty: number;
+  priceCents: number;
+}
+
 export interface PriceableProduct {
   priceCents: number | null;
   resellerPriceCents: number | null;
   noWrapPriceCents?: number | null;
   damagedPriceCents?: number | null;
+  resellerTiers?: ResellerTier[];
+}
+
+/** Scaglione rivenditore applicabile: quello con la soglia più alta raggiunta da quantity. */
+export function resellerTierFor(tiers: ResellerTier[] | undefined, quantity: number): ResellerTier | null {
+  if (!tiers?.length) return null;
+  let best: ResellerTier | null = null;
+  for (const t of tiers) {
+    if (t.minQty <= quantity && (!best || t.minQty > best.minQty)) best = t;
+  }
+  return best;
 }
 
 /**
  * Prezzo unitario da esporre per questo cliente. Il listino rivenditore (se approvato e
- * impostato) vale sempre, indipendentemente dalla confezione scelta. Altrimenti: prezzo
- * pubblico "con pellicola" di default, oppure il prezzo della confezione scelta se
- * impostato per quel prodotto (solo booster box JP, vedi isJpBoosterBox); se quella
- * confezione non ha un prezzo proprio, si ricade sul prezzo pubblico standard.
+ * impostato) vale sempre, indipendentemente dalla confezione scelta: prima lo scaglione
+ * per quantità raggiunto, poi il prezzo rivenditore base. Altrimenti: prezzo pubblico
+ * "con pellicola" di default, oppure il prezzo della confezione scelta se impostato per
+ * quel prodotto (solo booster box JP, vedi isJpBoosterBox); se quella confezione non ha un
+ * prezzo proprio, si ricade sul prezzo pubblico standard.
  */
 export function unitPriceCentsFor(
   product: PriceableProduct,
   isReseller: boolean,
-  packaging: PackagingChoice = "SEALED"
+  packaging: PackagingChoice = "SEALED",
+  quantity = 1
 ): number {
-  if (isReseller && product.resellerPriceCents != null) return product.resellerPriceCents;
+  if (isReseller) {
+    const tier = resellerTierFor(product.resellerTiers, quantity);
+    if (tier) return tier.priceCents;
+    if (product.resellerPriceCents != null) return product.resellerPriceCents;
+  }
   if (packaging === "NO_WRAP" && product.noWrapPriceCents != null) return product.noWrapPriceCents;
   if (packaging === "DAMAGED" && product.damagedPriceCents != null) return product.damagedPriceCents;
   return product.priceCents ?? 0;

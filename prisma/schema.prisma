@@ -154,9 +154,10 @@ model Product {
   supplierLinkId String?       @unique
   supplierLink   SupplierLink?
 
-  orderItems  OrderItem[]
-  changeLogs  ProductChangeLog[]
-  variants    ProductVariant[]
+  orderItems    OrderItem[]
+  changeLogs    ProductChangeLog[]
+  variants      ProductVariant[]
+  resellerTiers ResellerPriceTier[]
 
   createdAt DateTime @updatedAt @default(now())
   updatedAt DateTime @updatedAt
@@ -417,6 +418,22 @@ model ProductVariant {
   updatedAt DateTime @updatedAt
 
   @@index([productId])
+}
+
+/// Scaglioni di prezzo per i rivenditori approvati (uguali per tutti i rivenditori): da
+/// minQty pezzi in su il prezzo unitario è priceCents (IVA inclusa). Vale lo scaglione con
+/// la soglia più alta raggiunta dalla quantità in carrello; sotto il primo scaglione vale
+/// Product.resellerPriceCents (o il prezzo pubblico se non impostato).
+model ResellerPriceTier {
+  id         String  @id @default(cuid())
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  minQty     Int
+  priceCents Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, minQty])
 }
 
 model OrderItem {

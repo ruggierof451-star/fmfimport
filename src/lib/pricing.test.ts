@@ -24,6 +24,40 @@ describe("unitPriceCentsFor", () => {
   });
 });
 
+describe("unitPriceCentsFor — scaglioni rivenditore per quantità", () => {
+  const product = {
+    priceCents: 8990,
+    resellerPriceCents: 7200,
+    resellerTiers: [
+      { minQty: 12, priceCents: 6400 },
+      { minQty: 6, priceCents: 6800 },
+    ],
+  };
+
+  it("uses the base reseller price below the first tier", () => {
+    expect(unitPriceCentsFor(product, true, "SEALED", 5)).toBe(7200);
+  });
+
+  it("applies the tier as soon as its minimum quantity is reached", () => {
+    expect(unitPriceCentsFor(product, true, "SEALED", 6)).toBe(6800);
+    expect(unitPriceCentsFor(product, true, "SEALED", 11)).toBe(6800);
+  });
+
+  it("picks the highest tier reached, regardless of the order tiers are stored in", () => {
+    expect(unitPriceCentsFor(product, true, "SEALED", 12)).toBe(6400);
+    expect(unitPriceCentsFor(product, true, "SEALED", 50)).toBe(6400);
+  });
+
+  it("never applies reseller tiers to non-resellers", () => {
+    expect(unitPriceCentsFor(product, false, "SEALED", 50)).toBe(8990);
+  });
+
+  it("applies tiers even when no base reseller price is set", () => {
+    expect(unitPriceCentsFor({ ...product, resellerPriceCents: null }, true, "SEALED", 3)).toBe(8990);
+    expect(unitPriceCentsFor({ ...product, resellerPriceCents: null }, true, "SEALED", 6)).toBe(6800);
+  });
+});
+
 describe("extractVatCents — scorporo IVA già inclusa nel prezzo (per la fattura, non cambia il totale)", () => {
   it("extracts 22% VAT from a VAT-inclusive amount", () => {
     expect(extractVatCents(12200, 2200)).toBe(2200); // 122,00 € lordi -> 100,00 € netti + 22,00 € IVA

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useCart } from "@/components/cart-context";
-import { formatEuro } from "@/lib/pricing";
-import type { PackagingChoice } from "@/lib/pricing";
+import { formatEuro, resellerTierFor } from "@/lib/pricing";
+import type { PackagingChoice, ResellerTier } from "@/lib/pricing";
 import { MAX_VARIANT_QTY } from "@/lib/variants";
 
 export interface PackagingOption {
@@ -30,6 +30,7 @@ export function ProductBuyBox({
   maxQty,
   isPreorder,
   isResellerPrice,
+  resellerTiers = [],
 }: {
   productId: string;
   packagingOptions: PackagingOption[];
@@ -41,6 +42,8 @@ export function ProductBuyBox({
   maxQty: number;
   isPreorder: boolean;
   isResellerPrice?: boolean;
+  /** Scaglioni per quantità, passati solo se chi guarda è un rivenditore approvato. */
+  resellerTiers?: ResellerTier[];
 }) {
   const { addItem, showToast } = useCart();
   const [qty, setQty] = useState(1);
@@ -50,7 +53,9 @@ export function ProductBuyBox({
 
   const variant = selected === MAIN ? null : (variants.find((v) => v.id === selected) ?? null);
   const mainPriceCents = packagingOptions.find((o) => o.value === packaging)?.priceCents ?? packagingOptions[0]?.priceCents ?? 0;
-  const priceCents = variant ? variant.priceCents : mainPriceCents;
+  // Stessa regola del server (unitPriceCentsFor): lo scaglione rivenditore vince su tutto.
+  const tier = variant ? null : resellerTierFor(resellerTiers, qty);
+  const priceCents = variant ? variant.priceCents : (tier?.priceCents ?? mainPriceCents);
   const limit = variant ? MAX_VARIANT_QTY : maxQty;
   const soldOut = limit <= 0;
 
@@ -123,6 +128,18 @@ export function ProductBuyBox({
           </span>
         ) : null}
       </div>
+      {!variant && resellerTiers.length ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={sectionLabel}>Prezzi rivenditore per quantità</span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {resellerTiers.map((t) => (
+              <span key={t.minQty} className={tier?.minQty === t.minQty ? "pill dark" : "pill"}>
+                da {t.minQty} pz · {formatEuro(t.priceCents)}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="buyrow">
         <div className="qty">
           <button type="button" onClick={() => setQty((q) => clamp(q - 1))} aria-label="Diminuisci quantità">
