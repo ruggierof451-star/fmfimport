@@ -262,9 +262,11 @@ function PerkIconSvg({ icon }: { icon: PerkIcon }) {
         </>
       ) : (
         <>
-          <path d="M32 40L8 30l24-10 24 10z" {...g} transform="translate(0 12)" />
-          <path d="M32 40L8 30l24-10 24 10z" {...g} transform="translate(0 6)" fill="#fff" />
-          <path d="M32 40L8 30l24-10 24 10z" {...k} fill="#fff" />
+          <path d="M52 26A21 21 0 0 0 14 18" {...k} />
+          <path d="M14 8v10h10" {...k} />
+          <path d="M12 38a21 21 0 0 0 38 8" {...k} />
+          <path d="M50 56V46H40" {...k} />
+          <path d="M24 32l6 6 11-12" {...g} strokeWidth={3.2} />
         </>
       )}
     </svg>
