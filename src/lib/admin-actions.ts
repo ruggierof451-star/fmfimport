@@ -40,11 +40,36 @@ function variantsSummary(variants: { name: string; priceCents: number }[]): stri
   return variants.map((v) => `${v.name} (${(v.priceCents / 100).toFixed(2).replace(".", ",")} €)`).join(", ");
 }
 
+// Categorie di prodotto (bucket di catalogo). Le carte singole hanno gioco e lingua liberi.
+const PRODUCT_CATEGORIES = [
+  "pokemon-it",
+  "pokemon-jp",
+  "pokemon-cn",
+  "pokemon-kr",
+  "one-piece-jp",
+  "one-piece-cn",
+  "yugioh",
+  "dragon-ball",
+  "carte-singole-gradate",
+  "carte-singole-raw",
+] as const;
+
+/** Massimo di prodotti nella vetrina a ruota della home. */
+const HERO_MAX = 3;
+
+async function heroSlotsFull(exceptId?: string): Promise<boolean> {
+  const count = await prisma.product.count({
+    where: { heroFeatured: true, deletedAt: null, ...(exceptId ? { id: { not: exceptId } } : {}) },
+  });
+  return count >= HERO_MAX;
+}
+const HERO_FULL_ERROR = `Nella vetrina della home ci sono già ${HERO_MAX} prodotti: togline uno prima di aggiungerne un altro.`;
+
 const productUpdateSchema = z.object({
   id: z.string(),
   name: z.string().min(1).optional(),
   category: z
-    .enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn", "yugioh", "dragon-ball"])
+    .enum(PRODUCT_CATEGORIES)
     .optional(),
   game: z.enum(["POKEMON", "ONE_PIECE", "YUGIOH", "DRAGON_BALL"]).optional(),
   language: z.enum(["IT", "JP", "CN", "KR", "EN"]).optional(),
@@ -54,6 +79,7 @@ const productUpdateSchema = z.object({
   description: z.string().nullable().optional(),
   isNew: z.boolean().optional(),
   isPreorder: z.boolean().optional(),
+  heroFeatured: z.boolean().optional(),
   priceCents: z.number().int().min(0).nullable(),
   resellerPriceCents: z.number().int().min(0).nullable(),
   supplierCostCents: z.number().int().min(0).nullable(),
@@ -78,6 +104,7 @@ const FIELD_LABELS: Record<string, string> = {
   description: "Descrizione",
   isNew: "In evidenza (novità)",
   isPreorder: "Preordine",
+  heroFeatured: "Vetrina in home",
   priceCents: "Prezzo di vendita (centesimi)",
   resellerPriceCents: "Prezzo rivenditore (centesimi)",
   supplierCostCents: "Costo di acquisto (centesimi)",
@@ -98,8 +125,10 @@ function slugify(name: string): string {
 
 const productCreateSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio."),
-  category: z.enum(["pokemon-it", "pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn", "yugioh", "dragon-ball"]),
-  language: z.enum(["IT", "JP", "CN", "KR", "EN"]).optional(), // override: solo per categorie senza lingua fissa (Yu-Gi-Oh!, Dragon Ball)
+  category: z.enum(PRODUCT_CATEGORIES),
+  language: z.enum(["IT", "JP", "CN", "KR", "EN"]).optional(), // override: solo per categorie senza lingua fissa (Yu-Gi-Oh!, Dragon Ball, carte singole)
+  game: z.enum(["POKEMON", "ONE_PIECE", "YUGIOH", "DRAGON_BALL"]).optional(), // override: solo per le carte singole
+  heroFeatured: z.boolean().optional(),
   setName: z.string().min(1, "Il nome del set è obbligatorio."),
   type: z.string().min(1, "Il tipo è obbligatorio."),
   imageUrl: z.string().nullable().optional(),
@@ -125,6 +154,8 @@ const CATEGORY_TO_GAME_LANG: Record<string, { game: "POKEMON" | "ONE_PIECE" | "Y
   "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
   yugioh: { game: "YUGIOH", language: "JP" },
   "dragon-ball": { game: "DRAGON_BALL", language: "JP" },
+  "carte-singole-gradate": { game: "POKEMON", language: "IT" },
+  "carte-singole-raw": { game: "POKEMON", language: "IT" },
 };
 
 export async function createProductAction(input: z.infer<typeof productCreateSchema>): Promise<{ ok: boolean; error?: string; id?: string }> {
@@ -134,8 +165,10 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
   const parsed = productCreateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   const data = parsed.data;
-  const { game, language: defaultLanguage } = CATEGORY_TO_GAME_LANG[data.category];
+  const { game: defaultGame, language: defaultLanguage } = CATEGORY_TO_GAME_LANG[data.category];
+  const game = data.category.startsWith("carte-singole") ? data.game ?? defaultGame : defaultGame;
   const language = data.language ?? defaultLanguage;
+  if (data.heroFeatured && (await heroSlotsFull())) return { ok: false, error: HERO_FULL_ERROR };
 
   let slug = slugify(data.name);
   if (!slug) slug = `prodotto-${Date.now()}`;
@@ -164,6 +197,7 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
       stockLastCheckedAt: data.stockQty != null ? new Date() : null,
       published: data.published,
       isNew: data.isNew,
+      heroFeatured: data.heroFeatured ?? false,
       matchStatus: "MANUAL",
       variants: data.variants?.length
         ? { create: data.variants.map((v, i) => ({ name: v.name, priceCents: v.priceCents, position: i })) }
@@ -309,6 +343,9 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
     include: { variants: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] }, resellerTiers: true },
   });
   if (!existing) return { ok: false, error: "Prodotto non trovato." };
+  if (data.heroFeatured && !existing.heroFeatured && (await heroSlotsFull(data.id))) {
+    return { ok: false, error: HERO_FULL_ERROR };
+  }
 
   // Scaglioni rivenditore: la lista inviata sostituisce quella esistente (nessun ordine li referenzia).
   const tierOps = [];
@@ -375,6 +412,7 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
         description: data.description === undefined ? undefined : data.description || null,
         isNew: data.isNew,
         isPreorder: data.isPreorder,
+        heroFeatured: data.heroFeatured,
         priceCents: data.priceCents,
         resellerPriceCents: data.resellerPriceCents,
         noWrapPriceCents: data.noWrapPriceCents,

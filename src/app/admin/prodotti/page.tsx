@@ -113,7 +113,14 @@ export default async function AdminProductsPage({
           <tbody>
             {products.map((p) => (
               <tr key={p.id}>
-                <td>{cleanProductName(p.name)}</td>
+                <td>
+                  {cleanProductName(p.name)}
+                  {p.heroFeatured ? (
+                    <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "var(--gold)", whiteSpace: "nowrap" }}>
+                      ★ Vetrina home
+                    </span>
+                  ) : null}
+                </td>
                 <td>{p.category}</td>
                 <td>{p.priceCents != null ? formatEuro(p.priceCents) : <span className="muted">non in vendita</span>}</td>
                 <td>{p.resellerPriceCents != null ? formatEuro(p.resellerPriceCents) : "—"}</td>
