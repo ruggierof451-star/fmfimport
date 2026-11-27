@@ -60,7 +60,8 @@ export async function POST(req: Request) {
 
   const filename = `upload-${Date.now()}-${Math.round(Math.random() * 1e6)}.${finalExt}`;
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  // Archivio collegato con chiave classica oppure con OIDC + BLOB_STORE_ID (archivi recenti).
+  if (process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID) {
     try {
       // L'archivio del progetto può essere privato o pubblico: si prova prima privato
       // (le foto poi si vedono tramite /img/…, vedi src/lib/blob-image.ts).

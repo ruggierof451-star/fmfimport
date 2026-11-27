@@ -8,8 +8,10 @@ import { get } from "@vercel/blob";
 export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   if (!path?.length) return new Response("Non trovata.", { status: 404 });
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return new Response("Archivio immagini non collegato.", { status: 503, headers: { "X-Img-Reason": "no-token" } });
+  // Credenziali: BLOB_READ_WRITE_TOKEN oppure (archivi collegati più di recente) OIDC di
+  // Vercel + BLOB_STORE_ID. Le legge da sola la libreria.
+  if (!process.env.BLOB_READ_WRITE_TOKEN && !process.env.BLOB_STORE_ID) {
+    return new Response("Archivio immagini non collegato.", { status: 503, headers: { "X-Img-Reason": "no-credentials" } });
   }
   const pathname = path.map((p) => decodeURIComponent(p)).join("/");
   if (pathname.includes("..")) return new Response("Non trovata.", { status: 404 });
@@ -30,7 +32,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ path: s
     });
   } catch (err) {
     console.error("[img] lettura dall'archivio non riuscita:", pathname, err);
-    const reason = err instanceof Error ? err.name : "error";
+    const reason = err instanceof Error ? `${err.name}: ${err.message}`.slice(0, 180).replace(/[^\x20-\x7E]/g, " ") : "error";
     return new Response("Non trovata.", { status: 404, headers: { "X-Img-Reason": reason } });
   }
 }
