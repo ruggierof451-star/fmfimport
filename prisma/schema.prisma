@@ -305,6 +305,8 @@ model User {
   // Consenso esplicito alle email di marketing (offerte, novità): di default false,
   // si attiva solo con un'azione dell'utente (checkbox in registrazione o nell'account).
   marketingOptIn Boolean @default(false)
+  // ultimo allineamento riuscito con i contatti Resend (null = da sincronizzare)
+  marketingSyncedAt DateTime?
 
   addresses   Address[]
   orders      Order[]
@@ -492,6 +494,8 @@ enum MarketingCampaignStatus {
   SENDING
   SENT
   FAILED
+  SCHEDULED
+  CANCELED
 }
 
 // Email di marketing (offerte, novità): create e inviate dall'admin dalla sezione
@@ -510,4 +514,41 @@ model MarketingCampaign {
   updatedAt      DateTime                @updatedAt
   sentAt         DateTime?
   createdBy      String?
+
+  // Invio tramite Resend Broadcasts (vedi src/lib/marketing.ts)
+  segmentKey        String    @default("all") // gruppo di destinatari, es. "all", "clienti", "pokemon"
+  previewText       String? // anteprima mostrata accanto all'oggetto nella casella di posta
+  scheduledAt       DateTime? // invio programmato
+  resendBroadcastId String?   @unique
+}
+
+/// Iscritti alla newsletter dal modulo del sito, anche senza account. Doppia conferma:
+/// l'iscrizione vale solo dopo il clic sul link ricevuto via email (status CONFIRMED).
+model NewsletterSubscriber {
+  id                String           @id @default(cuid())
+  email             String           @unique
+  status            NewsletterStatus @default(PENDING)
+  interests         String[] // giochi scelti nel modulo: pokemon, onepiece, yugioh, dragonball
+  confirmToken      String           @unique
+  confirmSentAt     DateTime?
+  confirmedAt       DateTime?
+  unsubscribedAt    DateTime?
+  marketingSyncedAt DateTime? // ultimo allineamento riuscito con i contatti Resend
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+enum NewsletterStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+/// Segmenti (gruppi di destinatari) creati su Resend: qui solo la corrispondenza
+/// chiave interna → id del segmento su Resend, creato al primo utilizzo.
+model MarketingSegment {
+  key             String   @id
+  name            String
+  resendSegmentId String   @unique
+  createdAt       DateTime @default(now())
 }

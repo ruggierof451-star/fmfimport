@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { syncContactSafely } from "@/lib/marketing";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { formatEuro } from "@/lib/pricing";
@@ -60,6 +61,9 @@ export async function POST(req: Request) {
       }
 
       const customerEmail = order.guestEmail ?? (order.userId ? (await prisma.user.findUnique({ where: { id: order.userId } }))?.email : null);
+      // Email marketing: se il cliente ha dato il consenso entra nel segmento "Clienti"
+      // e negli interessi dei giochi acquistati (non blocca la risposta in caso di errore).
+      await syncContactSafely(customerEmail);
       if (customerEmail) {
         sendOrderConfirmationEmail({
           to: customerEmail,

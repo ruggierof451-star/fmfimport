@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { after } from "next/server";
+import { revokeMarketingConsent, syncContactSafely } from "@/lib/marketing";
 
 const addressSchema = z.object({
   label: z.string().optional(),
@@ -115,13 +117,23 @@ export async function setMarketingOptInAction(input: { optIn: boolean }): Promis
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Devi essere connesso." };
 
-  await prisma.user.update({ where: { id: user.id }, data: { marketingOptIn: input.optIn } });
+  if (input.optIn) {
+    await prisma.user.update({ where: { id: user.id }, data: { marketingOptIn: true, marketingSyncedAt: null } });
+  } else {
+    // vale anche per un'eventuale iscrizione alla newsletter con la stessa email
+    await revokeMarketingConsent(user.email);
+  }
+  after(() => syncContactSafely(user.email));
   revalidatePath("/account");
   return { ok: true };
 }
 
 /** Disiscrizione pubblica (link nelle email di marketing): nessun login richiesto. */
 export async function unsubscribeFromMarketingAction(input: { userId: string }): Promise<{ ok: boolean; error?: string }> {
-  await prisma.user.updateMany({ where: { id: input.userId }, data: { marketingOptIn: false } });
+  const user = await prisma.user.findUnique({ where: { id: input.userId }, select: { email: true } });
+  if (user) {
+    await revokeMarketingConsent(user.email);
+    after(() => syncContactSafely(user.email));
+  }
   return { ok: true };
 }

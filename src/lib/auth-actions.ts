@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { after } from "next/server";
+import { syncContactSafely } from "@/lib/marketing";
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 ora
 
@@ -49,6 +51,7 @@ export async function registerAction(
   });
 
   await createSession({ userId: user.id, role: user.role, email: user.email });
+  if (user.marketingOptIn) after(() => syncContactSafely(user.email));
   return { ok: true };
 }
 

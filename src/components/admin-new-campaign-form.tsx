@@ -4,9 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createMarketingCampaignAction } from "@/lib/marketing-actions";
 
-export function AdminNewCampaignForm() {
+export interface SegmentOption {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export function AdminNewCampaignForm({ segments }: { segments: SegmentOption[] }) {
   const router = useRouter();
   const [subject, setSubject] = useState("");
+  const [previewText, setPreviewText] = useState("");
+  const [segmentKey, setSegmentKey] = useState("all");
   const [bodyHtml, setBodyHtml] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -15,13 +23,15 @@ export function AdminNewCampaignForm() {
     e.preventDefault();
     setSaving(true);
     setMessage("");
-    const result = await createMarketingCampaignAction({ subject: subject.trim(), bodyHtml });
+    const result = await createMarketingCampaignAction({
+      subject: subject.trim(),
+      previewText: previewText.trim() || null,
+      bodyHtml,
+      segmentKey: segmentKey as "all",
+    });
     setSaving(false);
-    if (result.ok && result.id) {
-      router.push(`/admin/marketing/${result.id}`);
-    } else {
-      setMessage(result.error ?? "Errore durante la creazione.");
-    }
+    if (result.ok && result.id) router.push(`/admin/marketing/${result.id}`);
+    else setMessage(result.error ?? "Errore durante la creazione.");
   }
 
   return (
@@ -29,7 +39,21 @@ export function AdminNewCampaignForm() {
       {message ? <div className="alert err">{message}</div> : null}
       <label className="fl">
         Oggetto email
-        <input className="in" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="es. -15% su tutto il catalogo Pokémon" />
+        <input className="in" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="es. Nuovo set One Piece OP-12 disponibile" />
+      </label>
+      <label className="fl">
+        Anteprima (facoltativa) — il testo grigio che si vede accanto all&apos;oggetto nella casella di posta
+        <input className="in" value={previewText} onChange={(e) => setPreviewText(e.target.value)} placeholder="es. Booster box giapponesi in arrivo, preordina ora" />
+      </label>
+      <label className="fl">
+        Destinatari
+        <select className="in" value={segmentKey} onChange={(e) => setSegmentKey(e.target.value)}>
+          {segments.map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.label} ({s.count})
+            </option>
+          ))}
+        </select>
       </label>
       <label className="fl">
         Contenuto (HTML consentito)
@@ -41,8 +65,8 @@ export function AdminNewCampaignForm() {
           placeholder="<h1>Titolo</h1><p>Testo dell'offerta...</p>"
         />
         <span className="muted" style={{ fontSize: 13 }}>
-          Viene inserito dentro il modello email di FMF Cards (logo, piè di pagina, link di disiscrizione): scrivi
-          solo il contenuto centrale.
+          Viene inserito dentro il modello email di FMF Cards (logo, piè di pagina, link di disiscrizione): scrivi solo il
+          contenuto centrale. Dopo aver creato la bozza vedi l&apos;anteprima e puoi mandarti una prova.
         </span>
       </label>
       <button className="btn btn-dark" type="submit" disabled={saving} style={{ alignSelf: "flex-start" }}>

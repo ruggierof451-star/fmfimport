@@ -10,9 +10,9 @@ const BANK_ACCOUNT_HOLDER = process.env.BANK_ACCOUNT_HOLDER || "FMF Cards S.R.L.
 
 function layout(preheader: string, bodyHtml: string, opts: { unsubscribeUrl?: string } = {}): string {
   const footerNote = opts.unsubscribeUrl
-    ? `Hai ricevuto questa email perché hai accettato di ricevere offerte e novità da <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.it</a>.
+    ? `Hai ricevuto questa email perché hai accettato di ricevere offerte e novità da <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.com</a>.
        <a href="${opts.unsubscribeUrl}" style="color:#8A8A8A;text-decoration:underline;">Annulla l&apos;iscrizione</a>.`
-    : `Hai ricevuto questa email perché hai un account o un ordine su <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.it</a>.`;
+    : `Hai ricevuto questa email perché hai un account o un ordine su <a href="${SITE_URL}" style="color:#8A8A8A;">fmfcards.com</a>.`;
   return `<!DOCTYPE html>
 <html lang="it">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>FMF Cards</title></head>
@@ -294,45 +294,28 @@ export async function sendResellerRequestDecisionEmail(params: {
 }
 
 /**
- * Invia una campagna di marketing a una lista di iscritti. Ogni email viene inviata
- * singolarmente (mai più destinatari nello stesso campo "to", per non esporre gli
- * indirizzi tra loro) tramite l'API batch di Resend, a gruppi di massimo 100 per
- * rispettare il limite del servizio. Ogni email ha il proprio link di disiscrizione.
+ * HTML completo di una campagna di marketing, con la grafica delle email del sito.
+ * Il link di disiscrizione è il segnaposto di Resend {{{RESEND_UNSUBSCRIBE_URL}}}: Resend
+ * lo sostituisce per ogni destinatario e gestisce la disiscrizione (che poi torna al sito
+ * tramite webhook). Per l'email di prova il segnaposto diventa un link alla home.
  */
-export async function sendMarketingCampaign(
-  recipients: { userId: string; email: string }[],
-  subject: string,
-  bodyHtml: string
-): Promise<{ sent: number; failed: number }> {
-  if (!resend) {
-    console.log(`[email] RESEND_API_KEY non configurata — campagna marketing NON inviata (${recipients.length} destinatari).`);
-    return { sent: 0, failed: recipients.length };
-  }
+export function renderMarketingEmail(params: { subject: string; previewText?: string | null; bodyHtml: string; forTest?: boolean }): string {
+  const unsubscribeUrl = params.forTest ? SITE_URL : "{{{RESEND_UNSUBSCRIBE_URL}}}";
+  return layout(params.previewText || params.subject, params.bodyHtml, { unsubscribeUrl });
+}
 
-  let sent = 0;
-  let failed = 0;
-  const BATCH_SIZE = 100;
-
-  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-    const chunk = recipients.slice(i, i + BATCH_SIZE);
-    const payload = chunk.map((r) => ({
-      from: FROM,
-      to: r.email,
-      subject,
-      html: layout(subject, bodyHtml, { unsubscribeUrl: `${SITE_URL}/disiscrizione/${r.userId}` }),
-    }));
-    try {
-      const result = await resend.batch.send(payload);
-      if (result.error) {
-        failed += chunk.length;
-      } else {
-        sent += chunk.length;
-      }
-    } catch (err) {
-      console.error("[email] invio batch campagna marketing fallito:", err);
-      failed += chunk.length;
-    }
-  }
-
-  return { sent, failed };
+/** Email di conferma iscrizione alla newsletter (doppio consenso). */
+export async function sendNewsletterConfirmEmail(to: string, confirmUrl: string) {
+  const subject = "Conferma la tua iscrizione alla newsletter FMF Cards";
+  await send(
+    to,
+    subject,
+    layout(
+      "Un clic per confermare l'iscrizione",
+      `<h1 style="margin:0 0 12px;font-size:22px;">Conferma l&apos;iscrizione</h1>
+       <p style="margin:0 0 16px;line-height:1.6;">Hai chiesto di ricevere offerte, novità e nuovi arrivi di FMF Cards. Conferma con il pulsante qui sotto: finché non confermi non ti invieremo nulla.</p>
+       ${button(confirmUrl, "Confermo l'iscrizione", { gold: true })}
+       <p style="margin:20px 0 0;font-size:13px;color:#8A8A8A;line-height:1.6;">Se non sei stato tu, ignora questa email: senza conferma l&apos;iscrizione non viene attivata.</p>`
+    )
+  );
 }

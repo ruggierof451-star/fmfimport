@@ -1,14 +1,16 @@
 import { BackButton } from "@/components/back-button";
 import { AdminNewCampaignForm } from "@/components/admin-new-campaign-form";
+import { SEGMENTS, segmentCounts } from "@/lib/marketing";
 
 export const metadata = { title: "Admin · Nuova campagna marketing" };
 
-export default function AdminNewMarketingCampaignPage() {
+export default async function AdminNewMarketingCampaignPage() {
+  const counts = await segmentCounts();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <BackButton />
       <h1 style={{ fontSize: 26, fontWeight: 600 }}>Nuova campagna</h1>
-      <AdminNewCampaignForm />
+      <AdminNewCampaignForm segments={SEGMENTS.map((s) => ({ key: s.key, label: s.label, count: counts[s.key] }))} />
     </div>
   );
 }
