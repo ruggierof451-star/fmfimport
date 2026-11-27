@@ -5,7 +5,8 @@ import { getPricingSettings } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export const metadata = { title: "Checkout" };
+// Pagina personale o di servizio: fuori da Google.
+export const metadata = { title: "Checkout", robots: { index: false, follow: false } };
 
 export default async function CheckoutPage() {
   const [settings, user] = await Promise.all([getPricingSettings(), getCurrentUser()]);

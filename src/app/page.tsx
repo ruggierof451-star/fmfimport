@@ -10,6 +10,14 @@ import { LIST_META } from "@/lib/catalog";
 import { cleanProductName } from "@/lib/product-art";
 import { ensureCutoutImage } from "@/lib/image-cutout";
 import { getSession } from "@/lib/auth";
+import { JsonLd } from "@/components/json-ld";
+import { absoluteUrl, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/site";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { url: "/", images: [DEFAULT_OG_IMAGE] },
+};
 
 const HOME_SECTIONS: { key: string; label: string }[] = [
   { key: "novita", label: "Novità" },
@@ -62,6 +70,29 @@ export default async function HomePage() {
 
   return (
     <div className="home-bg">
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: SITE_NAME,
+            url: absoluteUrl("/"),
+            email: "fmfcardssrls@gmail.com",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: SITE_NAME,
+            url: absoluteUrl("/"),
+            inLanguage: "it-IT",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${absoluteUrl("/cerca")}?q={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          },
+        ]}
+      />
       <Header activeKey="home" transparent />
       <section className="hero" aria-labelledby="h1">
         <div className="wrap">

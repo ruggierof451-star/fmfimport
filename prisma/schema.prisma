@@ -503,6 +503,8 @@ enum MarketingCampaignStatus {
   SENDING
   SENT
   FAILED
+  SCHEDULED
+  CANCELED
 }
 
 // Email di marketing (offerte, novità): create e inviate dall'admin dalla sezione
@@ -521,4 +523,102 @@ model MarketingCampaign {
   updatedAt      DateTime                @updatedAt
   sentAt         DateTime?
   createdBy      String?
+
+  // Invio gestito dal sito (vedi src/lib/marketing-engine.ts)
+  segmentKey  String    @default("all") // gruppo di destinatari, es. "all", "clienti", "pokemon"
+  previewText String? // anteprima mostrata accanto all'oggetto nella casella di posta
+  scheduledAt DateTime? // invio programmato
+
+  sends MarketingSend[]
 }
+
+enum MarketingSendStatus {
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED
+}
+
+/// Una singola email di marketing (campagna o automazione) a un destinatario: è insieme
+/// la coda di invio (status QUEUED), il registro di quanto inviato nelle ultime 24 ore
+/// (per il limite giornaliero) e la base delle statistiche (aperture, clic, disiscrizioni).
+model MarketingSend {
+  id             String              @id @default(cuid())
+  // "c:<campagna>:<email>" · "a:welcome:<email>" · "a:abandoned:<ordine>": impedisce doppioni
+  dedupeKey      String              @unique
+  campaign       MarketingCampaign?  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId     String?
+  automationKey  String?
+  email          String
+  firstName      String?
+  refId          String? // es. id ordine per il promemoria ordine non completato
+  status         MarketingSendStatus @default(QUEUED)
+  error          String?
+  resendEmailId  String?
+  queuedAt       DateTime            @default(now())
+  sentAt         DateTime?
+  openedAt       DateTime?
+  openCount      Int                 @default(0)
+  clickedAt      DateTime?
+  clickCount     Int                 @default(0)
+  unsubscribedAt DateTime?
+
+  clicks MarketingClick[]
+
+  @@index([status, queuedAt])
+  @@index([sentAt])
+  @@index([campaignId])
+}
+
+model MarketingClick {
+  id        String        @id @default(cuid())
+  send      MarketingSend @relation(fields: [sendId], references: [id], onDelete: Cascade)
+  sendId    String
+  url       String
+  createdAt DateTime      @default(now())
+
+  @@index([sendId])
+}
+
+/// Email automatiche: "welcome" (dopo l'iscrizione) e "abandoned_order" (ordine creato ma
+/// non pagato). Testo modificabile dal pannello, attivabili/disattivabili.
+model MarketingAutomation {
+  key        String   @id
+  enabled    Boolean  @default(false)
+  subject    String
+  bodyHtml   String
+  delayHours Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+/// Stato del motore di invio: evita che due esecuzioni lavorino la coda insieme.
+model MarketingEngineState {
+  id        Int      @id @default(1)
+  lockedAt  DateTime @default(now())
+  lastRunAt DateTime @default(now())
+}
+
+/// Iscritti alla newsletter dal modulo del sito (anche senza account) o importati dal
+/// pannello. Dal modulo serve la doppia conferma: l'iscrizione vale solo dopo il clic sul
+/// link ricevuto via email (status CONFIRMED); gli importati sono confermati dall'admin.
+model NewsletterSubscriber {
+  id                String           @id @default(cuid())
+  email             String           @unique
+  status            NewsletterStatus @default(PENDING)
+  interests         String[] // giochi scelti nel modulo: pokemon, onepiece, yugioh, dragonball
+  confirmToken      String           @unique
+  confirmSentAt     DateTime?
+  confirmedAt       DateTime?
+  unsubscribedAt    DateTime?
+  firstName         String?
+  source            String           @default("newsletter") // newsletter | import
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+enum NewsletterStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+

@@ -5,7 +5,8 @@ import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 
-export const metadata = { title: "Ordine confermato" };
+// Pagina personale o di servizio: fuori da Google.
+export const metadata = { title: "Ordine confermato", robots: { index: false, follow: false } };
 
 const STEPS: { status: string; label: string }[] = [
   { status: "PENDING_PAYMENT", label: "Ricevuto" },

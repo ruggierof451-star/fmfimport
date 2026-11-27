@@ -4,6 +4,9 @@ import { requireAdmin } from "@/lib/auth";
 import { AdminNav } from "@/components/admin-nav";
 import { LogoutButton } from "@/components/logout-button";
 
+// Pannello admin: mai indicizzato (oltre al Disallow in robots.txt).
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
   if (!admin) redirect("/account");

@@ -1,12 +1,25 @@
 import { notFound } from "next/navigation";
 import { CatalogPage, type CatalogSearchParams } from "@/components/catalog-page";
 import { LIST_META } from "@/lib/catalog";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
   const meta = LIST_META[category];
   if (!meta) return {};
-  return { title: meta.title, description: meta.description || undefined };
+  // Canonical sempre sulla categoria "pulita": filtri, ordinamento e pagine della stessa
+  // lista non creano duplicati in Google.
+  return {
+    title: meta.title,
+    description: meta.description || undefined,
+    alternates: { canonical: `/${category}` },
+    openGraph: {
+      url: `/${category}`,
+      title: `${meta.title} · FMF Cards`,
+      description: meta.description || undefined,
+      images: [DEFAULT_OG_IMAGE],
+    },
+  };
 }
 
 export default async function CategoryRoute({

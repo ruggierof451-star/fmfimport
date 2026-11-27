@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -6,7 +7,13 @@ import { CopyEmailButton } from "@/components/copy-email-button";
 import { getPricingSettings } from "@/lib/settings";
 import { formatEuro } from "@/lib/pricing";
 
-export const metadata = { title: "Centro assistenza" };
+export const metadata = {
+  title: "Centro assistenza",
+  description:
+    "Assistenza clienti FMF Cards: risposte su ordini, spedizioni, resi e pagamenti.",
+  alternates: { canonical: "/assistenza" },
+  openGraph: { url: "/assistenza", title: "Centro assistenza · FMF Cards", images: [DEFAULT_OG_IMAGE] },
+};
 
 export default async function AssistenzaPage() {
   const settings = await getPricingSettings();

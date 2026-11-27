@@ -2,7 +2,8 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { UnsubscribeButton } from "@/components/unsubscribe-button";
 
-export const metadata = { title: "Disiscrizione email" };
+// Pagina personale o di servizio: fuori da Google.
+export const metadata = { title: "Disiscrizione email", robots: { index: false, follow: false } };
 
 export default async function UnsubscribePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
