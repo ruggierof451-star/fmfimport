@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateProductAction, deleteProductAction, archiveProductAction, unarchiveProductAction } from "@/lib/admin-actions";
 import { ImageUploadField } from "@/components/image-upload-field";
-import type { Product } from "@/generated/prisma";
+import { AdminVariantsEditor, variantDraftsFrom, variantsPayload } from "@/components/admin-variants-editor";
+import type { Product, ProductVariant } from "@/generated/prisma";
 
 const CATEGORY_OPTIONS = [
   { value: "pokemon-it", label: "Pokémon Italiano" },
@@ -30,7 +31,13 @@ const FREE_LANGUAGE_CATEGORIES = new Set(["yugioh", "dragon-ball"]);
 
 const DEFAULT_TYPES = ["Booster box", "Slim box", "Display", "Tin", "Deck", "Collection", "Promo e pack", "Accessori"];
 
-export function AdminProductForm({ product, existingTypes = [] }: { product: Product; existingTypes?: string[] }) {
+export function AdminProductForm({
+  product,
+  existingTypes = [],
+}: {
+  product: Product & { variants: ProductVariant[] };
+  existingTypes?: string[];
+}) {
   const router = useRouter();
   const typeOptions = Array.from(new Set([...DEFAULT_TYPES, ...existingTypes, product.type])).sort((a, b) =>
     a.localeCompare(b, "it")
@@ -57,6 +64,7 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
   const [costEuro, setCostEuro] = useState(product.supplierCostCents != null ? (product.supplierCostCents / 100).toFixed(2) : "");
   const [stockQty, setStockQty] = useState(product.stockQty != null ? String(product.stockQty) : "");
   const [published, setPublished] = useState(product.published);
+  const [variants, setVariants] = useState(() => variantDraftsFrom(product.variants));
   const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">(product.language);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -92,6 +100,12 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       setSaving(false);
       return;
     }
+    const variantsResult = variantsPayload(variants);
+    if (!variantsResult.ok) {
+      setMessage(variantsResult.error);
+      setSaving(false);
+      return;
+    }
     const result = await updateProductAction({
       id: product.id,
       name,
@@ -119,6 +133,7 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
       published,
       noWrapPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(noWrapPriceEuro) : null,
       damagedPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(damagedPriceEuro) : null,
+      variants: variantsResult.variants,
     });
     setSaving(false);
     if (result.ok) {
@@ -253,6 +268,8 @@ export function AdminProductForm({ product, existingTypes = [] }: { product: Pro
           </label>
         </>
       ) : null}
+
+      <AdminVariantsEditor value={variants} onChange={setVariants} mainLabel={type === "__altro__" ? customType : type} />
 
       <label className="fl">
         Costo di acquisto (€) — uso interno, opzionale

@@ -8,7 +8,6 @@ import { ProductBuyBox, type PackagingOption } from "@/components/product-buybox
 import {
   getProductBySlug,
   getRelatedProducts,
-  getTwinEditions,
   GAME_LABEL,
   LANG_LABEL,
   PACKAGING_LABEL,
@@ -41,7 +40,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const isReseller = session?.role === "RESELLER";
   const isResellerPrice = isReseller && product.resellerPriceCents != null;
   const cleanName = cleanProductName(product.name);
-  const twins = await getTwinEditions(product);
   const related = await getRelatedProducts(product);
 
   const canChoosePackaging = isJpBoosterBox(product.category, product.type);
@@ -90,7 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="pill">{LANG_LABEL[product.language]}</span>
               {product.condition === "B_GRADE" ? <span className="pill">B-Grade</span> : <span className="pill">Sigillato</span>}
               {product.isPreorder ? <span className="pill">Preordine</span> : null}
-              {soldOut ? <span className="pill">Esaurito</span> : null}
+              {soldOut ? <span className="pill">{product.variants.length ? `${product.type} esaurito` : "Esaurito"}</span> : null}
             </div>
             <h1>{cleanName}</h1>
             <div className="muted" style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14 }}>
@@ -110,29 +108,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <ProductBuyBox
                 productId={product.id}
                 packagingOptions={packagingOptions}
+                mainLabel={product.type}
+                variants={product.variants.map((v) => ({ id: v.id, name: v.name, priceCents: v.priceCents }))}
                 maxQty={cap}
                 isPreorder={product.isPreorder}
                 isResellerPrice={isResellerPrice}
               />
-              {twins.length ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>
-                    Disponibile anche in
-                  </span>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span className="btn btn-dark btn-sm" aria-current="true">
-                      {LANG_LABEL[product.language]}
-                      {product.condition === "B_GRADE" ? " · B-Grade" : ""}
-                    </span>
-                    {twins.map((t) => (
-                      <Link key={t.id} className="btn btn-line btn-sm" href={`/prodotto/${t.slug}`}>
-                        {LANG_LABEL[t.language]}
-                        {t.condition === "B_GRADE" ? " · B-Grade" : ""}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
             <div className="assure">
               <div>

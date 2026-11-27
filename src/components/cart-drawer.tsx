@@ -30,7 +30,7 @@ export function CartDrawer() {
             </div>
           ) : (
             quote?.lines.map((line) => (
-              <div className="line" key={`${line.productId}-${line.packaging ?? "SEALED"}`}>
+              <div className="line" key={`${line.productId}-${line.variantId ?? ""}-${line.packaging ?? "SEALED"}`}>
                 <Link className="im" href={`/prodotto/${line.slug}`} aria-hidden="true" tabIndex={-1}>
                   {line.imageUrl ? (
                     <Image src={line.imageUrl} alt="" fill sizes="64px" style={{ objectFit: "contain" }} unoptimized={/^https?:\/\//.test(line.imageUrl)} />
@@ -40,6 +40,7 @@ export function CartDrawer() {
                   <Link href={`/prodotto/${line.slug}`}>{line.name}</Link>
                   <span className="muted" style={{ fontSize: 13 }}>
                     {formatEuro(line.unitPriceCents)} cad.
+                    {line.variantName ? ` · ${line.variantName}` : ""}
                     {line.packaging && line.packaging !== "SEALED" ? ` · ${PACKAGING_LABEL[line.packaging]}` : ""}
                     {line.isResellerPrice ? (
                       <>
@@ -51,16 +52,16 @@ export function CartDrawer() {
                 </div>
                 <div className="rt">
                   <div className="qty">
-                    <button onClick={() => setQuantity(line.productId, line.quantity - 1, line.packaging)} aria-label="Diminuisci">
+                    <button onClick={() => setQuantity(line.productId, line.quantity - 1, line.packaging, line.variantId)} aria-label="Diminuisci">
                       −
                     </button>
                     <input readOnly value={line.quantity} />
-                    <button onClick={() => setQuantity(line.productId, line.quantity + 1, line.packaging)} aria-label="Aumenta">
+                    <button onClick={() => setQuantity(line.productId, line.quantity + 1, line.packaging, line.variantId)} aria-label="Aumenta">
                       +
                     </button>
                   </div>
                   <span className="tot">{formatEuro(line.lineTotalCents)}</span>
-                  <button className="x" aria-label="Rimuovi" onClick={() => removeItem(line.productId, line.packaging)}>
+                  <button className="x" aria-label="Rimuovi" onClick={() => removeItem(line.productId, line.packaging, line.variantId)}>
                     ×
                   </button>
                 </div>
