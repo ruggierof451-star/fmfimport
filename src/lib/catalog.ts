@@ -174,6 +174,8 @@ export interface CatalogFilters {
   games?: string[];
   langs?: string[];
   types?: string[];
+  /** Disponibilità: "magazzino" (in magazzino) e/o "ordinare" (su ordinazione). */
+  avail?: string[];
   priceBand?: "all" | "a" | "b" | "c" | "d";
   sort?: "rel" | "asc" | "desc" | "name";
   q?: string;
@@ -221,6 +223,10 @@ export async function listCatalog(key: string, filters: CatalogFilters, isResell
     ...(filters.games?.length ? { game: { in: filters.games.map((g) => g.toUpperCase()) as Game[] } } : {}),
     ...(filters.langs?.length ? { language: { in: filters.langs.map((l) => l.toUpperCase()) as Language[] } } : {}),
     ...(filters.types?.length ? { type: { in: filters.types } } : {}),
+    // un solo valore filtra; entrambi (o nessuno) = tutti
+    ...(filters.avail?.length === 1 && ["magazzino", "ordinare"].includes(filters.avail[0])
+      ? { onOrder: filters.avail[0] === "ordinare" }
+      : {}),
   };
 
   let where: Prisma.ProductWhereInput = { AND: [PUBLISHED, meta.where, combinable] };

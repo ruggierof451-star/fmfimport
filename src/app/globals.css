@@ -532,3 +532,11 @@ table.admin th{font-size:12px;color:var(--muted);font-weight:600;text-transform:
 
 /* Bandierine accanto alle sezioni per lingua */
 .flag{display:inline-block;vertical-align:middle;margin-right:7px;border-radius:2px;flex:none;position:relative;top:-1px}
+
+/* Scheda prodotto: riquadro disponibilità sotto le info (spedizione, originale, reso) */
+.avail{margin-top:14px;padding:12px 16px;border-radius:12px;border:1px solid;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.45}
+.avail b{font-size:15px;font-weight:700}
+.avail-order{background:#FDECEC;border-color:#E5484D;color:#B4232A}
+.avail-order span{color:#8F1D22}
+.avail-stock{background:#EAF7EE;border-color:#3FA45B;color:#1F7A3A}
+.avail-stock span{color:#25603A}

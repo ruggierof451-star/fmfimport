@@ -13,6 +13,7 @@ export interface CatalogSearchParams {
   game?: string | string[];
   lang?: string | string[];
   type?: string | string[];
+  avail?: string | string[];
   price?: string;
   sort?: string;
   page?: string;
@@ -29,6 +30,7 @@ export async function CatalogPage({ listKey, searchParams }: { listKey: string; 
     games: toArray(searchParams.game),
     langs: toArray(searchParams.lang),
     types: toArray(searchParams.type),
+    avail: toArray(searchParams.avail),
     priceBand: (searchParams.price as Filters["priceBand"]) ?? "all",
     sort: (searchParams.sort as Filters["sort"]) ?? "rel",
     q: searchParams.q,
@@ -50,6 +52,8 @@ export async function CatalogPage({ listKey, searchParams }: { listKey: string; 
     langJp: pool.filter((p) => p.language === Language.JP).length,
     langCn: pool.filter((p) => p.language === Language.CN).length,
     langKr: pool.filter((p) => p.language === Language.KR).length,
+    availStock: pool.filter((p) => !p.onOrder).length,
+    availOrder: pool.filter((p) => p.onOrder).length,
     byType: Object.fromEntries(availableTypes.map((t) => [t, pool.filter((p) => p.type === t).length])),
   };
 

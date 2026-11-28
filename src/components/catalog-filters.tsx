@@ -19,6 +19,8 @@ export function CatalogFilters({
     langJp: number;
     langCn: number;
     langKr: number;
+    availStock: number;
+    availOrder: number;
     byType: Record<string, number>;
   };
 }) {
@@ -30,6 +32,7 @@ export function CatalogFilters({
   const games = searchParams.getAll("game");
   const langs = searchParams.getAll("lang");
   const types = searchParams.getAll("type");
+  const avail = searchParams.getAll("avail");
   const price = searchParams.get("price") ?? "all";
 
   function updateParams(mutate: (p: URLSearchParams) => void) {
@@ -51,7 +54,7 @@ export function CatalogFilters({
     updateParams((p) => p.set(key, value));
   }
 
-  const hasFilters = games.length || langs.length || types.length || price !== "all";
+  const hasFilters = games.length || langs.length || types.length || avail.length || price !== "all";
 
   return (
     <>
@@ -89,6 +92,17 @@ export function CatalogFilters({
             </label>
           </fieldset>
         ) : null}
+        <fieldset>
+          <legend>Disponibilità</legend>
+          <label>
+            <input type="checkbox" checked={avail.includes("magazzino")} onChange={() => toggleMulti("avail", "magazzino")} />
+            Disponibile in magazzino<span className="n">{counts.availStock}</span>
+          </label>
+          <label>
+            <input type="checkbox" checked={avail.includes("ordinare")} onChange={() => toggleMulti("avail", "ordinare")} />
+            Da ordinare<span className="n">{counts.availOrder}</span>
+          </label>
+        </fieldset>
         <fieldset>
           <legend>Tipologia</legend>
           {availableTypes.map((t) => (

@@ -64,6 +64,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [published, setPublished] = useState(true);
   const [isNew, setIsNew] = useState(false);
   const [heroFeatured, setHeroFeatured] = useState(false);
+  const [onOrder, setOnOrder] = useState(false);
   const [game, setGame] = useState<GameValue>("POKEMON");
   const [language, setLanguage] = useState<"IT" | "JP" | "CN" | "KR" | "EN">("JP");
   const [saving, setSaving] = useState(false);
@@ -101,6 +102,7 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       category: category as Parameters<typeof createProductAction>[0]["category"],
       game: SINGLE_CARD_CATEGORIES.has(category) ? game : undefined,
       heroFeatured,
+      onOrder,
       language: FREE_LANGUAGE_CATEGORIES.has(category) ? language : undefined,
       setName: productSetName.trim(),
       type: finalType,
@@ -238,6 +240,18 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
         Quantità in stock
         <input className="in" value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder="es. 12, oppure vuoto" />
       </label>
+
+      <fieldset style={{ border: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <legend style={{ fontWeight: 600, marginBottom: 6 }}>Disponibilità</legend>
+        <label className="check">
+          <input type="radio" name="availability" checked={!onOrder} onChange={() => setOnOrder(false)} />
+          Disponibile in magazzino (spedizione 1-3 giorni lavorativi)
+        </label>
+        <label className="check">
+          <input type="radio" name="availability" checked={onOrder} onChange={() => setOnOrder(true)} />
+          Disponibile su ordinazione (importazione, circa 10-12 giorni lavorativi)
+        </label>
+      </fieldset>
 
       <label className="check">
         <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />

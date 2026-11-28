@@ -137,6 +137,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             },
             availability: product.isPreorder
               ? "https://schema.org/PreOrder"
+              : product.onOrder
+                ? "https://schema.org/BackOrder"
               : soldOut && !product.variants.length
                 ? "https://schema.org/OutOfStock"
                 : "https://schema.org/InStock",
@@ -244,6 +246,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </span>
               </div>
             </div>
+            {product.onOrder ? (
+              <div className="avail avail-order" role="note">
+                <b>Disponibile su ordinazione</b>
+                <span>Tempi di spedizione d&apos;importazione circa 10-12 giorni lavorativi</span>
+              </div>
+            ) : !soldOut ? (
+              <div className="avail avail-stock" role="note">
+                <b>Disponibile in magazzino</b>
+                <span>Spedizione in 1-3 giorni lavorativi</span>
+              </div>
+            ) : null}
           </div>
         </section>
         <ProductTabs product={product} />
