@@ -249,7 +249,7 @@ export function buildInfoPages(opts: {
           <p>
             Vendiamo prodotti sigillati <b>Pokémon</b>, <b>One Piece</b>, <b>Yu-Gi-Oh!</b> e <b>Dragon Ball</b>: dalle
             edizioni italiane a quelle di importazione giapponese, cinese e coreana. Ci rivolgiamo sia ai
-            collezionisti sia ai negozianti, con un prezzo unico e uguale per tutti.
+            collezionisti sia ai negozianti.
           </p>
           <h3>Perché senza registrazione</h3>
           <p>
