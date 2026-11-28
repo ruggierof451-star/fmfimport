@@ -39,6 +39,7 @@ export const NAV: { key: string; label: string }[] = [
   { key: "yugioh", label: "Yu-Gi-Oh!" },
   { key: "dragon-ball", label: "Dragon Ball" },
   { key: "carte-singole", label: "Carte singole" },
+  { key: "preordini", label: "Preordini" },
 ];
 
 export interface ListMeta {
@@ -160,6 +161,11 @@ export const LIST_META: Record<string, ListMeta> = {
     emptyFallbackMessage:
       "La classifica comparirà con i primi ordini. Intanto trovi qui sotto i prodotti appena arrivati.",
     fallbackWhere: { isNew: true },
+  },
+  preordini: {
+    title: "Preordini",
+    description: "Prodotti in arrivo, prenotabili ora: li ricevi appena escono. La data di uscita è indicata su ogni prodotto.",
+    where: { isPreorder: true },
   },
   offerte: {
     title: "Offerte",

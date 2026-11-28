@@ -203,6 +203,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {soldOut ? <span className="pill">{product.variants.length ? `${product.type} esaurito` : "Esaurito"}</span> : null}
             </div>
             <h1>{cleanName}</h1>
+            {product.isPreorder ? (
+              <div style={{ background: "#FBF7ED", border: "1px solid #EEE1BC", borderRadius: 10, padding: "10px 14px", fontSize: 14 }}>
+                <b>Preordine</b>
+                {product.preorderReleaseInfo ? <> · uscita prevista: <b>{product.preorderReleaseInfo}</b></> : null}. Prenotalo ora, lo riceverai appena disponibile.
+              </div>
+            ) : null}
             <div className="muted" style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14 }}>
               <span>
                 Espansione: <b style={{ color: "var(--ink)" }}>{product.setName}</b>

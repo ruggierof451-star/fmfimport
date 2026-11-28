@@ -87,6 +87,11 @@ export const CATEGORY_SEO: Record<string, { title: string; description: string }
     description:
       "I box e i display più acquistati su FMF Cards negli ultimi 30 giorni, calcolati sugli ordini reali. Pokémon, One Piece e altri TCG.",
   },
+  preordini: {
+    title: "Preordini TCG | Prodotti in arrivo da prenotare - FMF Cards",
+    description:
+      "Preordina le nuove uscite Pokémon, One Piece, Yu-Gi-Oh! e Dragon Ball: prenoti ora e ricevi il prodotto appena disponibile. Data di uscita indicata.",
+  },
   offerte: {
     title: "Offerte e Promozioni TCG - FMF Cards",
     description:

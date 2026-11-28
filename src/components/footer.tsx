@@ -28,6 +28,7 @@ export function Footer({ transparent }: { transparent?: boolean } = {}) {
             <Link href="/yugioh">Yu-Gi-Oh!</Link>
             <Link href="/dragon-ball">Dragon Ball</Link>
             <Link href="/carte-singole">Carte singole</Link>
+            <Link href="/preordini">Preordini</Link>
           </nav>
         </div>
         <div>

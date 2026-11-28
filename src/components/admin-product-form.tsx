@@ -64,6 +64,7 @@ export function AdminProductForm({
   const [description, setDescription] = useState(product.description ?? "");
   const [isNew, setIsNew] = useState(product.isNew);
   const [isPreorder, setIsPreorder] = useState(product.isPreorder);
+  const [preorderReleaseInfo, setPreorderReleaseInfo] = useState(product.preorderReleaseInfo ?? "");
   const [heroFeatured, setHeroFeatured] = useState(product.heroFeatured);
   const [onOrder, setOnOrder] = useState(product.onOrder);
   const [game, setGame] = useState<GameValue>(product.game);
@@ -146,6 +147,7 @@ export function AdminProductForm({
       description: description.trim() === "" ? null : description,
       isNew,
       isPreorder,
+      preorderReleaseInfo: isPreorder && preorderReleaseInfo.trim() !== "" ? preorderReleaseInfo.trim() : null,
       priceCents: toCents(priceEuro),
       resellerPriceCents: toCents(resellerPriceEuro),
       supplierCostCents: toCents(costEuro),
@@ -293,6 +295,12 @@ export function AdminProductForm({
         <input type="checkbox" checked={isPreorder} onChange={(e) => setIsPreorder(e.target.checked)} />
         Preordine
       </label>
+      {isPreorder ? (
+        <label className="fl">
+          Data di uscita (mostrata al cliente, es. "Marzo 2026" o "15/03/2026")
+          <input className="in" value={preorderReleaseInfo} onChange={(e) => setPreorderReleaseInfo(e.target.value)} placeholder="Es. Marzo 2026" />
+        </label>
+      ) : null}
 
       <hr style={{ border: "none", borderTop: "1px solid #2A2A2A", margin: "4px 0" }} />
 

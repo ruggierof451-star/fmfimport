@@ -146,6 +146,8 @@ model Product {
   published  Boolean @default(true)
   isNew      Boolean @default(false)
   isPreorder Boolean @default(false)
+  /// Data/periodo di uscita mostrato per i preordini (testo libero, es. "Marzo 2026" o "15/03/2026").
+  preorderReleaseInfo String?
   // Scelto a mano dall'admin per la vetrina a ruota in cima alla home (massimo 3 prodotti).
   heroFeatured Boolean @default(false)
   // Disponibilità: false = in magazzino (spedizione 1-3 giorni), true = su ordinazione

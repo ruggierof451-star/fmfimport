@@ -63,6 +63,8 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
   const [stockQty, setStockQty] = useState("");
   const [published, setPublished] = useState(true);
   const [isNew, setIsNew] = useState(false);
+  const [isPreorder, setIsPreorder] = useState(false);
+  const [preorderReleaseInfo, setPreorderReleaseInfo] = useState("");
   const [heroFeatured, setHeroFeatured] = useState(false);
   const [onOrder, setOnOrder] = useState(false);
   const [game, setGame] = useState<GameValue>("POKEMON");
@@ -114,6 +116,8 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
       stockQty: stockQty.trim() === "" ? null : parseInt(stockQty, 10),
       published,
       isNew,
+      isPreorder,
+      preorderReleaseInfo: isPreorder && preorderReleaseInfo.trim() !== "" ? preorderReleaseInfo.trim() : null,
       noWrapPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(noWrapPriceEuro) : null,
       damagedPriceCents: JP_CATEGORIES.has(category) && type === "Booster box" ? toCents(damagedPriceEuro) : null,
       variants: variantsResult.variants,
@@ -257,6 +261,17 @@ export function AdminNewProductForm({ existingTypes = [] }: { existingTypes?: st
         <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />
         Mostra come novità in homepage
       </label>
+
+      <label className="check">
+        <input type="checkbox" checked={isPreorder} onChange={(e) => setIsPreorder(e.target.checked)} />
+        Preordine (prodotto in arrivo, mostrato nella sezione Preordini)
+      </label>
+      {isPreorder ? (
+        <label className="fl">
+          Data di uscita (mostrata al cliente, es. "Marzo 2026" o "15/03/2026")
+          <input className="in" value={preorderReleaseInfo} onChange={(e) => setPreorderReleaseInfo(e.target.value)} placeholder="Es. Marzo 2026" />
+        </label>
+      ) : null}
 
       <label className="check">
         <input type="checkbox" checked={heroFeatured} onChange={(e) => setHeroFeatured(e.target.checked)} />
