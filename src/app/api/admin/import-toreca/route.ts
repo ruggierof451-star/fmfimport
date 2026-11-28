@@ -83,7 +83,7 @@ export async function POST(req: Request) {
 
   for (const item of items) {
     const key = compareKey(item.name);
-    if (isPreorderName(item.name, item.sourceUrl)) {
+    if (isPreorderName(item.name)) {
       skipped.push({ name: item.name, reason: "preordine" });
       continue;
     }

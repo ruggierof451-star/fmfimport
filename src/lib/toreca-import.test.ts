@@ -24,6 +24,7 @@ describe("guessType / guessSetName / isPreorderName", () => {
     expect(guessType("Pokemon 30th Celebration Premium Deck Set JP")).toBe("Deck");
     expect(guessType("Pokémon Center Fukuoka Special Box JP")).toBe("Collection");
     expect(guessSetName("Pokémon Mega Dream Ex Booster Box JP")).toBe("Mega Dream Ex");
-    expect(isPreorderName("Pokemon 30th Celebration Booster Box JP", "/product/pre-order-pokemon-30th-celebration-booster-box-jp/")).toBe(true);
+    expect(isPreorderName("Pokemon 30th Celebration Booster Box JP")).toBe(false);
+    expect(isPreorderName("[PRE-ORDER] Pokemon Nuovo Set Booster Box JP")).toBe(true);
   });
 });

@@ -54,6 +54,10 @@ export function guessSetName(name: string): string {
   return s || name.trim();
 }
 
-export function isPreorderName(name: string, url = ""): boolean {
-  return /pre-?order/i.test(name) || /pre-?order/i.test(url);
+/**
+ * Preordine solo se lo dice il nome. Il link non conta: Toreca lascia "preorder" nell'indirizzo
+ * anche dopo l'uscita (es. Abyss Eye, Mega Dream ex, 30th Celebration, già disponibili).
+ */
+export function isPreorderName(name: string): boolean {
+  return /pre-?order|preordine/i.test(name);
 }
