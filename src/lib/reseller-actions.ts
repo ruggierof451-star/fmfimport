@@ -44,10 +44,10 @@ export async function submitResellerRequestAction(input: ResellerRequestInput): 
     },
   });
 
-  sendResellerRequestReceivedEmail(email, companyName).catch((err) =>
+  await sendResellerRequestReceivedEmail(email, companyName).catch((err) =>
     console.error("[rivenditori] invio conferma ricezione fallito:", err)
   );
-  sendAdminNewResellerRequestNotification({
+  await sendAdminNewResellerRequestNotification({
     companyName,
     vatNumber: data.vatNumber.trim(),
     contactName: data.contactName.trim(),

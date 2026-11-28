@@ -57,9 +57,7 @@ export async function registerAction(
 
   await createSession({ userId: user.id, role: user.role, email: user.email });
   // email di benvenuto all'account (modello "account_welcome", modificabile da Admin → Email)
-  after(() =>
-    sendWelcomeEmail(user.email, user.name?.split(" ")[0] ?? "").catch((err) => console.error("[registrazione] email benvenuto fallita:", err))
-  );
+  await sendWelcomeEmail(user.email, user.name?.split(" ")[0] ?? "").catch((err) => console.error("[registrazione] email benvenuto fallita:", err));
   // email automatica di marketing di benvenuto (se attiva) a chi si registra con il consenso marketing
   if (user.marketingOptIn) {
     after(async () => {
