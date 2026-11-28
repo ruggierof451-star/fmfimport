@@ -7,6 +7,7 @@ import { createSession, destroySession, getCurrentUser, hashPassword, verifyPass
 import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email";
 import { after } from "next/server";
 import { enqueueAutomation, maybeProcessQueue } from "@/lib/marketing-engine";
+import { rateLimit, rateLimitReset, clientIp, tooManyAttemptsMessage } from "@/lib/rate-limit";
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 ora
 
@@ -34,6 +35,10 @@ export async function registerAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   }
   const email = parsed.data.email.toLowerCase().trim();
+
+  // Anti abuso: massimo 10 registrazioni ogni ora dallo stesso indirizzo IP.
+  const okIp = await rateLimit(`register:ip:${await clientIp()}`, 10, 60 * 60 * 1000);
+  if (!okIp.ok) return { ok: false, error: tooManyAttemptsMessage(okIp.retryAfterSec) };
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -77,11 +82,21 @@ export async function loginAction(input: { email: string; password: string }): P
   }
   const email = parsed.data.email.toLowerCase().trim();
 
+  // Anti brute force: massimo 10 tentativi per email e 20 per indirizzo IP ogni 15 minuti.
+  const ip = await clientIp();
+  const byEmail = await rateLimit(`login:email:${email}`, 10, 15 * 60 * 1000);
+  const byIp = await rateLimit(`login:ip:${ip}`, 20, 15 * 60 * 1000);
+  if (!byEmail.ok || !byIp.ok) {
+    return { ok: false, error: tooManyAttemptsMessage(Math.max(byEmail.retryAfterSec, byIp.retryAfterSec)) };
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
     return { ok: false, error: "Email o password non corrette." };
   }
 
+  // Accesso riuscito: azzera i contatori così un utente legittimo non resta limitato.
+  await rateLimitReset(`login:email:${email}`);
   await createSession({ userId: user.id, role: user.role, email: user.email });
   return { ok: true };
 }
@@ -133,6 +148,14 @@ export async function requestPasswordResetAction(
   const parsed = requestResetSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   const email = parsed.data.email.toLowerCase().trim();
+
+  // Anti abuso: massimo 5 richieste di reset ogni ora per IP e per email.
+  const ip = await clientIp();
+  const okIp = await rateLimit(`reset:ip:${ip}`, 5, 60 * 60 * 1000);
+  const okEmail = await rateLimit(`reset:email:${email}`, 5, 60 * 60 * 1000);
+  if (!okIp.ok || !okEmail.ok) {
+    return { ok: false, error: tooManyAttemptsMessage(Math.max(okIp.retryAfterSec, okEmail.retryAfterSec)) };
+  }
 
   const user = await prisma.user.findUnique({ where: { email } });
   // Risposta identica che l'utente esista o no: non riveliamo quali email sono registrate.

@@ -641,3 +641,14 @@ enum NewsletterStatus {
   UNSUBSCRIBED
 }
 
+
+// Conteggio tentativi per finestra temporale: protegge login, registrazione e recupero
+// password dai tentativi automatici ripetuti (brute force). Sta nel database così il
+// limite è condiviso tra tutte le funzioni serverless su Vercel. Le righe scadute
+// vengono semplicemente ignorate e riscritte; una pulizia periodica è facoltativa.
+model RateLimit {
+  key       String   @id // es. "login:ip:1.2.3.4" oppure "login:email:mario@x.it"
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+}
