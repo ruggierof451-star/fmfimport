@@ -171,7 +171,7 @@ export async function requestPasswordResetAction(
   });
 
   const resetPath = `/account/reimposta-password/${rawToken}`;
-  const resetUrl = `${process.env.SITE_URL || "http://localhost:3000"}${resetPath}`;
+  const resetUrl = `${process.env.SITE_URL || "https://www.fmfcards.com"}${resetPath}`;
   const emailResult = await sendPasswordResetEmail(email, resetUrl);
 
   // Il link di reset NON viene mai mostrato a schermo in produzione: chiunque può chiedere

@@ -12,7 +12,7 @@ import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
 
-const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
+const SITE_URL = process.env.SITE_URL || "https://www.fmfcards.com";
 
 /**
  * Crea un ordine. Il totale NON viene mai letto dal corpo della richiesta: viene
