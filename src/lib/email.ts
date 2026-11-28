@@ -24,8 +24,8 @@ function layout(preheader: string, bodyHtml: string, opts: { unsubscribeUrl?: st
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0F0F0;padding:32px 16px;">
     <tr><td align="center">
       <table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #EAEAEA;">
-        <tr><td bgcolor="#000000" style="background:#000000;padding:22px 32px;">
-          <img src="${SITE_URL}/fmf-cards-logo-white.png" width="180" alt="FMF CARDS" style="display:block;border:0;width:180px;height:auto;color:#ffffff;font-size:18px;font-weight:700;" />
+        <tr><td bgcolor="#000000" style="background:#000000;padding:0;font-size:0;line-height:0;">
+          <img src="${SITE_URL}/fmf-email-logo.png" width="560" alt="FMF CARDS" style="display:block;border:0;width:100%;max-width:560px;height:auto;" />
         </td></tr>
         <tr><td style="padding:32px;">${bodyHtml}</td></tr>
         <tr><td style="padding:20px 32px;background:#FAFAFA;border-top:1px solid #EAEAEA;">
