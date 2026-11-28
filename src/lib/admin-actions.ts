@@ -511,7 +511,7 @@ export async function updateOrderStatusAction(input: {
 
   const customerEmail = updated.user?.email ?? updated.guestEmail;
   if (customerEmail) {
-    sendOrderStatusEmail({
+    await sendOrderStatusEmail({
       to: customerEmail,
       orderNumber: updated.orderNumber,
       status: updated.status,

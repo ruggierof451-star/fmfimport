@@ -204,7 +204,7 @@ export async function POST(req: Request) {
   // consenso come dal modulo del sito: parte un'email di conferma e nessuna email di
   // marketing viene inviata finché non clicca il link. Non deve mai bloccare l'ordine.
   if (body.newsletter) {
-    subscribeNewsletterAction({
+    await subscribeNewsletterAction({
       email: customerEmail,
       firstName: body.shipping.firstName,
       interests: [],
@@ -216,7 +216,7 @@ export async function POST(req: Request) {
   // PENDING_PAYMENT finché un admin non lo conferma manualmente (vedi updateOrderStatusAction);
   // qui l'email di conferma parte subito, con le istruzioni per il bonifico incluse.
   if (body.paymentMethod === "BANK_TRANSFER") {
-    sendOrderConfirmationEmail({
+    await sendOrderConfirmationEmail({
       to: customerEmail,
       orderNumber: order.orderNumber,
       totalFormatted: formatEuro(order.totalCents),
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
       })),
     }).catch((err) => console.error("[checkout] invio email conferma fallito:", err));
 
-    sendAdminNewOrderNotification({
+    await sendAdminNewOrderNotification({
       orderNumber: order.orderNumber,
       orderId: order.id,
       totalFormatted: formatEuro(order.totalCents),

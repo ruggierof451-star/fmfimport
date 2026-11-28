@@ -111,7 +111,7 @@ export async function reviewResellerRequestAction(input: {
     await prisma.user.update({ where: { id: account.id }, data: { role: "CUSTOMER" } });
   }
 
-  sendResellerRequestDecisionEmail({
+  await sendResellerRequestDecisionEmail({
     to: updated.email,
     companyName: updated.companyName,
     approved: input.status === "APPROVED",
