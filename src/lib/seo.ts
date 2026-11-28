@@ -42,6 +42,11 @@ export const CATEGORY_SEO: Record<string, { title: string; description: string }
     description:
       "Booster box e slim box One Piece Card Game in edizione cinese, originali e sigillati. Prezzi chiari per tutti e spedizione con tracking.",
   },
+  "altri-tcg": {
+    title: "Altri TCG | Yu-Gi-Oh! e Dragon Ball Sigillati - FMF Cards",
+    description:
+      "Yu-Gi-Oh! e Dragon Ball Super Card Game: booster box e prodotti sigillati, edizione giapponese e inglese. Prezzi chiari e spedizione con tracking.",
+  },
   yugioh: {
     title: "Carte Yu-Gi-Oh! | Booster Box Sigillati - FMF Cards",
     description:
@@ -130,7 +135,7 @@ export function languageListKeyFor(game: Game, language: Language): string | nul
 
 /** Categoria del gioco (pagina "madre" della lingua). */
 export function gameListKeyFor(game: Game): string {
-  return game === "POKEMON" ? "pokemon" : game === "ONE_PIECE" ? "onepiece" : game === "YUGIOH" ? "yugioh" : "dragon-ball";
+  return game === "POKEMON" ? "pokemon" : game === "ONE_PIECE" ? "onepiece" : "altri-tcg";
 }
 
 type SeoProduct = {
@@ -196,6 +201,8 @@ export function categoryParentCrumb(key: string): { name: string; path: string }
     "one-piece-cn": "onepiece",
     "carte-singole-gradate": "carte-singole",
     "carte-singole-raw": "carte-singole",
+    yugioh: "altri-tcg",
+    "dragon-ball": "altri-tcg",
   };
   const parent = parents[key];
   return parent && LIST_META[parent] ? [{ name: LIST_META[parent].title, path: `/${parent}` }] : [];

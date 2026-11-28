@@ -36,8 +36,7 @@ export const NAV: { key: string; label: string }[] = [
   { key: "pokemon-kr", label: "Pokémon KR" },
   { key: "one-piece-jp", label: "One Piece JP" },
   { key: "one-piece-cn", label: "One Piece CN" },
-  { key: "yugioh", label: "Yu-Gi-Oh!" },
-  { key: "dragon-ball", label: "Dragon Ball" },
+  { key: "altri-tcg", label: "Altri TCG" },
   { key: "carte-singole", label: "Carte singole" },
   { key: "preordini", label: "Preordini" },
 ];
@@ -60,6 +59,12 @@ const POKEMON_SEGMENT = [
   { key: "pokemon-jp", label: "Giapponese" },
   { key: "pokemon-cn", label: "Cinese" },
   { key: "pokemon-kr", label: "Coreano" },
+];
+
+const ALTRI_TCG_SEGMENT = [
+  { key: "altri-tcg", label: "Tutti" },
+  { key: "yugioh", label: "Yu-Gi-Oh!" },
+  { key: "dragon-ball", label: "Dragon Ball" },
 ];
 
 const CARTE_SINGOLE_SEGMENT = [
@@ -111,15 +116,23 @@ export const LIST_META: Record<string, ListMeta> = {
       { key: "one-piece-cn", label: "Cinese" },
     ],
   },
+  "altri-tcg": {
+    title: "Altri TCG",
+    description: "Yu-Gi-Oh! e Dragon Ball: booster box e prodotti sigillati, edizione giapponese e inglese.",
+    where: { category: { in: ["yugioh", "dragon-ball"] } },
+    segment: ALTRI_TCG_SEGMENT,
+  },
   yugioh: {
     title: "Yu-Gi-Oh!",
     description: "Booster box e prodotti sigillati Yu-Gi-Oh!, edizione giapponese e inglese.",
     where: { category: "yugioh" },
+    segment: ALTRI_TCG_SEGMENT,
   },
   "dragon-ball": {
     title: "Dragon Ball",
     description: "Booster box e prodotti sigillati Dragon Ball Super Card Game, edizione giapponese e inglese.",
     where: { category: "dragon-ball" },
+    segment: ALTRI_TCG_SEGMENT,
   },
   "carte-singole": {
     title: "Carte singole",
