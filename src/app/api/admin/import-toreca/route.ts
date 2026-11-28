@@ -3,7 +3,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { compareKey, guessSetName, guessType, isPreorderName, salePriceCents } from "@/lib/toreca-import";
+import {
+  compareKey,
+  guessSetName,
+  guessType,
+  isPreorderName,
+  salePriceCents,
+} from "@/lib/toreca-import";
 
 /**
  * Importazione prodotti dal fornitore Toreca (solo admin).
@@ -27,7 +33,13 @@ const itemSchema = z.object({
 });
 const bodySchema = z.object({
   items: z.array(itemSchema).min(1).max(100),
-  category: z.enum(["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]),
+  category: z.enum([
+    "pokemon-jp",
+    "pokemon-cn",
+    "pokemon-kr",
+    "one-piece-jp",
+    "one-piece-cn",
+  ]),
   markupPct: z.number().min(0).max(300).default(25),
   publish: z.boolean().default(true),
   dryRun: z.boolean().default(true),
@@ -52,9 +64,14 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-async function saveImage(url: string, createdBy: string): Promise<string | null> {
+async function saveImage(
+  url: string,
+  createdBy: string,
+): Promise<string | null> {
   if (!/^https:\/\/torecaimport\.com\//.test(url)) return null;
-  const res = await fetch(url, { headers: { "User-Agent": "FMF Cards import" } }).catch(() => null);
+  const res = await fetch(url, {
+    headers: { "User-Agent": "FMF Cards import" },
+  }).catch(() => null);
   if (!res?.ok) return null;
   const type = (res.headers.get("content-type") ?? "").split(";")[0].trim();
   if (!IMAGE_TYPES.has(type)) return null;
@@ -69,21 +86,47 @@ async function saveImage(url: string, createdBy: string): Promise<string | null>
 
 export async function POST(req: Request) {
   const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Non autorizzato." }, { status: 401 });
+  if (!admin)
+    return NextResponse.json({ error: "Non autorizzato." }, { status: 401 });
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dati non validi." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Dati non validi." },
+      { status: 400 },
+    );
   const { items, category, markupPct, publish, dryRun } = parsed.data;
   const { game, language } = CATEGORY[category];
 
   const existing = await prisma.product.findMany({
     where: { deletedAt: null },
-    select: { id: true, name: true, slug: true, supplierLink: { select: { sourceUrl: true } } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      supplierLink: { select: { sourceUrl: true } },
+    },
   });
   const byKey = new Map(existing.map((p) => [compareKey(p.name), p]));
-  const bySource = new Map(existing.filter((p) => p.supplierLink?.sourceUrl).map((p) => [p.supplierLink!.sourceUrl!, p]));
+  // Gli indirizzi (slug) devono essere unici anche rispetto ai prodotti eliminati, che restano nel DB.
+  const takenSlugs = new Set(
+    (await prisma.product.findMany({ select: { slug: true } })).map(
+      (p) => p.slug,
+    ),
+  );
+  const bySource = new Map(
+    existing
+      .filter((p) => p.supplierLink?.sourceUrl)
+      .map((p) => [p.supplierLink!.sourceUrl!, p]),
+  );
 
-  const created: { name: string; slug: string; priceCents: number; costCents: number; image: boolean }[] = [];
+  const created: {
+    name: string;
+    slug: string;
+    priceCents: number;
+    costCents: number;
+    image: boolean;
+  }[] = [];
   const skipped: { name: string; reason: string }[] = [];
   const seenKeys = new Set<string>();
 
@@ -99,55 +142,83 @@ export async function POST(req: Request) {
       continue;
     }
     if (seenKeys.has(key)) {
-      skipped.push({ name: item.name, reason: "doppione nella stessa importazione" });
+      skipped.push({
+        name: item.name,
+        reason: "doppione nella stessa importazione",
+      });
       continue;
     }
     seenKeys.add(key);
 
     const priceCents = salePriceCents(item.costCents, markupPct);
     let slug = slugify(item.name) || `prodotto-${Date.now()}`;
-    if (existing.some((p) => p.slug === slug) || created.some((c) => c.slug === slug)) slug = `${slug}-${Date.now().toString(36)}`;
+    if (takenSlugs.has(slug)) slug = `${slug}-${Date.now().toString(36)}`;
+    takenSlugs.add(slug);
 
     if (dryRun) {
-      created.push({ name: item.name, slug, priceCents, costCents: item.costCents, image: Boolean(item.imageUrl) });
+      created.push({
+        name: item.name,
+        slug,
+        priceCents,
+        costCents: item.costCents,
+        image: Boolean(item.imageUrl),
+      });
       continue;
     }
 
-    const imageUrl = item.imageUrl ? await saveImage(item.imageUrl, admin.email).catch(() => null) : null;
-    await prisma.product.create({
-      data: {
-        name: item.name,
-        slug,
-        game,
-        language,
-        category,
-        setName: guessSetName(item.name),
-        type: guessType(item.name),
-        condition: "NEW",
-        imageUrl,
-        priceCents,
-        supplierCostCents: item.costCents,
-        costIsEstimated: false,
-        stockQty: null,
-        published: publish && Boolean(imageUrl),
-        onOrder: true,
-        matchStatus: "MATCHED",
-        supplierCode: item.supplierCode ?? null,
-        supplierLink: {
-          create: {
-            supplierName: "Toreca",
-            supplierCode: item.supplierCode ?? null,
-            costCents: item.costCents,
-            sourceUrl: item.sourceUrl,
-            matchConfidence: "import",
+    try {
+      const imageUrl = item.imageUrl
+        ? await saveImage(item.imageUrl, admin.email).catch(() => null)
+        : null;
+      await prisma.product.create({
+        data: {
+          name: item.name,
+          slug,
+          game,
+          language,
+          category,
+          setName: guessSetName(item.name),
+          type: guessType(item.name),
+          condition: "NEW",
+          imageUrl,
+          priceCents,
+          supplierCostCents: item.costCents,
+          costIsEstimated: false,
+          stockQty: null,
+          published: publish && Boolean(imageUrl),
+          onOrder: true,
+          matchStatus: "MATCHED",
+          supplierCode: item.supplierCode ?? null,
+          supplierLink: {
+            create: {
+              supplierName: "Toreca",
+              supplierCode: item.supplierCode ?? null,
+              costCents: item.costCents,
+              sourceUrl: item.sourceUrl,
+              matchConfidence: "import",
+            },
+          },
+          changeLogs: {
+            create: {
+              field: "Importazione",
+              oldValue: null,
+              newValue: `Toreca · costo ${(item.costCents / 100).toFixed(2)} € · +${markupPct}%`,
+              changedBy: admin.email,
+            },
           },
         },
-        changeLogs: {
-          create: { field: "Importazione", oldValue: null, newValue: `Toreca · costo ${(item.costCents / 100).toFixed(2)} € · +${markupPct}%`, changedBy: admin.email },
-        },
-      },
-    });
-    created.push({ name: item.name, slug, priceCents, costCents: item.costCents, image: Boolean(imageUrl) });
+      });
+      created.push({
+        name: item.name,
+        slug,
+        priceCents,
+        costCents: item.costCents,
+        image: Boolean(imageUrl),
+      });
+    } catch (err) {
+      console.error("[import-toreca] prodotto non creato:", item.name, err);
+      skipped.push({ name: item.name, reason: "errore durante la creazione" });
+    }
   }
 
   if (!dryRun && created.length) {
