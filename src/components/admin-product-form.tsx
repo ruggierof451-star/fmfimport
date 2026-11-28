@@ -65,6 +65,7 @@ export function AdminProductForm({
   const [isNew, setIsNew] = useState(product.isNew);
   const [isPreorder, setIsPreorder] = useState(product.isPreorder);
   const [heroFeatured, setHeroFeatured] = useState(product.heroFeatured);
+  const [onOrder, setOnOrder] = useState(product.onOrder);
   const [game, setGame] = useState<GameValue>(product.game);
   const [priceEuro, setPriceEuro] = useState(product.priceCents != null ? (product.priceCents / 100).toFixed(2) : "");
   const [resellerPriceEuro, setResellerPriceEuro] = useState(
@@ -136,6 +137,7 @@ export function AdminProductForm({
       name,
       category: category as NonNullable<Parameters<typeof updateProductAction>[0]["category"]>,
       heroFeatured,
+      onOrder,
       game: finalGame,
       language: finalLanguage,
       setName: productSetName,
@@ -264,6 +266,18 @@ export function AdminProductForm({
         Descrizione (HTML consentito)
         <textarea className="in" rows={6} value={description} onChange={(e) => setDescription(e.target.value)} />
       </label>
+
+      <fieldset style={{ border: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <legend style={{ fontWeight: 600, marginBottom: 6 }}>Disponibilità</legend>
+        <label className="check">
+          <input type="radio" name="availability" checked={!onOrder} onChange={() => setOnOrder(false)} />
+          Disponibile in magazzino (spedizione 1-3 giorni lavorativi)
+        </label>
+        <label className="check">
+          <input type="radio" name="availability" checked={onOrder} onChange={() => setOnOrder(true)} />
+          Disponibile su ordinazione (importazione, circa 10-12 giorni lavorativi)
+        </label>
+      </fieldset>
 
       <label className="check">
         <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />

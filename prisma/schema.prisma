@@ -148,6 +148,9 @@ model Product {
   isPreorder Boolean @default(false)
   // Scelto a mano dall'admin per la vetrina a ruota in cima alla home (massimo 3 prodotti).
   heroFeatured Boolean @default(false)
+  // Disponibilità: false = in magazzino (spedizione 1-3 giorni), true = su ordinazione
+  // (importazione, circa 10-12 giorni lavorativi). Riquadro in scheda prodotto e filtro catalogo.
+  onOrder Boolean @default(false)
   archived   Boolean   @default(false) // nascosto dal catalogo e dalla lista prodotti attivi, ma recuperabile
   deletedAt  DateTime? // eliminazione "soft": il prodotto resta nel DB (serve per lo storico ordini) ma sparisce ovunque tranne che nella sezione "Eliminati"
 

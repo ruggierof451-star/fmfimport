@@ -33,6 +33,8 @@ export async function GET() {
     orderBy: { updatedAt: "desc" },
   });
 
+  // Data stimata per i prodotti su ordinazione: ~16 giorni di calendario (10-12 lavorativi).
+  const backorderDate = new Date(Date.now() + 16 * 86_400_000).toISOString().slice(0, 10) + "T00:00+01:00";
   const items = products
     .map((p) => {
       if (p.priceCents == null || !p.imageUrl) return "";
@@ -40,7 +42,9 @@ export async function GET() {
       const image = displayImageUrl(p.imageUrl);
       const imageAbs = image.startsWith("http") ? image : absoluteUrl(image);
       const link = absoluteUrl(`/prodotto/${encodeURIComponent(p.slug)}`);
-      const inStock = p.isPreorder ? "preorder" : p.stockQty === 0 ? "out_of_stock" : "in_stock";
+      // Su ordinazione = "backorder": Google vuole anche la data stimata di disponibilità.
+      const inStock = p.isPreorder ? "preorder" : p.onOrder ? "backorder" : p.stockQty === 0 ? "out_of_stock" : "in_stock";
+      const availabilityDate = p.onOrder && !p.isPreorder ? `\n    <g:availability_date>${backorderDate}</g:availability_date>` : "";
       const productType = `${GAME_LABEL[p.game]} > ${LANG_LABEL[p.language]} > ${p.type}`;
       const desc = productDescription(
         { name: p.name, game: p.game, language: p.language, type: p.type, setName: p.setName, condition: p.condition },
@@ -52,7 +56,7 @@ export async function GET() {
     <g:description>${xmlEscape(desc.slice(0, 5000))}</g:description>
     <g:link>${xmlEscape(link)}</g:link>
     <g:image_link>${xmlEscape(imageAbs)}</g:image_link>
-    <g:availability>${inStock}</g:availability>
+    <g:availability>${inStock}</g:availability>${availabilityDate}
     <g:price>${(p.priceCents / 100).toFixed(2)} EUR</g:price>
     <g:brand>${xmlEscape(GAME_LABEL[p.game])}</g:brand>
     <g:condition>new</g:condition>

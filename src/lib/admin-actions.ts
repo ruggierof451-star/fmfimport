@@ -80,6 +80,7 @@ const productUpdateSchema = z.object({
   isNew: z.boolean().optional(),
   isPreorder: z.boolean().optional(),
   heroFeatured: z.boolean().optional(),
+  onOrder: z.boolean().optional(),
   priceCents: z.number().int().min(0).nullable(),
   resellerPriceCents: z.number().int().min(0).nullable(),
   supplierCostCents: z.number().int().min(0).nullable(),
@@ -105,6 +106,7 @@ const FIELD_LABELS: Record<string, string> = {
   isNew: "In evidenza (novità)",
   isPreorder: "Preordine",
   heroFeatured: "Vetrina in home",
+  onOrder: "Su ordinazione",
   priceCents: "Prezzo di vendita (centesimi)",
   resellerPriceCents: "Prezzo rivenditore (centesimi)",
   supplierCostCents: "Costo di acquisto (centesimi)",
@@ -129,6 +131,7 @@ const productCreateSchema = z.object({
   language: z.enum(["IT", "JP", "CN", "KR", "EN"]).optional(), // override: solo per categorie senza lingua fissa (Yu-Gi-Oh!, Dragon Ball, carte singole)
   game: z.enum(["POKEMON", "ONE_PIECE", "YUGIOH", "DRAGON_BALL"]).optional(), // override: solo per le carte singole
   heroFeatured: z.boolean().optional(),
+  onOrder: z.boolean().optional(),
   setName: z.string().min(1, "Il nome del set è obbligatorio."),
   type: z.string().min(1, "Il tipo è obbligatorio."),
   imageUrl: z.string().nullable().optional(),
@@ -198,6 +201,7 @@ export async function createProductAction(input: z.infer<typeof productCreateSch
       published: data.published,
       isNew: data.isNew,
       heroFeatured: data.heroFeatured ?? false,
+      onOrder: data.onOrder ?? false,
       matchStatus: "MANUAL",
       variants: data.variants?.length
         ? { create: data.variants.map((v, i) => ({ name: v.name, priceCents: v.priceCents, position: i })) }
@@ -413,6 +417,7 @@ export async function updateProductAction(input: ProductUpdateInput): Promise<{ 
         isNew: data.isNew,
         isPreorder: data.isPreorder,
         heroFeatured: data.heroFeatured,
+        onOrder: data.onOrder,
         priceCents: data.priceCents,
         resellerPriceCents: data.resellerPriceCents,
         noWrapPriceCents: data.noWrapPriceCents,
