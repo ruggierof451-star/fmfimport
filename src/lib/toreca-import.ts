@@ -33,7 +33,12 @@ export function compareKey(name: string): string {
 /** Tipologia del sito ricavata dal nome del prodotto Toreca. */
 export function guessType(name: string): string {
   const n = name.toLowerCase();
+  if (/playmat|sleeve|binder|deck box/.test(n)) return "Accessori";
+  if (/promo (pack|card)|comic/.test(n)) return "Promo e pack";
+  if (/card collection/.test(n)) return "Collection";
   if (/booster box|booster display/.test(n)) return "Booster box";
+  // One Piece: i set con sigla (OP-16, EB-05, PRB-02) senza altre indicazioni sono booster box
+  if (/\b(op|eb|prb)-\d+\b/.test(n) && !/deck|starter|tin|display/.test(n)) return "Booster box";
   if (/\bdeck\b/.test(n)) return "Deck";
   if (/\btin\b/.test(n)) return "Tin";
   if (/display/.test(n)) return "Display";
@@ -47,6 +52,7 @@ export function guessSetName(name: string): string {
     .replace(/\[[^\]]*\]/g, " ")
     .replace(/\b(pre-?order)\b/gi, " ")
     .replace(/\bpok[eé]mon\b/gi, " ")
+    .replace(/\bone piece( tcg| card game)?\b/gi, " ")
     .replace(/\b(booster box|booster display|premium deck set|special box|display)\b/gi, " ")
     .replace(/\b(JP|Japanese)\b/g, " ")
     .replace(/\s+/g, " ")

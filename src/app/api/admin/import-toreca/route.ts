@@ -27,13 +27,19 @@ const itemSchema = z.object({
 });
 const bodySchema = z.object({
   items: z.array(itemSchema).min(1).max(100),
-  category: z.enum(["pokemon-jp"]),
+  category: z.enum(["pokemon-jp", "pokemon-cn", "pokemon-kr", "one-piece-jp", "one-piece-cn"]),
   markupPct: z.number().min(0).max(300).default(25),
   publish: z.boolean().default(true),
   dryRun: z.boolean().default(true),
 });
 
-const CATEGORY = { "pokemon-jp": { game: "POKEMON", language: "JP" } } as const;
+const CATEGORY = {
+  "pokemon-jp": { game: "POKEMON", language: "JP" },
+  "pokemon-cn": { game: "POKEMON", language: "CN" },
+  "pokemon-kr": { game: "POKEMON", language: "KR" },
+  "one-piece-jp": { game: "ONE_PIECE", language: "JP" },
+  "one-piece-cn": { game: "ONE_PIECE", language: "CN" },
+} as const;
 const IMAGE_TYPES = new Set(["image/webp", "image/jpeg", "image/png"]);
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
