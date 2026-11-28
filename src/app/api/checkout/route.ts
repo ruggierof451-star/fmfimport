@@ -11,6 +11,7 @@ import { subscribeNewsletterAction } from "@/lib/newsletter-actions";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification } from "@/lib/email";
+import { reserveStockInTx, OutOfStockError } from "@/lib/order-stock";
 
 const SITE_URL = process.env.SITE_URL || "https://www.fmfcards.com";
 
@@ -150,7 +151,9 @@ export async function POST(req: Request) {
   const invoiceVatCents = extractVatCents(totals.totalCents, settings.invoiceVatRateBps);
   const grandTotalCents = totals.totalCents;
 
-  const order = await prisma.$transaction(async (tx) => {
+  let order;
+  try {
+    order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
       data: {
         orderNumber,
@@ -197,8 +200,27 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // Scala le scorte dei prodotti principali (le varianti sono illimitate). Se nel
+    // frattempo la disponibilità è calata, l'errore annulla tutta la transazione.
+    await reserveStockInTx(
+      tx,
+      validLines.map(({ product, variant, quantity }) => ({
+        productId: product.id,
+        variantId: variant?.id ?? null,
+        quantity,
+        stockQty: product.stockQty,
+      }))
+    );
+
     return created;
-  });
+    });
+  } catch (err) {
+    if (err instanceof OutOfStockError) {
+      return NextResponse.json({ error: "Spiacenti: la disponibilità di un articolo è appena cambiata. Aggiorna il carrello e riprova." }, { status: 409 });
+    }
+    throw err;
+  }
 
   // Iscrizione alla newsletter, se il cliente l'ha chiesta al checkout. Vale il doppio
   // consenso come dal modulo del sito: parte un'email di conferma e nessuna email di

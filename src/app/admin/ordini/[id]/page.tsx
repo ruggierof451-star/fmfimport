@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 import { AdminOrderStatusForm } from "@/components/admin-order-status-form";
 import { AdminCancelOrderButton } from "@/components/admin-cancel-order-button";
+import { AdminDeleteOrderButton } from "@/components/admin-delete-order-button";
 import { BackButton } from "@/components/back-button";
 
 export const metadata = { title: "Admin · Dettaglio ordine" };
@@ -22,7 +23,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         <h1 style={{ fontSize: 24, fontWeight: 600 }}>
           Ordine <span className="mono">{order.orderNumber}</span>
         </h1>
-        <AdminCancelOrderButton orderId={order.id} orderNumber={order.orderNumber} status={order.status} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <AdminCancelOrderButton orderId={order.id} orderNumber={order.orderNumber} status={order.status} />
+          <AdminDeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} redirectTo="/admin/ordini" />
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
+import { releaseOrderStock, reReserveOrderStock, isStockReleasingStatus } from "@/lib/order-stock";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { recordDiscountCodeUsage } from "@/lib/discounts";
 
@@ -487,7 +488,7 @@ export async function updateOrderStatusAction(input: {
   if (!admin) return { ok: false, error: "Non autorizzato." };
   if (!ORDER_STATUSES.includes(input.status)) return { ok: false, error: "Stato non valido." };
 
-  const before = await prisma.order.findUnique({ where: { id: input.orderId }, select: { paymentStatus: true, couponCode: true } });
+  const before = await prisma.order.findUnique({ where: { id: input.orderId }, select: { status: true, paymentStatus: true, couponCode: true } });
 
   const [updated] = await prisma.$transaction([
     prisma.order.update({
@@ -507,6 +508,15 @@ export async function updateOrderStatusAction(input: {
 
   if (before && before.paymentStatus !== "PAID" && updated.paymentStatus === "PAID" && before.couponCode) {
     recordDiscountCodeUsage(before.couponCode).catch((err) => console.error("[admin] conteggio utilizzi codice sconto fallito:", err));
+  }
+
+  // Scorte: se l'ordine passa ad annullato/rimborsato le restituisce; se da annullato
+  // torna attivo le re-impegna. Entrambe sono idempotenti (flag stockReleased).
+  if (before) {
+    const wasReleasing = isStockReleasingStatus(before.status);
+    const nowReleasing = isStockReleasingStatus(updated.status);
+    if (!wasReleasing && nowReleasing) await releaseOrderStock(updated.id);
+    else if (wasReleasing && !nowReleasing) await reReserveOrderStock(updated.id);
   }
 
   const customerEmail = updated.user?.email ?? updated.guestEmail;
@@ -610,3 +620,28 @@ export async function markContactMessageReadAction(input: { id: string; read: bo
   return { ok: true };
 }
 
+
+/**
+ * Elimina definitivamente un ordine (e la sua cronologia e righe). Prima restituisce le
+ * scorte eventualmente ancora impegnate, così eliminare un ordine non "perde" pezzi di
+ * magazzino. Pensata per ripulire gli ordini di prova: l'operazione è irreversibile.
+ */
+export async function deleteOrderAction(input: { orderId: string }) {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const order = await prisma.order.findUnique({ where: { id: input.orderId }, select: { id: true } });
+  if (!order) return { ok: false, error: "Ordine non trovato." };
+
+  // Se le scorte erano ancora impegnate, restituiscile prima di cancellare l'ordine.
+  await releaseOrderStock(order.id);
+
+  await prisma.$transaction([
+    prisma.orderStatusHistory.deleteMany({ where: { orderId: order.id } }),
+    prisma.orderItem.deleteMany({ where: { orderId: order.id } }),
+    prisma.order.delete({ where: { id: order.id } }),
+  ]);
+
+  revalidatePath("/admin/ordini");
+  return { ok: true };
+}

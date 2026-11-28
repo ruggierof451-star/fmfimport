@@ -3,6 +3,7 @@ import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification, sendPaymentFailedEmail } from "@/lib/email";
 import { recordDiscountCodeUsage } from "@/lib/discounts";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { releaseOrderStock } from "@/lib/order-stock";
 
 /**
  * Unico punto in cui un ordine passa a "pagato". Lo usano sia il webhook di Stripe sia
@@ -79,6 +80,9 @@ export async function markOrderPaymentFailed(orderId: string, source: string): P
   await prisma.orderStatusHistory.create({
     data: { orderId: order.id, status: "CANCELLED", note: `Pagamento non riuscito (${source}).`, changedBy: source },
   });
+
+  // Pagamento fallito: l'ordine è annullato, le scorte impegnate tornano disponibili.
+  await releaseOrderStock(order.id);
 
   const customerEmail =
     order.guestEmail ?? (order.userId ? (await prisma.user.findUnique({ where: { id: order.userId } }))?.email ?? null : null);

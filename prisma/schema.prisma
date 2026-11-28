@@ -369,6 +369,11 @@ model Order {
   /// (es. al ritorno del cliente sulla pagina dell'ordine): vedi lib/order-payment.ts.
   stripeSessionId String?
 
+  /// Le scorte vengono "impegnate" (scalate) quando l'ordine è creato e restituite se
+  /// l'ordine viene annullato, rimborsato o il pagamento fallisce. Questo flag evita di
+  /// restituirle due volte: false = scorte ancora impegnate, true = già restituite.
+  stockReleased Boolean @default(false)
+
   // Totali congelati al momento dell'ordine (sempre ricalcolati server-side).
   // Tutti gli importi sono SEMPRE IVA inclusa. invoiceVatCents è la quota IVA già compresa
   // nel totale (informativa, per la fattura); totalCents = subtotale - sconto + spedizione.
