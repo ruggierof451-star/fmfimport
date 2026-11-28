@@ -4,7 +4,9 @@ import { renderEmailTemplate, escapeHtml } from "@/lib/email-templates";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = process.env.EMAIL_FROM || "FMF Cards <onboarding@resend.dev>";
-const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
+// Se SITE_URL non è impostata su Vercel, le email devono comunque puntare al dominio reale
+// (non a localhost, che per chi riceve l'email non esiste): altrimenti logo e link si rompono.
+const SITE_URL = process.env.SITE_URL || "https://www.fmfcards.com";
 const GOLD = "#C9A646";
 const BANK_IBAN = process.env.BANK_IBAN;
 const BANK_ACCOUNT_HOLDER = process.env.BANK_ACCOUNT_HOLDER || "FMF Cards S.R.L.S.";
