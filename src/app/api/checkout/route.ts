@@ -180,6 +180,10 @@ export async function POST(req: Request) {
         vatNumber: invoiceRequested ? body.invoice?.vatNumber : undefined,
         sdiCode: invoiceRequested ? body.invoice?.sdiCode : undefined,
         customerNote: body.customerNote,
+        // Carta: le scorte si scalano solo a pagamento avvenuto (vedi markOrderPaid), non ora,
+        // così un checkout Stripe abbandonato non trattiene magazzino. Bonifico: ordine già
+        // confermato, quindi le scorte si impegnano subito.
+        stockReleased: body.paymentMethod !== "BANK_TRANSFER",
         items: {
           create: validLines.map(({ product, variant, displayName, quantity, packaging }, i) => ({
             productId: product.id,
@@ -201,17 +205,19 @@ export async function POST(req: Request) {
       },
     });
 
-    // Scala le scorte dei prodotti principali (le varianti sono illimitate). Se nel
-    // frattempo la disponibilità è calata, l'errore annulla tutta la transazione.
-    await reserveStockInTx(
-      tx,
-      validLines.map(({ product, variant, quantity }) => ({
-        productId: product.id,
-        variantId: variant?.id ?? null,
-        quantity,
-        stockQty: product.stockQty,
-      }))
-    );
+    // Solo bonifico: scala subito le scorte (ordine già confermato). Per carta si aspetta
+    // il pagamento (markOrderPaid), così un checkout abbandonato non trattiene magazzino.
+    if (body.paymentMethod === "BANK_TRANSFER") {
+      await reserveStockInTx(
+        tx,
+        validLines.map(({ product, variant, quantity }) => ({
+          productId: product.id,
+          variantId: variant?.id ?? null,
+          quantity,
+          stockQty: product.stockQty,
+        }))
+      );
+    }
 
     return created;
     });

@@ -3,7 +3,7 @@ import { formatEuro } from "@/lib/pricing";
 import { sendOrderConfirmationEmail, sendAdminNewOrderNotification, sendPaymentFailedEmail } from "@/lib/email";
 import { recordDiscountCodeUsage } from "@/lib/discounts";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
-import { releaseOrderStock } from "@/lib/order-stock";
+import { releaseOrderStock, reserveOrderStock } from "@/lib/order-stock";
 
 /**
  * Unico punto in cui un ordine passa a "pagato". Lo usano sia il webhook di Stripe sia
@@ -24,6 +24,9 @@ export async function markOrderPaid(orderId: string, source: string): Promise<{ 
     data: { paymentStatus: "PAID", status: "PAYMENT_CONFIRMED" },
   });
   if (claimed.count === 0) return { confirmed: false }; // già confermato da un'altra chiamata
+
+  // Pagamento con carta andato a buon fine: ora (non prima) le scorte vengono scalate.
+  await reserveOrderStock(order.id);
 
   await prisma.orderStatusHistory.create({
     data: { orderId: order.id, status: "PAYMENT_CONFIRMED", note: `Pagamento confermato (${source}).`, changedBy: source },

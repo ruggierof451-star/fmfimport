@@ -75,11 +75,12 @@ export async function releaseOrderStock(orderId: string): Promise<void> {
 }
 
 /**
- * Re-impegna le scorte di un ordine che era stato annullato e viene riportato attivo
- * (es. l'admin annulla per sbaglio e poi ripristina). Scala di nuovo le quantità, senza
- * scendere sotto zero. Alza il flag `stockReleased` a false in modo atomico.
+ * Impegna (scala) le scorte di un ordine le cui scorte non sono attualmente trattenute:
+ * usato quando il pagamento con carta va a buon fine (le scorte si scalano solo allora,
+ * non quando il checkout viene aperto) e quando un ordine annullato torna attivo. Scala
+ * senza scendere sotto zero. Alza il flag `stockReleased` a false in modo atomico.
  */
-export async function reReserveOrderStock(orderId: string): Promise<void> {
+export async function reserveOrderStock(orderId: string): Promise<void> {
   const claimed = await prisma.order.updateMany({
     where: { id: orderId, stockReleased: true },
     data: { stockReleased: false },

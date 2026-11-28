@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AdminDeleteOrderButton } from "@/components/admin-delete-order-button";
+import { AdminDeleteAllOrdersButton } from "@/components/admin-delete-all-orders-button";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
 import { formatEuro } from "@/lib/pricing";
@@ -34,7 +36,10 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <BackButton />
-      <h1 style={{ fontSize: 26, fontWeight: 600 }}>Ordini ({orders.length})</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 600 }}>Ordini ({orders.length})</h1>
+        {orders.length ? <AdminDeleteAllOrdersButton /> : null}
+      </div>
       <form style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input className="in" name="q" defaultValue={sp.q ?? ""} placeholder="Numero, email o nome…" style={{ width: 260 }} />
         <select className="in" name="status" defaultValue={sp.status ?? ""} style={{ width: 220 }}>
@@ -60,6 +65,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
               <th>Stato</th>
               <th>Pagamento</th>
               <th>Totale</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -79,11 +85,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                 </td>
                 <td>{o.paymentStatus}</td>
                 <td>{formatEuro(o.totalCents)}</td>
+                <td style={{ textAlign: "right" }}>
+                  <AdminDeleteOrderButton orderId={o.id} orderNumber={o.orderNumber} />
+                </td>
               </tr>
             ))}
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="muted">
+                <td colSpan={7} className="muted">
                   Nessun ordine trovato.
                 </td>
               </tr>

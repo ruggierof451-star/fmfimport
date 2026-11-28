@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword } from "@/lib/auth";
-import { releaseOrderStock, reReserveOrderStock, isStockReleasingStatus } from "@/lib/order-stock";
+import { releaseOrderStock, reserveOrderStock, isStockReleasingStatus } from "@/lib/order-stock";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { recordDiscountCodeUsage } from "@/lib/discounts";
 
@@ -516,7 +516,7 @@ export async function updateOrderStatusAction(input: {
     const wasReleasing = isStockReleasingStatus(before.status);
     const nowReleasing = isStockReleasingStatus(updated.status);
     if (!wasReleasing && nowReleasing) await releaseOrderStock(updated.id);
-    else if (wasReleasing && !nowReleasing) await reReserveOrderStock(updated.id);
+    else if (wasReleasing && !nowReleasing) await reserveOrderStock(updated.id);
   }
 
   const customerEmail = updated.user?.email ?? updated.guestEmail;
@@ -644,4 +644,26 @@ export async function deleteOrderAction(input: { orderId: string }) {
 
   revalidatePath("/admin/ordini");
   return { ok: true };
+}
+
+/**
+ * Elimina TUTTI gli ordini (cronologia e righe comprese). Pensata per ripulire in un colpo
+ * gli ordini di prova. Operazione irreversibile: prima restituisce le scorte di eventuali
+ * ordini ancora "impegnati", così non si perde magazzino.
+ */
+export async function deleteAllOrdersAction() {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Non autorizzato." };
+
+  const held = await prisma.order.findMany({ where: { stockReleased: false }, select: { id: true } });
+  for (const o of held) await releaseOrderStock(o.id);
+
+  const result = await prisma.$transaction([
+    prisma.orderStatusHistory.deleteMany({}),
+    prisma.orderItem.deleteMany({}),
+    prisma.order.deleteMany({}),
+  ]);
+
+  revalidatePath("/admin/ordini");
+  return { ok: true, deleted: result[2].count };
 }
