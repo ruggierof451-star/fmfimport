@@ -57,9 +57,7 @@ export async function registerAction(
 
   await createSession({ userId: user.id, role: user.role, email: user.email });
   // email di benvenuto all'account (modello "account_welcome", modificabile da Admin → Email)
-  after(() =>
-    sendWelcomeEmail(user.email, user.name?.split(" ")[0] ?? "").catch((err) => console.error("[registrazione] email benvenuto fallita:", err))
-  );
+  await sendWelcomeEmail(user.email, user.name?.split(" ")[0] ?? "").catch((err) => console.error("[registrazione] email benvenuto fallita:", err));
   // email automatica di marketing di benvenuto (se attiva) a chi si registra con il consenso marketing
   if (user.marketingOptIn) {
     after(async () => {
@@ -171,7 +169,7 @@ export async function requestPasswordResetAction(
   });
 
   const resetPath = `/account/reimposta-password/${rawToken}`;
-  const resetUrl = `${process.env.SITE_URL || "http://localhost:3000"}${resetPath}`;
+  const resetUrl = `${process.env.SITE_URL || "https://www.fmfcards.com"}${resetPath}`;
   const emailResult = await sendPasswordResetEmail(email, resetUrl);
 
   // Il link di reset NON viene mai mostrato a schermo in produzione: chiunque può chiedere

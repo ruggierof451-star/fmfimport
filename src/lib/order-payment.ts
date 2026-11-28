@@ -36,7 +36,7 @@ export async function markOrderPaid(orderId: string, source: string): Promise<{ 
     order.guestEmail ?? (order.userId ? (await prisma.user.findUnique({ where: { id: order.userId } }))?.email ?? null : null);
 
   if (customerEmail) {
-    sendOrderConfirmationEmail({
+    await sendOrderConfirmationEmail({
       to: customerEmail,
       orderNumber: order.orderNumber,
       totalFormatted: formatEuro(order.totalCents),
@@ -48,7 +48,7 @@ export async function markOrderPaid(orderId: string, source: string): Promise<{ 
       })),
     }).catch((err) => console.error("[pagamento] invio email conferma fallito:", err));
 
-    sendAdminNewOrderNotification({
+    await sendAdminNewOrderNotification({
       orderNumber: order.orderNumber,
       orderId: order.id,
       totalFormatted: formatEuro(order.totalCents),

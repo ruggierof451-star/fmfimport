@@ -44,10 +44,10 @@ export async function submitResellerRequestAction(input: ResellerRequestInput): 
     },
   });
 
-  sendResellerRequestReceivedEmail(email, companyName).catch((err) =>
+  await sendResellerRequestReceivedEmail(email, companyName).catch((err) =>
     console.error("[rivenditori] invio conferma ricezione fallito:", err)
   );
-  sendAdminNewResellerRequestNotification({
+  await sendAdminNewResellerRequestNotification({
     companyName,
     vatNumber: data.vatNumber.trim(),
     contactName: data.contactName.trim(),
@@ -111,7 +111,7 @@ export async function reviewResellerRequestAction(input: {
     await prisma.user.update({ where: { id: account.id }, data: { role: "CUSTOMER" } });
   }
 
-  sendResellerRequestDecisionEmail({
+  await sendResellerRequestDecisionEmail({
     to: updated.email,
     companyName: updated.companyName,
     approved: input.status === "APPROVED",

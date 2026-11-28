@@ -31,8 +31,8 @@ export async function submitContactMessageAction(input: ContactInput): Promise<{
     },
   });
 
-  sendContactReplyNotice(data.email).catch((err) => console.error("[contatti] invio conferma fallito:", err));
-  sendAdminNewContactMessageNotification({
+  await sendContactReplyNotice(data.email).catch((err) => console.error("[contatti] invio conferma fallito:", err));
+  await sendAdminNewContactMessageNotification({
     email: data.email,
     orderNumber: data.orderNumber?.trim() || null,
     message: data.message,
