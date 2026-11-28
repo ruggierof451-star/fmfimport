@@ -27,10 +27,12 @@ export function CheckoutForm({
   invoiceVatRateBps,
   prefill,
   isReseller,
+  isLoggedIn,
 }: {
   invoiceVatRateBps: number;
   prefill?: CheckoutPrefill;
   isReseller?: boolean;
+  isLoggedIn?: boolean;
 }) {
   const { items, quote, clearCart, couponCode } = useCart();
 
@@ -152,8 +154,15 @@ export function CheckoutForm({
               <h2>Contatti</h2>
             </div>
             <p className="muted" style={{ margin: 0 }}>
-              Acquisti come ospite.{" "}
-              <Link href="/account">Hai un account? Accedi</Link>
+              {isLoggedIn ? (
+                <>
+                  Stai acquistando con il tuo account{prefill?.email ? <> (<b>{prefill.email}</b>)</> : null}.
+                </>
+              ) : (
+                <>
+                  Acquisti come ospite. <Link href="/account">Hai un account? Accedi</Link>
+                </>
+              )}
             </p>
             <div className="form">
               <Field label="Email" full error={errors.email} htmlFor="email">
